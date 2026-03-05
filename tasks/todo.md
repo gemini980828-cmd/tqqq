@@ -201,3 +201,18 @@
 - [x] 접근안 확정 (Grid + 안정성 게이트)
 - [x] 설계 문서 작성: `docs/plans/2026-03-06-performance-improvement-design.md`
 - [x] 구현 계획 문서 작성: `docs/plans/2026-03-06-performance-improvement-implementation-plan.md`
+
+### Phase 2 Execution (Task1~Task7) - Autopilot
+- [x] Task1: `src/tqqq_strategy/experiments/phase2_config.py` 구현 (grid + 제약검증)
+- [x] Task2: `src/tqqq_strategy/experiments/phase2_runner.py` 구현 (원본 신호엔진 기반 후보 평가)
+- [x] Task3: `src/tqqq_strategy/experiments/phase2_oos.py` 구현 (IS/OOS 분할 + 유지율 게이트)
+- [x] Task4: `ops/scripts/run_phase2_coarse.py` 실행 -> `experiments/trials.csv` (64 rows)
+- [x] Task5: `ops/scripts/run_phase2_fine.py` 실행 -> `experiments/trials_fine.csv` (90 rows)
+- [x] Task6: `ops/scripts/select_phase2_best.py` 실행 -> `experiments/passed_leaderboard.csv`, `experiments/best_config.json`
+- [x] Task7: 단위테스트 추가/검증 (`tests/experiments/test_phase2_constraints.py`, `tests/experiments/test_phase2_oos.py`)
+
+### Phase 2 Key Result
+- baseline(after-tax CAGR): 38.60%
+- best(after-tax CAGR): 39.81%
+- delta: +1.22%p
+- hard gates: MDD pass, OOS retention pass(0.704)
