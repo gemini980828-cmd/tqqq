@@ -184,3 +184,8 @@
   - `reports/no_tv_transition_replay.csv`
   - `reports/cost_sensitivity_s2.csv`
 - [x] Verified test baseline remains green (`17 passed`)
+
+### After-tax Sensitivity Run (S2)
+- [x] Added runner `ops/scripts/run_aftertax_sensitivity.py` (bps × initial capital)
+- [x] Generated `reports/aftertax_sensitivity_s2.csv`
+- [x] Re-verified baseline tests (`17 passed`)
