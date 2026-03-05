@@ -175,3 +175,12 @@
 - Added FX-aware execution valuation using `KRW=X` close series and exported `reports/backtest_tax_ledger_primary.csv`.
 - Re-ran primary window (2011-06-23~2026-01-30): CAGR 35.07%, AfterTaxCAGR 32.16%, MDD -34.22%.
 - Verified regressions: `UV_CACHE_DIR=.uv-cache uv run --offline --with pytest pytest -q` (17 passed).
+
+### No-TV Alternative Validation (Signal QA path)
+- [x] Added no-TV validation harness: `ops/scripts/generate_no_tv_validation_report.py`
+- [x] Added cost sensitivity runner: `ops/scripts/run_cost_sensitivity.py`
+- [x] Generated reports:
+  - `reports/no_tv_validation_summary.json`
+  - `reports/no_tv_transition_replay.csv`
+  - `reports/cost_sensitivity_s2.csv`
+- [x] Verified test baseline remains green (`17 passed`)

@@ -1,0 +1,18 @@
+{
+  "rows": 3673,
+  "date_from": "2011-06-23",
+  "date_to": "2026-01-30",
+  "allowed_weight_violations": 0,
+  "vol_lock_rows": 316,
+  "vol_lock_violations": 0,
+  "transition_count": 205,
+  "weight_distribution": {
+    "0.0": 1143,
+    "0.05": 22,
+    "0.1": 53,
+    "0.8": 48,
+    "0.9": 283,
+    "0.95": 1757,
+    "1.0": 367
+  }
+}
