@@ -102,3 +102,16 @@
 - Implemented `apply_korean_overseas_tax(realized_profit_krw: float) -> float` exactly per plan in `src/tqqq_strategy/backtest/tax_kr.py`.
 - Added required scaffold file `src/tqqq_strategy/backtest/runner.py` for Task 5 scope.
 - Verified with `UV_CACHE_DIR=/tmp/.uv-cache uv run --with pytest pytest -q tests/backtest/test_cost_tax.py` (2 passed).
+
+### Task 6 Execution Plan (validation tolerance)
+- [x] Add failing tolerance test in `tests/validation/test_weight_tolerance.py`
+- [x] Implement minimal `within_tolerance(...)` in `src/tqqq_strategy/validation/golden_diff.py`
+- [x] Create `reports/.gitkeep`
+- [x] Run targeted validation test and capture result
+
+
+### Task 6 Review
+- Added failing test first in `tests/validation/test_weight_tolerance.py` and confirmed import failure before implementation.
+- Implemented minimal `within_tolerance` in `src/tqqq_strategy/validation/golden_diff.py` using `abs(expected - actual) <= tol`.
+- Added required `reports/.gitkeep`.
+- Verified with `uv run --with pytest pytest -q tests/validation/test_weight_tolerance.py` (2 passed).
