@@ -225,3 +225,24 @@
 - [x] Extended window report generated on `data/user_input_2000.csv`: `experiments/pre2011_stress_test_windows.csv`, `experiments/pre2011_stress_test_summary.json`
 - [x] Extended stress test to earlier windows with synthetic pre-live dataset (`data/user_input_2000_ext.csv`)
 - [x] Generated `experiments/ext2000_stress_test_windows.csv` and `experiments/ext2000_stress_test_summary.json`
+
+### Phase 3 Task A - Telegram Daily Signal Alert
+- [x] Implement telegram sender module (message formatter + HTTP send + dry-run)
+- [x] Implement daily job orchestration (latest signal read + idempotency key + send)
+- [x] Add tests for formatter/idempotency/no-duplicate behavior
+- [x] Add CLI script for manual daily run and verify pytest green
+
+### Phase 3 Task A Review
+- Added `src/tqqq_strategy/ops/telegram_alert.py` with stdlib `urllib` Telegram send and dry-run support.
+- Replaced `src/tqqq_strategy/ops/daily_job.py` with latest/previous signal read, idempotency key generation via `build_alert_key`, duplicate-skip state handling, and S2 transition message generation.
+- Added CLI `ops/scripts/run_daily_telegram_alert.py` to read `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`, `TELEGRAM_DRY_RUN` and print result JSON (defaults to dry-run when token/chat is missing).
+- Added tests: `tests/ops/test_telegram_alert.py`, `tests/ops/test_daily_job.py`.
+- Verification:
+  - `UV_CACHE_DIR=/tmp/.uv-cache uv run --with pytest pytest -q tests/ops/test_telegram_alert.py tests/ops/test_daily_job.py` → `3 passed in 0.03s`
+  - `UV_CACHE_DIR=/tmp/.uv-cache uv run --offline --with pytest pytest -q tests/ops` → `4 passed in 0.02s`
+- Follow-up hardening after code review:
+  - dry-run no longer persists idempotency state
+  - CLI exits non-zero on real send failure
+  - required CSV column validation added
+  - atomic state-file write via temp+replace
+  - extra tests added (dry-run no-persist, missing-column error)
