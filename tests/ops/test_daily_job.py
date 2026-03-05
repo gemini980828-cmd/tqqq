@@ -8,15 +8,26 @@ CSV_SAMPLE = """time,S1_code,S1_weight,S2_code,S2_weight,S3_code,S3_weight
 2026-03-06,0,0.0,3,0.25,0,0.0
 """
 
+DATA_SAMPLE = """time,QQQ종가,TQQQ종가,SPY종가,원달러환율
+2026-03-05,100.0,50.0,600.0,1470.0
+2026-03-06,102.0,51.0,605.0,1475.0
+"""
+
 
 def _write_csv(path: Path) -> None:
     path.write_text(CSV_SAMPLE, encoding="utf-8")
 
 
+def _write_data_csv(path: Path) -> None:
+    path.write_text(DATA_SAMPLE, encoding="utf-8")
+
+
 def test_run_daily_signal_alert_skips_duplicate_on_second_run(tmp_path) -> None:
     signal_csv = tmp_path / "signals.csv"
+    data_csv = tmp_path / "data.csv"
     state_file = tmp_path / "state.json"
     _write_csv(signal_csv)
+    _write_data_csv(data_csv)
 
     calls: list[dict] = []
 
@@ -33,6 +44,7 @@ def test_run_daily_signal_alert_skips_duplicate_on_second_run(tmp_path) -> None:
 
     first = run_daily_signal_alert(
         signal_csv_path=signal_csv,
+        data_csv_path=data_csv,
         state_path=state_file,
         bot_token="token",
         chat_id="chat",
@@ -41,6 +53,7 @@ def test_run_daily_signal_alert_skips_duplicate_on_second_run(tmp_path) -> None:
     )
     second = run_daily_signal_alert(
         signal_csv_path=signal_csv,
+        data_csv_path=data_csv,
         state_path=state_file,
         bot_token="token",
         chat_id="chat",
@@ -59,12 +72,19 @@ def test_run_daily_signal_alert_skips_duplicate_on_second_run(tmp_path) -> None:
 
     assert len(calls) == 1
     assert state_file.exists()
+    assert "현재 포지션" in first["message"]
+    assert "시장 데이터 요약" in first["message"]
+    assert "손익여부" in first["message"]
+    assert "SPY 200일 이동평균선 필터" in first["message"]
+    assert "QQQ RSI(14)" in first["message"]
 
 
 def test_run_daily_signal_alert_dry_run_does_not_persist_state(tmp_path) -> None:
     signal_csv = tmp_path / "signals.csv"
+    data_csv = tmp_path / "data.csv"
     state_file = tmp_path / "state.json"
     _write_csv(signal_csv)
+    _write_data_csv(data_csv)
 
     calls: list[dict] = []
 
@@ -74,6 +94,7 @@ def test_run_daily_signal_alert_dry_run_does_not_persist_state(tmp_path) -> None
 
     first = run_daily_signal_alert(
         signal_csv_path=signal_csv,
+        data_csv_path=data_csv,
         state_path=state_file,
         bot_token="token",
         chat_id="chat",
@@ -82,6 +103,7 @@ def test_run_daily_signal_alert_dry_run_does_not_persist_state(tmp_path) -> None
     )
     second = run_daily_signal_alert(
         signal_csv_path=signal_csv,
+        data_csv_path=data_csv,
         state_path=state_file,
         bot_token="token",
         chat_id="chat",
@@ -116,7 +138,9 @@ def test_run_daily_signal_alert_raises_on_missing_required_columns(tmp_path) -> 
 
 def test_run_daily_signal_alert_raises_on_invalid_weight_value(tmp_path) -> None:
     signal_csv = tmp_path / "signals_bad_weight.csv"
+    data_csv = tmp_path / "data.csv"
     state_file = tmp_path / "state.json"
+    _write_data_csv(data_csv)
     signal_csv.write_text(
         "time,S1_code,S1_weight,S2_code,S2_weight,S3_code,S3_weight\n"
         "2026-03-05,0,0.0,1,abc,0,0.0\n"
@@ -127,6 +151,7 @@ def test_run_daily_signal_alert_raises_on_invalid_weight_value(tmp_path) -> None
     try:
         run_daily_signal_alert(
             signal_csv_path=signal_csv,
+            data_csv_path=data_csv,
             state_path=state_file,
             bot_token="token",
             chat_id="chat",

@@ -248,3 +248,21 @@
   - extra tests added (dry-run no-persist, missing-column error)
 - [x] Added market-close automation wrapper: `ops/scripts/run_daily_close_alert.sh`
 - [x] Registered user crontab (KST Tue-Sat 05:20 & 06:20) with idempotent duplicate protection
+
+### Phase 3 Task A-2 - WebP 알림 포맷 정합
+- [x] WebP 샘플(9551781008_...webp) 알림 블록/문구 구조 매핑
+- [x] `daily_job.py` 메시지 구성 로직을 샘플 수준으로 확장 (포지션/사유/시장요약/운영로그)
+- [x] `run_daily_telegram_alert.py`에 `--data-csv` 인자 추가
+- [x] ops 테스트 보강 및 회귀 통과 확인
+
+### Phase 3 Task A-2 Review
+- 메시지 포맷을 샘플 기준으로 강화:
+  - `현재 포지션`, `교체 포지션`, `신호코드 전환`, `손익여부`, `로스 컷`
+  - `📈 시장 데이터 요약` 내 50/100/200 이격도, 기울기 조건, SPY 필터, RSI 상태, 3캔들 이모지, 환율
+  - 가격/손익 방향 이모지(🟢/🔴/⚪) 반영
+- CLI 인자 확장:
+  - `ops/scripts/run_daily_telegram_alert.py --data-csv <path>`
+- 검증:
+  - `UV_CACHE_DIR=.uv-cache uv run --offline --with pytest pytest -q tests/ops/test_telegram_alert.py tests/ops/test_daily_job.py` → `6 passed`
+  - `UV_CACHE_DIR=.uv-cache uv run --offline --with pytest pytest -q` → `25 passed`
+  - dry-run 실행으로 실제 메시지 렌더 확인 (`2026-01-30` 샘플)
