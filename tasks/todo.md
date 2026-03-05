@@ -53,6 +53,7 @@
 - [x] Task 2: 데이터 계약(canonical schema) 및 품질검사
 - [x] Task 3: 원천 수집기(stooq/yfinance)
 - [x] Task 4: Pine 동치 신호엔진 v1
+- [x] Task 5: 백테스트 비용/세금 모듈 스캐폴드
 
 ### Task 2 Execution Plan (canonical schema + quality)
 - [x] Add failing tests for canonical validation (missing columns, duplicate date+symbol)
@@ -89,3 +90,15 @@
 - Added `src/tqqq_strategy/signal/engine_v1.py` with priority decision flow from plan spec.
 - Added `src/tqqq_strategy/signal/params.py` for minimal action/overheat constants used by v1 engine.
 - Added `tests/signal/test_engine_v1_priority.py` asserting lock has highest priority (`code == 0`).
+
+### Task 5 Execution Plan (backtest cost/tax)
+- [x] Add failing test for KR overseas tax function behavior
+- [x] Implement minimal KR overseas tax function in `src/tqqq_strategy/backtest/tax_kr.py`
+- [x] Create minimal runner scaffold file required by plan (`src/tqqq_strategy/backtest/runner.py`)
+- [x] Run targeted backtest tax tests and capture result
+
+### Task 5 Review
+- Added `tests/backtest/test_cost_tax.py` first and confirmed initial failure (`ModuleNotFoundError`) before implementation.
+- Implemented `apply_korean_overseas_tax(realized_profit_krw: float) -> float` exactly per plan in `src/tqqq_strategy/backtest/tax_kr.py`.
+- Added required scaffold file `src/tqqq_strategy/backtest/runner.py` for Task 5 scope.
+- Verified with `UV_CACHE_DIR=/tmp/.uv-cache uv run --with pytest pytest -q tests/backtest/test_cost_tax.py` (2 passed).
