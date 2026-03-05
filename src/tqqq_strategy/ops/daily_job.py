@@ -7,12 +7,16 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Callable
 
+import numpy as np
+import pandas as pd
+
 from tqqq_strategy.ops.idempotency import build_alert_key
 from tqqq_strategy.ops.telegram_alert import format_s2_change_message, send_telegram_message
 
 SignalRow = dict[str, str]
 SenderFn = Callable[..., dict]
 REQUIRED_SIGNAL_COLUMNS = {"time", "S2_code", "S2_weight"}
+REQUIRED_DATA_COLUMNS = {"time", "QQQ종가", "TQQQ종가", "SPY종가"}
 
 
 def _read_last_two_rows(signal_csv_path: Path) -> tuple[SignalRow, SignalRow]:
@@ -27,6 +31,25 @@ def _read_last_two_rows(signal_csv_path: Path) -> tuple[SignalRow, SignalRow]:
         raise ValueError("signal csv must include at least two rows")
 
     return rows[-2], rows[-1]
+
+
+def _read_market_data(data_csv_path: Path) -> pd.DataFrame:
+    df = pd.read_csv(data_csv_path, parse_dates=["time"]).sort_values("time").reset_index(drop=True)
+    missing = REQUIRED_DATA_COLUMNS.difference(set(df.columns))
+    if missing:
+        raise ValueError(f"data csv missing required columns: {sorted(missing)}")
+
+    # ensure helper MAs
+    if "QQQ3일선" not in df.columns:
+        df["QQQ3일선"] = df["QQQ종가"].rolling(3, min_periods=3).mean()
+    if "QQQ161일선" not in df.columns:
+        df["QQQ161일선"] = df["QQQ종가"].rolling(161, min_periods=161).mean()
+    if "TQQQ200일선" not in df.columns:
+        df["TQQQ200일선"] = df["TQQQ종가"].rolling(200, min_periods=200).mean()
+    if "SPY200일선" not in df.columns:
+        df["SPY200일선"] = df["SPY종가"].rolling(200, min_periods=200).mean()
+
+    return df
 
 
 def _read_state(state_path: Path) -> dict:
@@ -46,9 +69,79 @@ def _write_state(state_path: Path, payload: dict) -> None:
     os.replace(tmp, state_path)
 
 
+def _rsi_wilder(close: pd.Series, length: int = 14) -> float:
+    diff = close.diff()
+    up = diff.clip(lower=0)
+    down = (-diff).clip(lower=0)
+    au = up.ewm(alpha=1 / length, adjust=False, min_periods=length).mean()
+    ad = down.ewm(alpha=1 / length, adjust=False, min_periods=length).mean()
+    rs = au / ad
+    rsi = 100 - 100 / (1 + rs)
+    return float(rsi.iloc[-1]) if len(rsi) else float("nan")
+
+
+def _rolling_linreg_slope(y: np.ndarray, length: int = 45) -> float:
+    if len(y) < length:
+        return float("nan")
+    x = np.arange(length, dtype=float)
+    w = y[-length:]
+    if np.isnan(w).any():
+        return float("nan")
+    denom = length * np.sum(x * x) - np.sum(x) ** 2
+    if denom == 0:
+        return float("nan")
+    m = (length * np.sum(x * w) - np.sum(x) * np.sum(w)) / denom
+    return float(m)
+
+
+def _format_pct(v: float) -> str:
+    if np.isnan(v):
+        return "N/A"
+    return f"{v:+.2f}%"
+
+
+def _emoji_from_sign(v: float) -> str:
+    if np.isnan(v):
+        return "⚪"
+    if v > 0:
+        return "🟢"
+    if v < 0:
+        return "🔴"
+    return "⚪"
+
+
+def _rsi_state(rsi: float) -> str:
+    if np.isnan(rsi):
+        return "N/A"
+    if rsi >= 70.0:
+        return "과열"
+    if rsi <= 30.0:
+        return "과매도"
+    return "중립"
+
+
+def _build_reason(*, vol20: float, spy_dist200: float, new_weight: float, prev_weight: float, tqqq_dist200: float, qqq3: float, qqq161: float) -> str:
+    if vol20 >= 5.9:
+        return "변동성 과열 락 조건(20일 변동성 ≥ 5.9%)"
+    if spy_dist200 <= 97.75:
+        return "SPY 200일선 필터 약세(이격도 ≤ 97.75)"
+    if new_weight <= 0.001 and prev_weight >= 0.80:
+        return "고비중 구간 청산/손절 조건"
+    if new_weight >= 0.999 and tqqq_dist200 >= 101.0:
+        return "추세 조건 완전 충족(200일 이격도 101% 이상)"
+    if new_weight <= 0.101 and (qqq3 > qqq161):
+        return "추세 조건 부분 만족(10% 진입)"
+    if new_weight < prev_weight and tqqq_dist200 >= 139.0:
+        return "과열 구간 단계적 감량"
+    if abs(new_weight - 0.95) < 1e-9 and prev_weight >= 0.999:
+        return "+10% TP10 1회 감량"
+    return "기본 추세/보유 유지"
+
+
 def run_daily_signal_alert(
     *,
     signal_csv_path: Path | str = Path("reports/signals_s1_s2_s3_user_original.csv"),
+    data_csv_path: Path | str = Path("data/user_input.csv"),
     state_path: Path | str = Path("reports/daily_telegram_alert_state.json"),
     bot_token: str | None = None,
     chat_id: str | None = None,
@@ -56,9 +149,12 @@ def run_daily_signal_alert(
     sender: SenderFn = send_telegram_message,
 ) -> dict:
     signal_csv = Path(signal_csv_path)
+    data_csv = Path(data_csv_path)
     state_file = Path(state_path)
 
     prev_row, new_row = _read_last_two_rows(signal_csv)
+    market_df = _read_market_data(data_csv)
+
     date_str = new_row["time"]
     prev_code = str(prev_row["S2_code"])
     new_code = str(new_row["S2_code"])
@@ -83,13 +179,138 @@ def run_daily_signal_alert(
             "state_path": str(state_file),
         }
 
+    # market snapshot on same date as signal
+    market_df["date"] = market_df["time"].dt.strftime("%Y-%m-%d")
+    matches = market_df.index[market_df["date"] == date_str].tolist()
+    if not matches:
+        raise ValueError(f"date {date_str} not found in data csv {data_csv}")
+    i = matches[-1]
+    if i <= 0:
+        raise ValueError("not enough market history for daily delta")
+
+    hist = market_df.iloc[: i + 1].copy()
+    latest = hist.iloc[-1]
+    prev = hist.iloc[-2]
+
+    tqqq_close = float(latest["TQQQ종가"])
+    tqqq_prev = float(prev["TQQQ종가"])
+    tqqq_day_pct = (tqqq_close / tqqq_prev - 1.0) * 100.0
+
+    ma50 = hist["TQQQ종가"].rolling(50, min_periods=50).mean().iloc[-1]
+    ma100 = hist["TQQQ종가"].rolling(100, min_periods=100).mean().iloc[-1]
+    ma200 = hist["TQQQ종가"].rolling(200, min_periods=200).mean().iloc[-1]
+    dist50 = (tqqq_close / ma50) * 100.0 if pd.notna(ma50) and ma50 != 0 else float("nan")
+    dist100 = (tqqq_close / ma100) * 100.0 if pd.notna(ma100) and ma100 != 0 else float("nan")
+    dist200 = (tqqq_close / ma200) * 100.0 if pd.notna(ma200) and ma200 != 0 else float("nan")
+
+    dist200_series = (hist["TQQQ종가"] / hist["TQQQ종가"].rolling(200, min_periods=200).mean()) * 100.0
+    slope = _rolling_linreg_slope(dist200_series.to_numpy(dtype=float), 45)
+
+    qqq3 = float(latest["QQQ3일선"])
+    qqq161 = float(latest["QQQ161일선"])
+    qqq3_vs161 = (qqq3 / qqq161 - 1.0) * 100.0 if qqq161 != 0 else float("nan")
+
+    spy_dist200 = (float(latest["SPY종가"]) / float(latest["SPY200일선"])) * 100.0 if float(latest["SPY200일선"]) != 0 else float("nan")
+
+    vol20 = hist["TQQQ종가"].pct_change().rolling(20, min_periods=20).std(ddof=1).iloc[-1] * 100.0
+    rsi14 = _rsi_wilder(hist["QQQ종가"], 14)
+
+    last3_ret = hist["QQQ종가"].pct_change().tail(3).fillna(0.0)
+
+    def _dot(v: float) -> str:
+        return "🟢" if v > 0 else ("🔴" if v < 0 else "⚪")
+
+    candle3 = "".join(_dot(float(v)) for v in last3_ret)
+
+    fx_line = "원/달러 환율: N/A"
+    if "원달러환율" in hist.columns and pd.notna(hist["원달러환율"].iloc[-1]):
+        fx_now = float(hist["원달러환율"].iloc[-1])
+        fx_prev = float(hist["원달러환율"].iloc[-2]) if pd.notna(hist["원달러환율"].iloc[-2]) else fx_now
+        fx_pct = (fx_now / fx_prev - 1.0) * 100.0 if fx_prev != 0 else float("nan")
+        fx_line = f"원/달러 환율: {fx_now:.2f} ({_format_pct(fx_pct)})"
+
+    delta = new_weight - prev_weight
+    if abs(delta) < 1e-12:
+        trade_line = "매매 없음"
+    elif delta < 0:
+        trade_line = f"매도: {abs(delta) * 100:.2f}%"
+    else:
+        trade_line = f"매수: {abs(delta) * 100:.2f}%"
+
+    holding_ratio = "N/A"
+    if prev_weight > 1e-12:
+        holding_ratio = f"{abs(delta) / prev_weight * 100:.2f}%"
+
+    reason = _build_reason(
+        vol20=float(vol20),
+        spy_dist200=float(spy_dist200),
+        new_weight=float(new_weight),
+        prev_weight=float(prev_weight),
+        tqqq_dist200=float(dist200),
+        qqq3=float(qqq3),
+        qqq161=float(qqq161),
+    )
+
+    slope_cond = "해당 없음"
+    if pd.notna(slope) and pd.notna(dist200) and pd.notna(vol20):
+        if (slope >= 0.1100) and (dist200 <= 98.8) and (vol20 <= 6.0):
+            slope_cond = "충족"
+
+    tqqq_vs200 = dist200 - 100.0 if pd.notna(dist200) else float("nan")
+    price_emoji = _emoji_from_sign(tqqq_day_pct)
+    pnl_emoji = _emoji_from_sign(tqqq_day_pct)
+    position_emoji = "🟢" if new_weight > 0 else "🔴"
+    loss_cut_line = "해당 없음" if new_weight < 0.8 else "활성(진입가×0.941 모니터링)"
+
+    position_lines = [
+        f"현재 포지션: TQQQ({new_weight * 100:.2f}%) {position_emoji}",
+        f"교체 포지션: TQQQ({prev_weight * 100:.2f}%)",
+        f"신호코드 전환: {prev_code}->{new_code}",
+        f"{trade_line}(보유대비: {holding_ratio})",
+        f"손익여부: {pnl_emoji}({_format_pct(tqqq_day_pct)}) ✂️100% 시드 기준",
+        f"로스 컷: {loss_cut_line}",
+    ]
+
+    market_lines = [
+        f"TQQQ 종가: {price_emoji}{tqqq_close:.4f}({_format_pct(tqqq_day_pct)})",
+        f"200일 이동평균선: {ma200:.4f}" if pd.notna(ma200) else "200일 이동평균선: N/A",
+        f"50일 이격도: {dist50:.2f}" if pd.notna(dist50) else "50일 이격도: N/A",
+        f"100일 이격도: {dist100:.2f}" if pd.notna(dist100) else "100일 이격도: N/A",
+        f"200일 이격도: {dist200:.2f}" if pd.notna(dist200) else "200일 이격도: N/A",
+        f"200일 이격도 기울기 조건: {slope_cond}",
+        "",
+        f"TQQQ 현재가↔200일: {_format_pct(tqqq_vs200)}",
+        f"QQQ 3일↔161일: {_format_pct(qqq3_vs161)}",
+        "",
+        f"SPY 200일 이동평균선 필터: {'상승 추세' if spy_dist200 > 97.75 else '약세'}",
+        f"SPY 200일 이격도: {spy_dist200:.2f}" if pd.notna(spy_dist200) else "SPY 200일 이격도: N/A",
+        "",
+        f"QQQ 3음봉 여부: {candle3}",
+        f"20일 변동성: {vol20:.2f}%" if pd.notna(vol20) else "20일 변동성: N/A",
+        f"QQQ RSI(14): {rsi14:.2f} ({_rsi_state(rsi14)})" if pd.notna(rsi14) else "QQQ RSI(14): N/A",
+        fx_line,
+    ]
+
+    ops_lines = [
+        f"run_id: daily-{date_str}",
+        f"alert_key: {key}",
+        f"dry_run: {dry_run}",
+    ]
+
     message = format_s2_change_message(
         date_str=date_str,
         prev_code=prev_code,
         prev_weight=prev_weight,
         new_code=new_code,
         new_weight=new_weight,
+        title="일일현황보고",
+        alert_type="긴급 포지션 변경(리스크 관리) 알림" if prev_code != new_code else "일일 신호 점검 알림",
+        position_lines=position_lines,
+        reason=reason,
+        market_lines=market_lines,
+        ops_lines=ops_lines,
     )
+
     send_result = sender(
         bot_token=bot_token,
         chat_id=chat_id,

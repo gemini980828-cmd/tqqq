@@ -17,6 +17,7 @@ def _parse_bool(value: str | None, default: bool) -> bool:
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--signal-csv", default="reports/signals_s1_s2_s3_user_original.csv")
+    ap.add_argument("--data-csv", default="data/user_input.csv")
     ap.add_argument("--state-path", default="reports/daily_telegram_alert_state.json")
     args = ap.parse_args()
 
@@ -30,6 +31,7 @@ def main() -> None:
 
     result = run_daily_signal_alert(
         signal_csv_path=args.signal_csv,
+        data_csv_path=args.data_csv,
         state_path=args.state_path,
         bot_token=bot_token,
         chat_id=chat_id,

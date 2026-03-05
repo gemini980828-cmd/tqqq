@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import urllib.error
 import urllib.request
+from typing import Iterable
 
 
 def _format_weight(value: float) -> str:
@@ -15,13 +16,46 @@ def format_s2_change_message(
     prev_weight: float,
     new_code: str,
     new_weight: float,
+    *,
+    title: str = "일일현황보고",
+    alert_type: str = "일일 신호 점검 알림",
+    position_lines: Iterable[str] | None = None,
+    reason: str = "기본 추세/보유 유지",
+    market_lines: Iterable[str] | None = None,
+    ops_lines: Iterable[str] | None = None,
 ) -> str:
-    return (
-        "[TQQQ Daily Signal Alert]\n"
-        f"Date: {date_str}\n"
-        f"S2: {prev_code} ({_format_weight(prev_weight)})"
-        f" -> {new_code} ({_format_weight(new_weight)})"
-    )
+    pos = list(position_lines or [])
+    market = list(market_lines or [])
+    ops = list(ops_lines or [])
+
+    if not pos:
+        pos = [
+            f"현재 포지션: TQQQ({_format_weight(new_weight)})",
+            f"교체 포지션: TQQQ({_format_weight(prev_weight)})",
+            f"신호코드 전환: {prev_code}->{new_code}",
+        ]
+
+    if not market:
+        market = ["시장 데이터 요약: N/A"]
+
+    if not ops:
+        ops = ["ops log: N/A"]
+
+    lines = [
+        f"[ {date_str} ] {title}",
+        f"🚨 {alert_type}",
+        "----------------------------------------",
+        *pos,
+        "----------------------------------------",
+        f"사유: {reason}",
+        "----------------------------------------",
+        "📈 시장 데이터 요약",
+        *market,
+        "----------------------------------------",
+        "🧾 운영 로그",
+        *ops,
+    ]
+    return "\n".join(lines)
 
 
 def send_telegram_message(

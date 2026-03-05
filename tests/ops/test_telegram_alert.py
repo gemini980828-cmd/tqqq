@@ -18,6 +18,8 @@ def test_format_s2_change_message_contains_key_fields() -> None:
     assert "100.00%" in message
     assert "25.00%" in message
     assert "->" in message
+    assert "현재 포지션" in message
+    assert "교체 포지션" in message
 
 
 def test_send_telegram_message_dry_run_returns_sent_without_network_call(monkeypatch) -> None:
