@@ -189,3 +189,4 @@
 - [x] Added runner `ops/scripts/run_aftertax_sensitivity.py` (bps × initial capital)
 - [x] Generated `reports/aftertax_sensitivity_s2.csv`
 - [x] Re-verified baseline tests (`17 passed`)
+- [x] Enhanced after-tax sensitivity report with tax-event-aware risk fields (`aftertax_mdd_raw`, `aftertax_mdd_ex_taxday`, `tax_event_days`)
