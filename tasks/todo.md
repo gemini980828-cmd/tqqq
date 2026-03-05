@@ -246,3 +246,5 @@
   - required CSV column validation added
   - atomic state-file write via temp+replace
   - extra tests added (dry-run no-persist, missing-column error)
+- [x] Added market-close automation wrapper: `ops/scripts/run_daily_close_alert.sh`
+- [x] Registered user crontab (KST Tue-Sat 05:20 & 06:20) with idempotent duplicate protection
