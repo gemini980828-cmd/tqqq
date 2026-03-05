@@ -114,4 +114,15 @@
 - Added failing test first in `tests/validation/test_weight_tolerance.py` and confirmed import failure before implementation.
 - Implemented minimal `within_tolerance` in `src/tqqq_strategy/validation/golden_diff.py` using `abs(expected - actual) <= tol`.
 - Added required `reports/.gitkeep`.
-- Verified with `uv run --with pytest pytest -q tests/validation/test_weight_tolerance.py` (2 passed).
+- Verified with `UV_CACHE_DIR=/tmp/.uv-cache uv run --offline --with pytest pytest -q tests/validation/test_weight_tolerance.py` (4 passed).
+
+### Task 7 Execution Plan (WFO OOS gate)
+- [x] Add failing test in `tests/experiments/test_oos_gate.py`
+- [x] Implement minimal `passes_oos_gate(...)` in `src/tqqq_strategy/experiments/wfo.py`
+- [x] Run targeted experiment test and capture result
+
+
+### Task 7 Review
+- Added failing test first in `tests/experiments/test_oos_gate.py` and confirmed initial `ModuleNotFoundError` before implementation.
+- Implemented minimal `passes_oos_gate(...)` in `src/tqqq_strategy/experiments/wfo.py` with `is_score <= 0` guard and ratio gate comparison.
+- Verified with `UV_CACHE_DIR=/tmp/.uv-cache uv run --offline --with pytest pytest -q tests/experiments/test_oos_gate.py` (2 passed).
