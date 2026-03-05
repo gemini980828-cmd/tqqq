@@ -139,3 +139,15 @@
 - Implemented minimal `build_dashboard_snapshot(payload)` in `app/api/main.py` returning required block keys.
 - Created required Task 8 files: `app/web/src/pages/Dashboard.tsx` and `app/contracts/telegram_snapshot.schema.json`.
 - Verified target test with `UV_CACHE_DIR=/tmp/.uv-cache uv run --offline --with pytest pytest -q tests/contracts/test_telegram_blocks.py` (1 passed).
+
+### Task 9 Execution Plan (ops idempotency key)
+- [x] Add failing test first with exact `build_alert_key` contract
+- [x] Implement minimal `build_alert_key(date_str, prev_code, new_code)`
+- [x] Create minimal non-empty `daily_job.py` scaffold
+- [x] Run targeted ops test and capture output
+
+### Task 9 Review
+- Added `tests/ops/test_idempotency.py` first with the exact required contract and confirmed initial failure: `ModuleNotFoundError: No module named 'tqqq_strategy.ops'`.
+- Implemented `build_alert_key(date_str, prev_code, new_code)` in `src/tqqq_strategy/ops/idempotency.py` as `f"{date_str}:{prev_code}->{new_code}"`.
+- Added minimal non-empty scaffold file `src/tqqq_strategy/ops/daily_job.py`.
+- Verified with `UV_CACHE_DIR=/tmp/.uv-cache uv run --offline --with pytest pytest -q tests/ops/test_idempotency.py` (`1 passed`).
