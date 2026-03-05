@@ -151,3 +151,14 @@
 - Implemented `build_alert_key(date_str, prev_code, new_code)` in `src/tqqq_strategy/ops/idempotency.py` as `f"{date_str}:{prev_code}->{new_code}"`.
 - Added minimal non-empty scaffold file `src/tqqq_strategy/ops/daily_job.py`.
 - Verified with `UV_CACHE_DIR=/tmp/.uv-cache uv run --offline --with pytest pytest -q tests/ops/test_idempotency.py` (`1 passed`).
+
+### Task 10 Execution Plan (integration verification)
+- [x] Add runbook checklist doc at `docs/runbooks/backtest-and-ops-checklist.md`
+- [x] Run full test suite (`pytest -q`)
+- [x] Run validation module entry (`python -m tqqq_strategy.validation.golden_diff`)
+- [x] Record verification evidence in review notes
+
+### Task 10 Review
+- Added `docs/runbooks/backtest-and-ops-checklist.md` with required operational verification checklist items.
+- Verified full test suite with `UV_CACHE_DIR=/tmp/.uv-cache uv run --offline --with pytest pytest -q` (`17 passed`).
+- Verified validation module entry with `PYTHONPATH=src python3 -m tqqq_strategy.validation.golden_diff` (exit 0).
