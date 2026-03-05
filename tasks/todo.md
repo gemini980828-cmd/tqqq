@@ -195,3 +195,9 @@
 - [x] Re-ran using `reports/signals_s1_s2_s3_user_original.csv` as the only signal source
 - [x] Generated summary: `reports/user_signal_backtest_summary.csv`
 - [x] Generated after-tax sensitivity on user signal: `reports/aftertax_sensitivity_user_signal_s2.csv`
+
+### Phase 2 Brainstorming Finalization
+- [x] 목표/가드레일 확정 (세후 CAGR 우선, MDD -50% 이내)
+- [x] 접근안 확정 (Grid + 안정성 게이트)
+- [x] 설계 문서 작성: `docs/plans/2026-03-06-performance-improvement-design.md`
+- [x] 구현 계획 문서 작성: `docs/plans/2026-03-06-performance-improvement-implementation-plan.md`
