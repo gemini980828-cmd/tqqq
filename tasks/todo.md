@@ -162,3 +162,9 @@
 - Added `docs/runbooks/backtest-and-ops-checklist.md` with required operational verification checklist items.
 - Verified full test suite with `UV_CACHE_DIR=/tmp/.uv-cache uv run --offline --with pytest pytest -q` (`17 passed`).
 - Verified validation module entry with `PYTHONPATH=src python3 -m tqqq_strategy.validation.golden_diff` (exit 0).
+
+### Backtest Run Execution Plan (Primary window)
+- [x] Add executable backtest runner script using current reference strategy logic
+- [x] Run primary window backtest (2011-06-23 ~ 2026-01-30 close) and export metrics/equity
+- [x] Extend metrics beyond CAGR/MDD (risk-adjusted and path metrics)
+- [ ] Review outputs with user and calibrate assumptions (tax/fill/slippage/data-source)
