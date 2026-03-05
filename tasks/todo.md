@@ -126,3 +126,16 @@
 - Added failing test first in `tests/experiments/test_oos_gate.py` and confirmed initial `ModuleNotFoundError` before implementation.
 - Implemented minimal `passes_oos_gate(...)` in `src/tqqq_strategy/experiments/wfo.py` with `is_score <= 0` guard and ratio gate comparison.
 - Verified with `UV_CACHE_DIR=/tmp/.uv-cache uv run --offline --with pytest pytest -q tests/experiments/test_oos_gate.py` (2 passed).
+
+### Task 8 Execution Plan (telegram snapshot contract)
+- [x] Add failing contract test in `tests/contracts/test_telegram_blocks.py`
+- [x] Implement minimal `build_dashboard_snapshot(payload: dict)` in `app/api/main.py`
+- [x] Create required scaffold files for web page and schema contract
+- [x] Run target contract test and capture fail/pass evidence
+
+
+### Task 8 Review
+- Added failing contract test first in `tests/contracts/test_telegram_blocks.py` and captured initial import failure for missing `app` module path.
+- Implemented minimal `build_dashboard_snapshot(payload)` in `app/api/main.py` returning required block keys.
+- Created required Task 8 files: `app/web/src/pages/Dashboard.tsx` and `app/contracts/telegram_snapshot.schema.json`.
+- Verified target test with `UV_CACHE_DIR=/tmp/.uv-cache uv run --offline --with pytest pytest -q tests/contracts/test_telegram_blocks.py` (1 passed).

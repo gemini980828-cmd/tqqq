@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "TelegramSnapshot",
+  "type": "object",
+  "required": [
+    "header",
+    "position_change",
+    "reason",
+    "market_summary",
+    "ops_log"
+  ],
+  "properties": {
+    "header": { "type": ["object", "array", "string", "number", "boolean", "null"] },
+    "position_change": { "type": ["object", "array", "string", "number", "boolean", "null"] },
+    "reason": { "type": ["object", "array", "string", "number", "boolean", "null"] },
+    "market_summary": { "type": ["object", "array", "string", "number", "boolean", "null"] },
+    "ops_log": { "type": ["object", "array", "string", "number", "boolean", "null"] }
+  },
+  "additionalProperties": true
+}
