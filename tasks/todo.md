@@ -52,7 +52,7 @@
 - [x] Task 1: 프로젝트 골격 및 테스트 환경 부트스트랩
 - [x] Task 2: 데이터 계약(canonical schema) 및 품질검사
 - [x] Task 3: 원천 수집기(stooq/yfinance)
-- [ ] Task 4: Pine 동치 신호엔진 v1
+- [x] Task 4: Pine 동치 신호엔진 v1
 
 ### Task 2 Execution Plan (canonical schema + quality)
 - [x] Add failing tests for canonical validation (missing columns, duplicate date+symbol)
@@ -77,3 +77,15 @@
 - Created `ingest_stooq.py` with `normalize_stooq_row(...)` and `adj_close=close` defaulting for stooq rows.
 - Added `tests/data/test_ingest_contract.py` covering the required yfinance contract example and stooq canonical defaults.
 - Verified with `UV_CACHE_DIR=/tmp/.uv-cache uv run --with pytest pytest -q tests/data/test_ingest_contract.py tests/data/test_schema_quality.py` (5 passed).
+
+
+### Task 4 Execution Plan (signal engine v1)
+- [x] Add priority test for lock override
+- [x] Implement minimal `decide_code(...)` in `engine_v1.py`
+- [x] Add minimal signal params constants in `params.py`
+- [x] Run targeted signal test and capture result
+
+### Task 4 Review
+- Added `src/tqqq_strategy/signal/engine_v1.py` with priority decision flow from plan spec.
+- Added `src/tqqq_strategy/signal/params.py` for minimal action/overheat constants used by v1 engine.
+- Added `tests/signal/test_engine_v1_priority.py` asserting lock has highest priority (`code == 0`).
