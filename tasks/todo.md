@@ -47,3 +47,9 @@
 ## 작성된 산출물
 - `docs/plans/2026-03-05-tqqq-strategy-design.md`
 - `docs/plans/2026-03-05-tqqq-strategy-implementation-plan.md`
+
+## 구현 진행 (Subagent-Driven)
+- [x] Task 1: 프로젝트 골격 및 테스트 환경 부트스트랩
+- [ ] Task 2: 데이터 계약(canonical schema) 및 품질검사
+- [ ] Task 3: 원천 수집기(stooq/yfinance)
+- [ ] Task 4: Pine 동치 신호엔진 v1
