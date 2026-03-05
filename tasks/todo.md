@@ -216,3 +216,8 @@
 - best(after-tax CAGR): 39.81%
 - delta: +1.22%p
 - hard gates: MDD pass, OOS retention pass(0.704)
+
+### Phase 2 Overfitting Stress Test
+- [x] Added window stress script: `ops/scripts/run_phase2_stress_test.py`
+- [x] Generated: `experiments/stress_test_windows.csv`, `experiments/stress_test_summary.json`
+- [x] Result: best config improved after-tax CAGR in 5/5 windows (avg +0.80%p)
