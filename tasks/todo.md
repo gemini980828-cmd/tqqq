@@ -50,6 +50,18 @@
 
 ## 구현 진행 (Subagent-Driven)
 - [x] Task 1: 프로젝트 골격 및 테스트 환경 부트스트랩
-- [ ] Task 2: 데이터 계약(canonical schema) 및 품질검사
+- [x] Task 2: 데이터 계약(canonical schema) 및 품질검사
 - [ ] Task 3: 원천 수집기(stooq/yfinance)
 - [ ] Task 4: Pine 동치 신호엔진 v1
+
+### Task 2 Execution Plan (canonical schema + quality)
+- [x] Add failing tests for canonical validation (missing columns, duplicate date+symbol)
+- [x] Implement schema constants in `src/tqqq_strategy/data/schema.py`
+- [x] Implement `validate_canonical(df) -> (ok, errs)` in `src/tqqq_strategy/data/quality.py`
+- [x] Run targeted tests and capture results
+
+### Task 2 Review
+- Added canonical requirement constants in `schema.py` (date,symbol,close,adj_close,source,tz,session_type,is_trading_day).
+- Implemented `validate_canonical(df)` for required-column checks and duplicate `(date,symbol)` rejection.
+- Added TDD tests including duplicate rejection assertion containing "duplicate".
+- Verified with `uv run --with pytest pytest -q tests/data/test_schema_quality.py` (3 passed).
