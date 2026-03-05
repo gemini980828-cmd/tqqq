@@ -1,0 +1,2 @@
+engine,rows,date_from,date_to,one_way_bps,initial_capital_krw,pretax_cagr,aftertax_cagr,tax_drag_pctp,pretax_mdd,aftertax_mdd,pretax_sharpe,aftertax_sharpe,total_tax_paid_krw
+user_original_signal,3673,2011-06-23,2026-01-30,5.0,100000000.0,0.4156743616862226,0.3859792803756308,0.029695081310591842,-0.40467363761426745,-0.5343459511576858,1.1518505827334822,0.9815050032933834,4216176717.128256

@@ -190,3 +190,8 @@
 - [x] Generated `reports/aftertax_sensitivity_s2.csv`
 - [x] Re-verified baseline tests (`17 passed`)
 - [x] Enhanced after-tax sensitivity report with tax-event-aware risk fields (`aftertax_mdd_raw`, `aftertax_mdd_ex_taxday`, `tax_event_days`)
+
+### User-Original Signal Engine Backtest (Enforced)
+- [x] Re-ran using `reports/signals_s1_s2_s3_user_original.csv` as the only signal source
+- [x] Generated summary: `reports/user_signal_backtest_summary.csv`
+- [x] Generated after-tax sensitivity on user signal: `reports/aftertax_sensitivity_user_signal_s2.csv`
