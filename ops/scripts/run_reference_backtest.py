@@ -291,27 +291,119 @@ def compute_metrics(equity: pd.Series, daily_ret: pd.Series, bench: pd.Series) -
     }
 
 
-def apply_yearly_tax(
-    equity: pd.Series,
+def simulate_portfolio(
+    *,
+    prices_usd: pd.Series,
+    fx_krw_per_usd: pd.Series,
+    target_weight: pd.Series,
     initial_capital_krw: float,
-    annual_deduction_krw: float = 2_500_000,
+    cost_oneway: float = 0.0005,
+    annual_deduction_krw: float = 2_500_000.0,
     tax_rate: float = 0.22,
-) -> pd.Series:
-    taxed = equity.copy().astype(float)
-    years = taxed.index.year
-    for y in sorted(np.unique(years)):
-        idx = taxed.index[years == y]
-        if len(idx) < 2:
-            continue
-        start, end = idx[0], idx[-1]
-        pnl_krw = (taxed.loc[end] - taxed.loc[start]) * initial_capital_krw
-        tax_krw = max(pnl_krw - annual_deduction_krw, 0.0) * tax_rate
-        taxed.loc[end] -= tax_krw / initial_capital_krw
-    return taxed
+) -> tuple[pd.Series, pd.Series, pd.DataFrame]:
+    idx = prices_usd.index
+    prices_krw = (prices_usd * fx_krw_per_usd).astype(float)
+
+    cash = float(initial_capital_krw)
+    shares = 0.0
+    avg_cost_krw = 0.0
+    ytd_realized = 0.0
+    cum_tax_paid = 0.0
+    current_year = int(idx[0].year)
+
+    eq_pre = pd.Series(index=idx, dtype=float)
+    eq_after = pd.Series(index=idx, dtype=float)
+    rows: list[dict[str, float | int | str]] = []
+
+    for i, dt in enumerate(idx):
+        price = float(prices_krw.iloc[i])
+        w = float(target_weight.iloc[i])
+
+        gross_equity = cash + shares * price
+        target_value = gross_equity * w
+        target_shares = target_value / price if price > 0 else 0.0
+        delta = target_shares - shares
+
+        buy_fee = 0.0
+        sell_fee = 0.0
+        realized = 0.0
+
+        if delta < -1e-12:
+            sell_qty = min(-delta, shares)
+            gross_proceeds = sell_qty * price
+            sell_fee = gross_proceeds * cost_oneway
+            net_proceeds = gross_proceeds - sell_fee
+            removed_basis = avg_cost_krw * sell_qty
+            realized = net_proceeds - removed_basis
+            cash += net_proceeds
+            shares -= sell_qty
+            ytd_realized += realized
+            if shares <= 1e-12:
+                shares = 0.0
+                avg_cost_krw = 0.0
+
+        elif delta > 1e-12:
+            buy_qty = delta
+            gross_cost = buy_qty * price
+            buy_fee = gross_cost * cost_oneway
+            total_need = gross_cost + buy_fee
+            if total_need > cash and price > 0:
+                buy_qty = cash / (price * (1.0 + cost_oneway))
+                gross_cost = buy_qty * price
+                buy_fee = gross_cost * cost_oneway
+                total_need = gross_cost + buy_fee
+            if buy_qty > 1e-12:
+                new_total_shares = shares + buy_qty
+                avg_cost_krw = (shares * avg_cost_krw + total_need) / new_total_shares
+                shares = new_total_shares
+                cash -= total_need
+
+        pre_tax_equity = cash + shares * price
+        eq_pre.iloc[i] = pre_tax_equity
+        eq_after.iloc[i] = pre_tax_equity - cum_tax_paid
+
+        next_year = int(idx[i + 1].year) if i + 1 < len(idx) else None
+        year_end = (next_year is None) or (next_year != current_year)
+        tax_paid_today = 0.0
+        if year_end:
+            taxable = max(ytd_realized - annual_deduction_krw, 0.0)
+            tax_paid_today = taxable * tax_rate
+            if tax_paid_today > 0:
+                cum_tax_paid += tax_paid_today
+                cash -= tax_paid_today
+                eq_after.iloc[i] = pre_tax_equity - cum_tax_paid
+            rows.append(
+                {
+                    "year": current_year,
+                    "realized_gain_krw": ytd_realized,
+                    "taxable_gain_krw": taxable,
+                    "tax_paid_krw": tax_paid_today,
+                }
+            )
+            ytd_realized = 0.0
+            if next_year is not None:
+                current_year = next_year
+
+        rows.append(
+            {
+                "date": str(dt.date()),
+                "weight": w,
+                "price_krw": price,
+                "shares": shares,
+                "cash_krw": cash,
+                "realized_today_krw": realized,
+                "buy_fee_krw": buy_fee,
+                "sell_fee_krw": sell_fee,
+                "equity_krw": eq_pre.iloc[i],
+                "taxed_equity_krw": eq_after.iloc[i],
+            }
+        )
+
+    return eq_pre / initial_capital_krw, eq_after / initial_capital_krw, pd.DataFrame(rows)
 
 
 def run(start: str, end: str, out_dir: Path, initial_capital_krw: float) -> None:
-    raw = yf.download(["TQQQ", "QQQ", "SPY"], start=start, end=end, auto_adjust=False, progress=False)
+    raw = yf.download(["TQQQ", "QQQ", "SPY", "KRW=X"], start=start, end=end, auto_adjust=False, progress=False)
     if raw.empty:
         raise RuntimeError("No data downloaded")
 
@@ -319,28 +411,21 @@ def run(start: str, end: str, out_dir: Path, initial_capital_krw: float) -> None
     for sym in ["TQQQ", "QQQ", "SPY"]:
         df[f"{sym}_close"] = raw[("Close", sym)]
         df[f"{sym}_adj"] = raw[("Adj Close", sym)]
+    df["KRWFX_close"] = raw[("Close", "KRW=X")]
 
+    df["KRWFX_close"] = df["KRWFX_close"].ffill().bfill()
     df = df.dropna().copy()
     weight = compute_basic_strategy(df, BasicParams(spy_bear_cap=0.0))
-    ret = df["TQQQ_close"].pct_change().fillna(0.0)
 
-    eq = pd.Series(index=df.index, dtype=float)
-    eq.iloc[0] = 1.0
-    prev_w = 0.0
-    cost_oneway = 0.0005  # 5bps
-    for i in range(1, len(df)):
-        w_prev = float(weight.iloc[i - 1])
-        gross = eq.iloc[i - 1] * (1.0 + w_prev * ret.iloc[i])
-        turnover = abs(float(weight.iloc[i]) - prev_w)
-        net = gross * (1.0 - turnover * cost_oneway)
-        eq.iloc[i] = net
-        prev_w = float(weight.iloc[i])
+    eq, taxed_eq, ledger = simulate_portfolio(
+        prices_usd=df["TQQQ_close"],
+        fx_krw_per_usd=df["KRWFX_close"],
+        target_weight=weight,
+        initial_capital_krw=initial_capital_krw,
+    )
 
-    eq = eq.ffill().fillna(1.0)
     qqq_eq = (1 + df["QQQ_close"].pct_change().fillna(0.0)).cumprod()
-
     pretax = compute_metrics(eq, eq.pct_change().fillna(0), qqq_eq.pct_change().fillna(0))
-    taxed_eq = apply_yearly_tax(eq, initial_capital_krw=initial_capital_krw)
     aftertax_cagr = (taxed_eq.iloc[-1] / taxed_eq.iloc[0]) ** (252 / len(taxed_eq)) - 1
     pretax["AfterTaxCAGR"] = float(aftertax_cagr)
 
@@ -350,6 +435,7 @@ def run(start: str, end: str, out_dir: Path, initial_capital_krw: float) -> None
     pd.DataFrame({"date": df.index, "weight": weight.values, "equity": eq.values, "taxed_equity": taxed_eq.values}).to_csv(
         out_dir / "backtest_equity_primary.csv", index=False
     )
+    ledger.to_csv(out_dir / "backtest_tax_ledger_primary.csv", index=False)
 
     print("=== Backtest Summary (Primary) ===")
     for k, v in pretax.items():

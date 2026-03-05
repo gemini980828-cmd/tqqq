@@ -168,3 +168,10 @@
 - [x] Run primary window backtest (2011-06-23 ~ 2026-01-30 close) and export metrics/equity
 - [x] Extend metrics beyond CAGR/MDD (risk-adjusted and path metrics)
 - [ ] Review outputs with user and calibrate assumptions (tax/fill/slippage/data-source)
+
+### Backtest Tax Model Recalibration Review
+- Replaced simplified year-end equity tax approximation with realized-gain based annual tax ledger model in `ops/scripts/run_reference_backtest.py`.
+- Tax model now applies 22% only to annual realized gains above 2.5M KRW deduction, based on sell transactions and moving average cost basis.
+- Added FX-aware execution valuation using `KRW=X` close series and exported `reports/backtest_tax_ledger_primary.csv`.
+- Re-ran primary window (2011-06-23~2026-01-30): CAGR 35.07%, AfterTaxCAGR 32.16%, MDD -34.22%.
+- Verified regressions: `UV_CACHE_DIR=.uv-cache uv run --offline --with pytest pytest -q` (17 passed).
