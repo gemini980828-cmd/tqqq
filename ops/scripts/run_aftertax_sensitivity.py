@@ -21,6 +21,15 @@ def calc_mdd(eq: pd.Series) -> float:
     return float((eq / eq.cummax() - 1).min())
 
 
+def calc_mdd_excluding_tax_jumps(eq_pre: pd.Series, eq_after: pd.Series) -> tuple[float, int]:
+    cum_tax = (eq_pre - eq_after).fillna(0.0)
+    tax_jump = cum_tax.diff().fillna(0.0) > 1e-12
+    kept = eq_after.loc[~tax_jump]
+    if kept.empty:
+        return float("nan"), 0
+    return calc_mdd(kept), int(tax_jump.sum())
+
+
 def main(start: str, end: str, out_csv: Path) -> None:
     raw = yf.download(["QQQ", "TQQQ", "SPY", "KRW=X"], start=start, end=end, auto_adjust=False, progress=False)
     if raw.empty:
@@ -49,6 +58,7 @@ def main(start: str, end: str, out_csv: Path) -> None:
             )
             pretax_cagr = calc_cagr(eq_pre)
             aftertax_cagr = calc_cagr(eq_after)
+            aftertax_mdd_ex_taxday, tax_event_days = calc_mdd_excluding_tax_jumps(eq_pre, eq_after)
             rows.append(
                 {
                     "one_way_bps": one_way_bps,
@@ -57,7 +67,9 @@ def main(start: str, end: str, out_csv: Path) -> None:
                     "aftertax_cagr": aftertax_cagr,
                     "tax_drag_pctp": pretax_cagr - aftertax_cagr,
                     "pretax_mdd": calc_mdd(eq_pre),
-                    "aftertax_mdd": calc_mdd(eq_after),
+                    "aftertax_mdd_raw": calc_mdd(eq_after),
+                    "aftertax_mdd_ex_taxday": aftertax_mdd_ex_taxday,
+                    "tax_event_days": tax_event_days,
                     "total_tax_paid_krw": float(ledger[ledger["year"].notna()]["tax_paid_krw"].sum()) if "year" in ledger.columns else np.nan,
                 }
             )
