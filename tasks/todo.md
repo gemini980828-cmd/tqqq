@@ -223,3 +223,5 @@
 - [x] Result: best config improved after-tax CAGR in 5/5 windows (avg +0.80%p)
 - [x] User-requested pre-2011 stress window added and executed (`PRE2011: 2010-02-11~2011-06-22`)
 - [x] Extended window report generated on `data/user_input_2000.csv`: `experiments/pre2011_stress_test_windows.csv`, `experiments/pre2011_stress_test_summary.json`
+- [x] Extended stress test to earlier windows with synthetic pre-live dataset (`data/user_input_2000_ext.csv`)
+- [x] Generated `experiments/ext2000_stress_test_windows.csv` and `experiments/ext2000_stress_test_summary.json`
