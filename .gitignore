@@ -14,3 +14,5 @@ artifacts/
 results/
 logs/
 *.sqlite3
+
+.worktrees/
