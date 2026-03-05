@@ -51,7 +51,7 @@
 ## 구현 진행 (Subagent-Driven)
 - [x] Task 1: 프로젝트 골격 및 테스트 환경 부트스트랩
 - [x] Task 2: 데이터 계약(canonical schema) 및 품질검사
-- [ ] Task 3: 원천 수집기(stooq/yfinance)
+- [x] Task 3: 원천 수집기(stooq/yfinance)
 - [ ] Task 4: Pine 동치 신호엔진 v1
 
 ### Task 2 Execution Plan (canonical schema + quality)
@@ -65,3 +65,15 @@
 - Implemented `validate_canonical(df)` for required-column checks and duplicate `(date,symbol)` rejection.
 - Added TDD tests including duplicate rejection assertion containing "duplicate".
 - Verified with `uv run --with pytest pytest -q tests/data/test_schema_quality.py` (3 passed).
+
+
+### Task 3 Execution Plan (ingest normalizers)
+- [x] Add minimal normalizer modules for yfinance/stooq canonical rows
+- [x] Add ingest contract tests (including required normalize_yf_row example)
+- [x] Run targeted data tests and capture results
+
+### Task 3 Review
+- Created `ingest_yf.py` with `normalize_yf_row(...)` returning canonical fields including `tz`, `session_type`, `is_trading_day`.
+- Created `ingest_stooq.py` with `normalize_stooq_row(...)` and `adj_close=close` defaulting for stooq rows.
+- Added `tests/data/test_ingest_contract.py` covering the required yfinance contract example and stooq canonical defaults.
+- Verified with `UV_CACHE_DIR=/tmp/.uv-cache uv run --with pytest pytest -q tests/data/test_ingest_contract.py tests/data/test_schema_quality.py` (5 passed).
