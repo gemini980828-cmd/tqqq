@@ -221,3 +221,5 @@
 - [x] Added window stress script: `ops/scripts/run_phase2_stress_test.py`
 - [x] Generated: `experiments/stress_test_windows.csv`, `experiments/stress_test_summary.json`
 - [x] Result: best config improved after-tax CAGR in 5/5 windows (avg +0.80%p)
+- [x] User-requested pre-2011 stress window added and executed (`PRE2011: 2010-02-11~2011-06-22`)
+- [x] Extended window report generated on `data/user_input_2000.csv`: `experiments/pre2011_stress_test_windows.csv`, `experiments/pre2011_stress_test_summary.json`

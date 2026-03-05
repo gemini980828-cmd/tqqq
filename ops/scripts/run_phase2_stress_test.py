@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 import json
 from pathlib import Path
 
@@ -36,8 +37,8 @@ def eval_on_df(df: pd.DataFrame, p: Phase2Params, one_way_bps: float = 5.0, init
     }
 
 
-def main() -> None:
-    data = pd.read_csv("data/user_input.csv", parse_dates=["time"]).sort_values("time").reset_index(drop=True)
+def main(data_csv: str, out_prefix: str) -> None:
+    data = pd.read_csv(data_csv, parse_dates=["time"]).sort_values("time").reset_index(drop=True)
 
     baseline = Phase2Params(
         vol_threshold=0.059,
@@ -56,11 +57,12 @@ def main() -> None:
     best_p = Phase2Params(**json.loads(best["params_json"]))
 
     windows = [
+        ("PRE2011", "2010-02-11", "2011-06-22"),
         ("2011-2014", "2011-06-23", "2014-12-31"),
         ("2015-2018", "2015-01-01", "2018-12-31"),
         ("2019-2022", "2019-01-01", "2022-12-31"),
         ("2023-2026", "2023-01-01", "2026-01-30"),
-        ("FULL", "2011-06-23", "2026-01-30"),
+        ("FULL", "2010-02-11", "2026-01-30"),
     ]
 
     rows = []
@@ -88,7 +90,7 @@ def main() -> None:
 
     out = pd.DataFrame(rows)
     Path("experiments").mkdir(exist_ok=True)
-    out.to_csv("experiments/stress_test_windows.csv", index=False)
+    out.to_csv(f"experiments/{out_prefix}_stress_test_windows.csv", index=False)
 
     robust_up = int((out["delta_aftertax_cagr"] > 0).sum())
     robust_down = int((out["delta_aftertax_cagr"] <= 0).sum())
@@ -101,11 +103,15 @@ def main() -> None:
         "min_delta_aftertax_cagr": float(out["delta_aftertax_cagr"].min()),
         "max_delta_aftertax_cagr": float(out["delta_aftertax_cagr"].max()),
     }
-    Path("experiments/stress_test_summary.json").write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
+    Path(f"experiments/{out_prefix}_stress_test_summary.json").write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
 
     print(out.to_string(index=False))
     print(json.dumps(summary, ensure_ascii=False, indent=2))
 
 
 if __name__ == "__main__":
-    main()
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--data-csv", default="data/user_input.csv")
+    ap.add_argument("--out-prefix", default="stress")
+    args = ap.parse_args()
+    main(args.data_csv, args.out_prefix)
