@@ -322,3 +322,10 @@
 - 검증:
   - `UV_CACHE_DIR=.uv-cache uv run --with pytest pytest -q tests/ops/test_telegram_alert.py tests/ops/test_daily_job.py` → `8 passed`
   - `UV_CACHE_DIR=.uv-cache uv run --with pytest pytest -q` → `27 passed`
+
+### Dashboard MVP Brainstorming (Action-First + Risk)
+- [x] 목적 확정: A(오늘 액션 판단) + B(성과/리스크 모니터링)
+- [x] 레이아웃 확정: Action Hero 상단 + KPI + 리스크 계기판 + 이벤트 타임라인 + 운영로그
+- [x] 이벤트 타임라인 포함 확정
+- [x] 설계 문서 작성: `docs/plans/2026-03-06-dashboard-action-first-design.md`
+- [x] 구현 계획 문서 작성: `docs/plans/2026-03-06-dashboard-action-first-implementation-plan.md`
