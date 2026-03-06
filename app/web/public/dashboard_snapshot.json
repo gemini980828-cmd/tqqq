@@ -73,49 +73,49 @@
         "manager_id": "core_strategy",
         "title": "Core Strategy",
         "label": "Core Strategy",
-        "status": "stale",
+        "status": "live",
         "headline": "실보유 86.63% / 목표 95.00%",
         "summary": "실보유 86.63% / 목표 95.00% · 코어전략 목표 비중 95.00% 기준 요약",
         "warning_count": 1,
         "recommended_action": "현재 전략 비중 유지",
-        "stale": true,
-        "generated_at": "2026-03-06T10:48:59.268284+00:00"
+        "stale": false,
+        "generated_at": "2026-01-30T00:00:00"
       },
       {
         "manager_id": "stock_research",
         "title": "Stock Research",
         "label": "Stock Research",
-        "status": "stale",
+        "status": "tracking",
         "headline": "관심종목 1개",
         "summary": "관심종목 1개를 추적 중입니다.",
         "warning_count": 0,
         "recommended_action": "관심종목 신규 발굴",
-        "stale": true,
-        "generated_at": "2026-03-06T10:48:59.268284+00:00"
+        "stale": false,
+        "generated_at": "2026-01-30T00:00:00"
       },
       {
         "manager_id": "real_estate",
         "title": "Real Estate",
         "label": "Real Estate",
-        "status": "stale",
+        "status": "tracking",
         "headline": "관심 단지 1개",
         "summary": "관심 단지 1개를 팔로잉 중입니다.",
         "warning_count": 0,
         "recommended_action": "검토 단지 체크리스트 업데이트",
-        "stale": true,
-        "generated_at": "2026-03-06T10:48:59.268284+00:00"
+        "stale": false,
+        "generated_at": "2026-01-30T00:00:00"
       },
       {
         "manager_id": "cash_debt",
         "title": "Cash & Debt",
         "label": "Cash & Debt",
-        "status": "stale",
+        "status": "monitoring",
         "headline": "현금/부채 항목 1개",
         "summary": "현금 1,500,000원 / 부채 0원",
         "warning_count": 0,
         "recommended_action": "현금/부채 현황 유지",
-        "stale": true,
-        "generated_at": "2026-03-06T10:48:59.268284+00:00"
+        "stale": false,
+        "generated_at": "2026-01-30T00:00:00"
       }
     ],
     "updated_at": "2026-01-30T00:00:00",
@@ -127,16 +127,7 @@
         "title": "코어전략 유지 점검",
         "detail": "실보유 86.63% / 목표 95.00% / 리밸런싱 gap 939,000원",
         "recommended_action": "현재 전략 비중 유지",
-        "stale": "true"
-      },
-      {
-        "id": "cash_debt-guardrail",
-        "manager_id": "cash_debt",
-        "severity": "high",
-        "title": "현금/부채 방어 여력 재점검",
-        "detail": "현금 1,500,000원 / 부채 0원",
-        "recommended_action": "현금/부채 현황 유지",
-        "stale": "true"
+        "stale": "false"
       },
       {
         "id": "stock_research-candidates",
@@ -145,7 +136,16 @@
         "title": "개별주 후보 리서치",
         "detail": "관심종목 신규 발굴",
         "recommended_action": "관심종목 신규 발굴",
-        "stale": "true"
+        "stale": "false"
+      },
+      {
+        "id": "real_estate-review",
+        "manager_id": "real_estate",
+        "severity": "medium",
+        "title": "부동산 검토 큐 확인",
+        "detail": "검토 단지 체크리스트 업데이트",
+        "recommended_action": "검토 단지 체크리스트 업데이트",
+        "stale": "false"
       }
     ]
   },
@@ -167,49 +167,49 @@
       "manager_id": "core_strategy",
       "title": "Core Strategy",
       "label": "Core Strategy",
-      "status": "stale",
+      "status": "live",
       "headline": "실보유 86.63% / 목표 95.00%",
       "summary": "실보유 86.63% / 목표 95.00% · 코어전략 목표 비중 95.00% 기준 요약",
       "warning_count": 1,
       "recommended_action": "현재 전략 비중 유지",
-      "stale": true,
-      "generated_at": "2026-03-06T10:48:59.268284+00:00"
+      "stale": false,
+      "generated_at": "2026-01-30T00:00:00"
     },
     {
       "manager_id": "stock_research",
       "title": "Stock Research",
       "label": "Stock Research",
-      "status": "stale",
+      "status": "tracking",
       "headline": "관심종목 1개",
       "summary": "관심종목 1개를 추적 중입니다.",
       "warning_count": 0,
       "recommended_action": "관심종목 신규 발굴",
-      "stale": true,
-      "generated_at": "2026-03-06T10:48:59.268284+00:00"
+      "stale": false,
+      "generated_at": "2026-01-30T00:00:00"
     },
     {
       "manager_id": "real_estate",
       "title": "Real Estate",
       "label": "Real Estate",
-      "status": "stale",
+      "status": "tracking",
       "headline": "관심 단지 1개",
       "summary": "관심 단지 1개를 팔로잉 중입니다.",
       "warning_count": 0,
       "recommended_action": "검토 단지 체크리스트 업데이트",
-      "stale": true,
-      "generated_at": "2026-03-06T10:48:59.268284+00:00"
+      "stale": false,
+      "generated_at": "2026-01-30T00:00:00"
     },
     {
       "manager_id": "cash_debt",
       "title": "Cash & Debt",
       "label": "Cash & Debt",
-      "status": "stale",
+      "status": "monitoring",
       "headline": "현금/부채 항목 1개",
       "summary": "현금 1,500,000원 / 부채 0원",
       "warning_count": 0,
       "recommended_action": "현금/부채 현황 유지",
-      "stale": true,
-      "generated_at": "2026-03-06T10:48:59.268284+00:00"
+      "stale": false,
+      "generated_at": "2026-01-30T00:00:00"
     }
   ],
   "manager_summaries": {
@@ -227,9 +227,9 @@
       "recommended_actions": [
         "현재 전략 비중 유지"
       ],
-      "generated_at": "2026-03-06T10:48:59.268284+00:00",
-      "source_version": "wealth_manual.json:2026-03-06T10:48:59.268284+00:00:92c2b05fa5e1",
-      "stale": true
+      "generated_at": "2026-01-30T00:00:00",
+      "source_version": "wealth_manual.json:2026-01-30T00:00:00:92c2b05fa5e1",
+      "stale": false
     },
     "stock_research": {
       "manager_id": "stock_research",
@@ -243,9 +243,9 @@
       "recommended_actions": [
         "관심종목 신규 발굴"
       ],
-      "generated_at": "2026-03-06T10:48:59.268284+00:00",
-      "source_version": "wealth_manual.json:2026-03-06T10:48:59.268284+00:00:92c2b05fa5e1",
-      "stale": true
+      "generated_at": "2026-01-30T00:00:00",
+      "source_version": "wealth_manual.json:2026-01-30T00:00:00:92c2b05fa5e1",
+      "stale": false
     },
     "real_estate": {
       "manager_id": "real_estate",
@@ -259,9 +259,9 @@
       "recommended_actions": [
         "검토 단지 체크리스트 업데이트"
       ],
-      "generated_at": "2026-03-06T10:48:59.268284+00:00",
-      "source_version": "wealth_manual.json:2026-03-06T10:48:59.268284+00:00:92c2b05fa5e1",
-      "stale": true
+      "generated_at": "2026-01-30T00:00:00",
+      "source_version": "wealth_manual.json:2026-01-30T00:00:00:92c2b05fa5e1",
+      "stale": false
     },
     "cash_debt": {
       "manager_id": "cash_debt",
@@ -275,9 +275,9 @@
       "recommended_actions": [
         "현금/부채 현황 유지"
       ],
-      "generated_at": "2026-03-06T10:48:59.268284+00:00",
-      "source_version": "wealth_manual.json:2026-03-06T10:48:59.268284+00:00:92c2b05fa5e1",
-      "stale": true
+      "generated_at": "2026-01-30T00:00:00",
+      "source_version": "wealth_manual.json:2026-01-30T00:00:00:92c2b05fa5e1",
+      "stale": false
     }
   },
   "core_strategy_position": {
@@ -327,16 +327,7 @@
       "title": "코어전략 유지 점검",
       "detail": "실보유 86.63% / 목표 95.00% / 리밸런싱 gap 939,000원",
       "recommended_action": "현재 전략 비중 유지",
-      "stale": "true"
-    },
-    {
-      "id": "cash_debt-guardrail",
-      "manager_id": "cash_debt",
-      "severity": "high",
-      "title": "현금/부채 방어 여력 재점검",
-      "detail": "현금 1,500,000원 / 부채 0원",
-      "recommended_action": "현금/부채 현황 유지",
-      "stale": "true"
+      "stale": "false"
     },
     {
       "id": "stock_research-candidates",
@@ -345,7 +336,7 @@
       "title": "개별주 후보 리서치",
       "detail": "관심종목 신규 발굴",
       "recommended_action": "관심종목 신규 발굴",
-      "stale": "true"
+      "stale": "false"
     },
     {
       "id": "real_estate-review",
@@ -354,7 +345,7 @@
       "title": "부동산 검토 큐 확인",
       "detail": "검토 단지 체크리스트 업데이트",
       "recommended_action": "검토 단지 체크리스트 업데이트",
-      "stale": "true"
+      "stale": "false"
     }
   ]
 }

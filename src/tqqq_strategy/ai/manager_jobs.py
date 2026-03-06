@@ -204,8 +204,13 @@ def refresh_manager_summaries(
     manual_path = Path(manual_truth_path)
     manual_inputs = load_manual_truth(manual_path)
     snapshot = _build_refresh_snapshot(signal_csv_path, manual_inputs)
-    resolved_generated_at = _ensure_generated_at(generated_at)
-    source_version = f"{manual_path.name}:{build_summary_source_version(manual_inputs, resolved_generated_at)}"
+    snapshot_updated_at = str((snapshot.get("action_hero") or {}).get("updated_at") or "")
+    resolved_generated_at = generated_at or snapshot_updated_at or _ensure_generated_at()
+    source_version = build_summary_source_version(
+        manual_inputs,
+        snapshot_updated_at or resolved_generated_at,
+        source_label=manual_path.name,
+    )
     records = build_manager_summary_records(
         snapshot,
         manual_inputs,
