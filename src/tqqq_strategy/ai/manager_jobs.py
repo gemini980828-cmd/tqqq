@@ -4,10 +4,12 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Mapping
 
-from tqqq_strategy.ops.dashboard_snapshot import generate_dashboard_snapshot
+import pandas as pd
+
 from tqqq_strategy.wealth import (
     DEFAULT_MANUAL_TRUTH_PATH,
     DEFAULT_SUMMARY_STORE_PATH,
+    build_core_strategy_position,
     build_liquidity_summary,
     build_summary_source_version,
     load_manual_truth,
@@ -162,6 +164,31 @@ def build_manager_summary_records(
     }
 
 
+def _build_refresh_snapshot(signal_csv_path: str | Path, manual_inputs: Mapping[str, list[dict[str, Any]]]) -> dict[str, Any]:
+    signals = pd.read_csv(signal_csv_path, parse_dates=["time"]).sort_values("time").reset_index(drop=True)
+    latest = signals.iloc[-1]
+    previous = signals.iloc[-2] if len(signals) >= 2 else latest
+    target_weight_pct = round(float(latest["S2_weight"]) * 100.0, 2)
+    prev_weight_pct = round(float(previous["S2_weight"]) * 100.0, 2)
+    action = "유지"
+    if target_weight_pct > prev_weight_pct + 1e-9:
+        action = "매수"
+    elif target_weight_pct < prev_weight_pct - 1e-9:
+        action = "매도"
+
+    core_actuals = build_core_strategy_position(dict(manual_inputs), target_weight_pct=target_weight_pct)
+    return {
+        "action_hero": {
+            "action": action,
+            "target_weight_pct": target_weight_pct,
+            "reason_summary": f"코어전략 목표 비중 {target_weight_pct:.2f}% 기준 요약",
+            "updated_at": latest["time"].isoformat(),
+        },
+        "core_strategy_actuals": core_actuals,
+        "core_strategy_position": core_actuals,
+    }
+
+
 def refresh_manager_summaries(
     *,
     signal_csv_path: str | Path = Path("reports/signals_s1_s2_s3_user_original.csv"),
@@ -173,16 +200,10 @@ def refresh_manager_summaries(
     summary_store_path: str | Path = DEFAULT_SUMMARY_STORE_PATH,
     generated_at: str | None = None,
 ) -> dict[str, dict[str, Any]]:
+    _ = (data_csv_path, metrics_csv_path, state_path, equity_csv_path)
     manual_path = Path(manual_truth_path)
     manual_inputs = load_manual_truth(manual_path)
-    snapshot = generate_dashboard_snapshot(
-        signal_csv_path=signal_csv_path,
-        data_csv_path=data_csv_path,
-        metrics_csv_path=metrics_csv_path,
-        state_path=state_path,
-        equity_csv_path=equity_csv_path,
-        manual_truth_path=manual_path,
-    )
+    snapshot = _build_refresh_snapshot(signal_csv_path, manual_inputs)
     resolved_generated_at = _ensure_generated_at(generated_at)
     source_version = f"{manual_path.name}:{build_summary_source_version(manual_inputs, resolved_generated_at)}"
     records = build_manager_summary_records(

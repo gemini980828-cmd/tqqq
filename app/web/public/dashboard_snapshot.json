@@ -73,36 +73,81 @@
         "manager_id": "core_strategy",
         "title": "Core Strategy",
         "label": "Core Strategy",
-        "status": "live",
+        "status": "stale",
         "headline": "실보유 86.63% / 목표 95.00%",
-        "summary": "실보유 86.63% / 목표 95.00%"
+        "summary": "실보유 86.63% / 목표 95.00% · 코어전략 목표 비중 95.00% 기준 요약",
+        "warning_count": 1,
+        "recommended_action": "현재 전략 비중 유지",
+        "stale": true,
+        "generated_at": "2026-03-06T10:48:59.268284+00:00"
       },
       {
         "manager_id": "stock_research",
         "title": "Stock Research",
         "label": "Stock Research",
-        "status": "tracking",
+        "status": "stale",
         "headline": "관심종목 1개",
-        "summary": "관심종목 1개"
+        "summary": "관심종목 1개를 추적 중입니다.",
+        "warning_count": 0,
+        "recommended_action": "관심종목 신규 발굴",
+        "stale": true,
+        "generated_at": "2026-03-06T10:48:59.268284+00:00"
       },
       {
         "manager_id": "real_estate",
         "title": "Real Estate",
         "label": "Real Estate",
-        "status": "tracking",
+        "status": "stale",
         "headline": "관심 단지 1개",
-        "summary": "관심 단지 1개"
+        "summary": "관심 단지 1개를 팔로잉 중입니다.",
+        "warning_count": 0,
+        "recommended_action": "검토 단지 체크리스트 업데이트",
+        "stale": true,
+        "generated_at": "2026-03-06T10:48:59.268284+00:00"
       },
       {
         "manager_id": "cash_debt",
         "title": "Cash & Debt",
         "label": "Cash & Debt",
-        "status": "monitoring",
+        "status": "stale",
         "headline": "현금/부채 항목 1개",
-        "summary": "현금 1,500,000원"
+        "summary": "현금 1,500,000원 / 부채 0원",
+        "warning_count": 0,
+        "recommended_action": "현금/부채 현황 유지",
+        "stale": true,
+        "generated_at": "2026-03-06T10:48:59.268284+00:00"
       }
     ],
-    "updated_at": "2026-01-30T00:00:00"
+    "updated_at": "2026-01-30T00:00:00",
+    "inbox_preview": [
+      {
+        "id": "core_strategy-action",
+        "manager_id": "core_strategy",
+        "severity": "high",
+        "title": "코어전략 유지 점검",
+        "detail": "실보유 86.63% / 목표 95.00% / 리밸런싱 gap 939,000원",
+        "recommended_action": "현재 전략 비중 유지",
+        "stale": "true"
+      },
+      {
+        "id": "cash_debt-guardrail",
+        "manager_id": "cash_debt",
+        "severity": "high",
+        "title": "현금/부채 방어 여력 재점검",
+        "detail": "현금 1,500,000원 / 부채 0원",
+        "recommended_action": "현금/부채 현황 유지",
+        "stale": "true"
+      },
+      {
+        "id": "stock_research-candidates",
+        "manager_id": "stock_research",
+        "severity": "medium",
+        "title": "개별주 후보 리서치",
+        "detail": "관심종목 신규 발굴",
+        "recommended_action": "관심종목 신규 발굴",
+        "stale": "true"
+      }
+    ]
   },
   "wealth_overview": {
     "invested_krw": 9720000,
@@ -111,40 +156,130 @@
     "debt_krw": 0,
     "net_worth_krw": 11220000
   },
+  "liquidity_summary": {
+    "cash_krw": 1500000,
+    "debt_krw": 0,
+    "net_liquidity_krw": 1500000,
+    "liquidity_ratio_pct": 13.37
+  },
   "manager_cards": [
     {
       "manager_id": "core_strategy",
       "title": "Core Strategy",
       "label": "Core Strategy",
-      "status": "live",
+      "status": "stale",
       "headline": "실보유 86.63% / 목표 95.00%",
-      "summary": "실보유 86.63% / 목표 95.00%"
+      "summary": "실보유 86.63% / 목표 95.00% · 코어전략 목표 비중 95.00% 기준 요약",
+      "warning_count": 1,
+      "recommended_action": "현재 전략 비중 유지",
+      "stale": true,
+      "generated_at": "2026-03-06T10:48:59.268284+00:00"
     },
     {
       "manager_id": "stock_research",
       "title": "Stock Research",
       "label": "Stock Research",
-      "status": "tracking",
+      "status": "stale",
       "headline": "관심종목 1개",
-      "summary": "관심종목 1개"
+      "summary": "관심종목 1개를 추적 중입니다.",
+      "warning_count": 0,
+      "recommended_action": "관심종목 신규 발굴",
+      "stale": true,
+      "generated_at": "2026-03-06T10:48:59.268284+00:00"
     },
     {
       "manager_id": "real_estate",
       "title": "Real Estate",
       "label": "Real Estate",
-      "status": "tracking",
+      "status": "stale",
       "headline": "관심 단지 1개",
-      "summary": "관심 단지 1개"
+      "summary": "관심 단지 1개를 팔로잉 중입니다.",
+      "warning_count": 0,
+      "recommended_action": "검토 단지 체크리스트 업데이트",
+      "stale": true,
+      "generated_at": "2026-03-06T10:48:59.268284+00:00"
     },
     {
       "manager_id": "cash_debt",
       "title": "Cash & Debt",
       "label": "Cash & Debt",
-      "status": "monitoring",
+      "status": "stale",
       "headline": "현금/부채 항목 1개",
-      "summary": "현금 1,500,000원"
+      "summary": "현금 1,500,000원 / 부채 0원",
+      "warning_count": 0,
+      "recommended_action": "현금/부채 현황 유지",
+      "stale": true,
+      "generated_at": "2026-03-06T10:48:59.268284+00:00"
     }
   ],
+  "manager_summaries": {
+    "core_strategy": {
+      "manager_id": "core_strategy",
+      "summary_text": "실보유 86.63% / 목표 95.00% · 코어전략 목표 비중 95.00% 기준 요약",
+      "key_points": [
+        "실보유 86.63%",
+        "목표 95.00%",
+        "리밸런싱 gap 939,000원"
+      ],
+      "warnings": [
+        "목표 대비 괴리 8.37%p가 커서 리밸런싱 우선순위가 높습니다."
+      ],
+      "recommended_actions": [
+        "현재 전략 비중 유지"
+      ],
+      "generated_at": "2026-03-06T10:48:59.268284+00:00",
+      "source_version": "wealth_manual.json:2026-03-06T10:48:59.268284+00:00:92c2b05fa5e1",
+      "stale": true
+    },
+    "stock_research": {
+      "manager_id": "stock_research",
+      "summary_text": "관심종목 1개를 추적 중입니다.",
+      "key_points": [
+        "관심종목 1개",
+        "후보 0개",
+        "관찰 1개"
+      ],
+      "warnings": [],
+      "recommended_actions": [
+        "관심종목 신규 발굴"
+      ],
+      "generated_at": "2026-03-06T10:48:59.268284+00:00",
+      "source_version": "wealth_manual.json:2026-03-06T10:48:59.268284+00:00:92c2b05fa5e1",
+      "stale": true
+    },
+    "real_estate": {
+      "manager_id": "real_estate",
+      "summary_text": "관심 단지 1개를 팔로잉 중입니다.",
+      "key_points": [
+        "관심 단지 1개",
+        "검토 1개",
+        "관심 0개"
+      ],
+      "warnings": [],
+      "recommended_actions": [
+        "검토 단지 체크리스트 업데이트"
+      ],
+      "generated_at": "2026-03-06T10:48:59.268284+00:00",
+      "source_version": "wealth_manual.json:2026-03-06T10:48:59.268284+00:00:92c2b05fa5e1",
+      "stale": true
+    },
+    "cash_debt": {
+      "manager_id": "cash_debt",
+      "summary_text": "현금 1,500,000원 / 부채 0원",
+      "key_points": [
+        "현금 1,500,000원",
+        "부채 0원",
+        "유동성 비중 13.37%"
+      ],
+      "warnings": [],
+      "recommended_actions": [
+        "현금/부채 현황 유지"
+      ],
+      "generated_at": "2026-03-06T10:48:59.268284+00:00",
+      "source_version": "wealth_manual.json:2026-03-06T10:48:59.268284+00:00:92c2b05fa5e1",
+      "stale": true
+    }
+  },
   "core_strategy_position": {
     "symbol": "TQQQ",
     "name": "ProShares UltraPro QQQ",
@@ -180,6 +315,46 @@
     "investable_total_krw": 11220000
   },
   "meta": {
-    "manual_source_version": "wealth_manual.json"
-  }
+    "manual_source_version": "wealth_manual.json",
+    "summary_source_version": "wealth_manual.json:2026-01-30T00:00:00:92c2b05fa5e1",
+    "summary_store_path": "reports/wealth_manager_summaries.json"
+  },
+  "home_inbox": [
+    {
+      "id": "core_strategy-action",
+      "manager_id": "core_strategy",
+      "severity": "high",
+      "title": "코어전략 유지 점검",
+      "detail": "실보유 86.63% / 목표 95.00% / 리밸런싱 gap 939,000원",
+      "recommended_action": "현재 전략 비중 유지",
+      "stale": "true"
+    },
+    {
+      "id": "cash_debt-guardrail",
+      "manager_id": "cash_debt",
+      "severity": "high",
+      "title": "현금/부채 방어 여력 재점검",
+      "detail": "현금 1,500,000원 / 부채 0원",
+      "recommended_action": "현금/부채 현황 유지",
+      "stale": "true"
+    },
+    {
+      "id": "stock_research-candidates",
+      "manager_id": "stock_research",
+      "severity": "medium",
+      "title": "개별주 후보 리서치",
+      "detail": "관심종목 신규 발굴",
+      "recommended_action": "관심종목 신규 발굴",
+      "stale": "true"
+    },
+    {
+      "id": "real_estate-review",
+      "manager_id": "real_estate",
+      "severity": "medium",
+      "title": "부동산 검토 큐 확인",
+      "detail": "검토 단지 체크리스트 업데이트",
+      "recommended_action": "검토 단지 체크리스트 업데이트",
+      "stale": "true"
+    }
+  ]
 }

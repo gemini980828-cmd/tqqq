@@ -168,7 +168,15 @@ def build_manager_cards(
     return enriched_cards
 
 
-def build_summary_source_version(manual_inputs: dict[str, list[dict[str, Any]]], as_of: str) -> str:
+def build_summary_source_version(
+    manual_inputs: dict[str, list[dict[str, Any]]],
+    as_of: str,
+    *,
+    source_label: str | None = None,
+) -> str:
     payload = json.dumps(manual_inputs, ensure_ascii=False, sort_keys=True)
     digest = hashlib.sha1(payload.encode("utf-8")).hexdigest()[:12]
-    return f"{as_of}:{digest}"
+    version = f"{as_of}:{digest}"
+    if source_label:
+        return f"{source_label}:{version}"
+    return version
