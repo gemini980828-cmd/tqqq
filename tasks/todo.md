@@ -305,3 +305,20 @@
 - 검증:
   - `UV_CACHE_DIR=.uv-cache uv run --with pytest pytest -q tests/ops/test_telegram_alert.py tests/ops/test_daily_job.py` → `7 passed`
   - `UV_CACHE_DIR=.uv-cache uv run --with pytest pytest -q` → `26 passed`
+
+### Phase 3 Task A-5 - 피드백 라운드 2 (계기판형/액션유무 분리)
+- [x] 액션 유무에 따라 템플릿 분리 (무액션=요약형, 액션=상세형)
+- [x] 임계값 병기 라인으로 변경 (`Vol20`, `SPY200`, `Dist200`)
+- [x] 중복 라인 제거 (`현재/교체/코드전환` 반복 축소)
+- [x] 50/100일 이격도 제거 (비매매 핵심 지표 제외)
+- [x] 운영 로그 원본 포맷 유지 (`run_id`, `alert_key`, `dry_run`)
+- [x] 테스트 보강/회귀 통과
+
+### Phase 3 Task A-5 Review
+- 핵심 반영:
+  - 무액션일: 짧은 요약 템플릿 + 핵심 체크 3개
+  - 액션일: 상세 템플릿 + 체크리스트 + 시장요약
+  - 수치+임계값 계기판형 표기 유지
+- 검증:
+  - `UV_CACHE_DIR=.uv-cache uv run --with pytest pytest -q tests/ops/test_telegram_alert.py tests/ops/test_daily_job.py` → `8 passed`
+  - `UV_CACHE_DIR=.uv-cache uv run --with pytest pytest -q` → `27 passed`

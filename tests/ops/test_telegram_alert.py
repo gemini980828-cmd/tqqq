@@ -23,7 +23,7 @@ def test_format_s2_change_message_contains_key_fields() -> None:
     assert "현재 포지션" in message
     assert "교체 포지션" in message
     assert "[매매 필요]" in message
-    assert "🧩 조건 체크리스트" in message
+    assert "🧩 체크" in message
     assert "✅ 조건 A" in message
 
 

@@ -47,22 +47,15 @@ def format_s2_change_message(
     if not reasons:
         reasons = [f"사유: {reason}"]
 
-    lines = [
-        f"[ {date_str} ] {title}",
-        f"🚨 {alert_type}",
-        action_line or "📢 [액션 없음] 포지션 유지",
-        "----------------------------------------",
-        *pos,
-        "----------------------------------------",
-        "🧩 조건 체크리스트",
-        *reasons,
-        "----------------------------------------",
-        "📈 시장 데이터 요약",
-        *market,
-        "----------------------------------------",
-        "🧾 운영 로그",
-        *ops,
-    ]
+    lines = [f"[ {date_str} ] {title}", f"🚨 {alert_type}", action_line or "📢 [액션 없음] 포지션 유지"]
+    if pos:
+        lines += ["", *pos]
+    if reasons:
+        lines += ["", "🧩 체크", *reasons]
+    if market:
+        lines += ["", "📈 시장 요약", *market]
+    if ops:
+        lines += ["", "🧾 운영 로그", *ops]
     return "\n".join(lines)
 
 

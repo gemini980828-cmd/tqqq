@@ -13,6 +13,11 @@ DATA_SAMPLE = """time,QQQ종가,TQQQ종가,SPY종가,원달러환율
 2026-03-06,102.0,51.0,605.0,1475.0
 """
 
+CSV_SAME_WEIGHT_SAMPLE = """time,S1_code,S1_weight,S2_code,S2_weight,S3_code,S3_weight
+2026-03-05,0,0.0,2,0.95,0,0.0
+2026-03-06,0,0.0,2,0.95,0,0.0
+"""
+
 
 def _write_csv(path: Path) -> None:
     path.write_text(CSV_SAMPLE, encoding="utf-8")
@@ -20,6 +25,10 @@ def _write_csv(path: Path) -> None:
 
 def _write_data_csv(path: Path) -> None:
     path.write_text(DATA_SAMPLE, encoding="utf-8")
+
+
+def _write_same_weight_csv(path: Path) -> None:
+    path.write_text(CSV_SAME_WEIGHT_SAMPLE, encoding="utf-8")
 
 
 def test_run_daily_signal_alert_skips_duplicate_on_second_run(tmp_path) -> None:
@@ -80,13 +89,12 @@ def test_run_daily_signal_alert_skips_duplicate_on_second_run(tmp_path) -> None:
     assert "신호:" in first["message"]
     assert "일간 수익:" in first["message"]
     assert "진입가 대비:" in first["message"]
-    assert "로스 컷:" in first["message"]
-    assert "🧩 조건 체크리스트" in first["message"]
+    assert "로스컷:" in first["message"]
+    assert "🧩 체크" in first["message"]
     assert "20일 변동성 < 5.9%" in first["message"]
-    assert "현재 포지션" in first["message"]
-    assert "시장 데이터 요약" in first["message"]
-    assert "일간 수익:" in first["message"]
-    assert "SPY 200일 이동평균선 필터" in first["message"]
+    assert "비중 변경:" in first["message"]
+    assert "📈 시장 요약" in first["message"]
+    assert "SPY200 이격도" in first["message"]
     assert "QQQ RSI(14)" in first["message"]
 
 
@@ -154,6 +162,33 @@ def test_run_daily_signal_alert_uses_existing_entry_price_when_weight_not_increa
     )
 
     assert "진입가 $49.20" in result["message"]
+
+
+def test_run_daily_signal_alert_compact_template_for_no_action_day(tmp_path) -> None:
+    signal_csv = tmp_path / "signals_same.csv"
+    data_csv = tmp_path / "data.csv"
+    state_file = tmp_path / "state.json"
+    _write_same_weight_csv(signal_csv)
+    _write_data_csv(data_csv)
+    state_file.write_text('{"last_alert_key":"old","entry_price":49.2}', encoding="utf-8")
+
+    def fake_sender(*, bot_token, chat_id, text, dry_run):
+        return {"sent": True, "dry_run": dry_run}
+
+    result = run_daily_signal_alert(
+        signal_csv_path=signal_csv,
+        data_csv_path=data_csv,
+        state_path=state_file,
+        bot_token="token",
+        chat_id="chat",
+        dry_run=False,
+        sender=fake_sender,
+    )
+
+    msg = result["message"]
+    assert "📢 [액션 없음]" in msg
+    assert "조건 " in msg and "/3 충족" in msg
+    assert "run_id: daily-2026-03-06" in msg
 
 
 def test_run_daily_signal_alert_raises_on_missing_required_columns(tmp_path) -> None:
