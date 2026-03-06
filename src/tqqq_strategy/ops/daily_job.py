@@ -120,22 +120,63 @@ def _rsi_state(rsi: float) -> str:
     return "중립"
 
 
-def _build_reason(*, vol20: float, spy_dist200: float, new_weight: float, prev_weight: float, tqqq_dist200: float, qqq3: float, qqq161: float) -> str:
-    if vol20 >= 5.9:
-        return "변동성 과열 락 조건(20일 변동성 ≥ 5.9%)"
-    if spy_dist200 <= 97.75:
-        return "SPY 200일선 필터 약세(이격도 ≤ 97.75)"
-    if new_weight <= 0.001 and prev_weight >= 0.80:
-        return "고비중 구간 청산/손절 조건"
-    if new_weight >= 0.999 and tqqq_dist200 >= 101.0:
-        return "추세 조건 완전 충족(200일 이격도 101% 이상)"
-    if new_weight <= 0.101 and (qqq3 > qqq161):
-        return "추세 조건 부분 만족(10% 진입)"
-    if new_weight < prev_weight and tqqq_dist200 >= 139.0:
-        return "과열 구간 단계적 감량"
+def _position_label(weight: float) -> str:
+    if weight <= 1e-9:
+        return "현금"
+    return f"TQQQ {weight * 100:.0f}%"
+
+
+def _signal_label(*, new_weight: float, prev_weight: float, dist200: float) -> str:
+    if new_weight <= 1e-9:
+        return "강제 청산(0%)"
     if abs(new_weight - 0.95) < 1e-9 and prev_weight >= 0.999:
-        return "+10% TP10 1회 감량"
-    return "기본 추세/보유 유지"
+        return "익절 감량(95%)"
+    if new_weight <= 0.101:
+        return "부분 진입(10%)"
+    if new_weight >= 0.999 and dist200 >= 101.0:
+        return "풀 투자 유지"
+    if abs(new_weight - 0.9) < 1e-9:
+        return "과열 감량(90%)"
+    if abs(new_weight - 0.8) < 1e-9:
+        return "과열 감량(80%)"
+    if abs(new_weight - 0.05) < 1e-9:
+        return "과열 감량(5%)"
+    return f"비중 조정({new_weight * 100:.1f}%)"
+
+
+def _build_action_line(*, prev_weight: float, new_weight: float) -> str:
+    delta = new_weight - prev_weight
+    if abs(delta) < 1e-9:
+        return "📢 [액션 없음] 포지션 유지"
+    direction = "매수" if delta > 0 else "매도"
+    return f"📢 [매매 필요] {_position_label(prev_weight)} → {_position_label(new_weight)} ({direction} {abs(delta) * 100:.2f}%)"
+
+
+def _build_reason_lines(
+    *,
+    vol20: float,
+    spy_dist200: float,
+    dist200: float,
+    qqq3_vs161: float,
+    prev_weight: float,
+    new_weight: float,
+    entry_price: float | None,
+) -> list[str]:
+    lines: list[str] = []
+    vol_icon = "⬜" if np.isnan(vol20) else ("✅" if vol20 < 5.9 else "🚨")
+    spy_icon = "⬜" if np.isnan(spy_dist200) else ("✅" if spy_dist200 > 97.75 else "🚨")
+    dist_icon = "⬜" if np.isnan(dist200) else ("✅" if dist200 >= 101.0 else "⬜")
+    lines.append(f"{vol_icon} 20일 변동성 < 5.9%: {vol20:.2f}%")
+    lines.append(f"{spy_icon} SPY 200MA 필터(>97.75): {spy_dist200:.2f}")
+    lines.append(f"{dist_icon} TQQQ 200일 이격도 ≥ 101%: {dist200:.2f}")
+    lines.append(f"{'⬜' if dist200 < 139.0 else '✅'} 과열 감량 구간(≥139): {'미해당' if dist200 < 139.0 else f'{dist200:.2f}'}")
+    tp10_hit = prev_weight >= 0.999 and abs(new_weight - 0.95) < 1e-9
+    lines.append(f"{'✅' if tp10_hit else '⬜'} TP10 조건(신규100% 진입 후 +10%): {'충족' if tp10_hit else '미해당'}")
+    stop_active = new_weight >= 0.8 and entry_price is not None
+    lines.append(f"{'⚠' if stop_active else '⬜'} 손절 감시(고비중 & 진입가×0.941): {'활성' if stop_active else '미해당'}")
+    if not np.isnan(qqq3_vs161):
+        lines.append(f"{'✅' if qqq3_vs161 > 0 else '⬜'} QQQ 3일선 > 161일선: {_format_pct(qqq3_vs161)}")
+    return lines
 
 
 def run_daily_signal_alert(
@@ -230,26 +271,9 @@ def run_daily_signal_alert(
         fx_line = f"원/달러 환율: {fx_now:.2f} ({_format_pct(fx_pct)})"
 
     delta = new_weight - prev_weight
-    if abs(delta) < 1e-12:
-        trade_line = "매매 없음"
-    elif delta < 0:
-        trade_line = f"매도: {abs(delta) * 100:.2f}%"
-    else:
-        trade_line = f"매수: {abs(delta) * 100:.2f}%"
-
     holding_ratio = "N/A"
     if prev_weight > 1e-12:
         holding_ratio = f"{abs(delta) / prev_weight * 100:.2f}%"
-
-    reason = _build_reason(
-        vol20=float(vol20),
-        spy_dist200=float(spy_dist200),
-        new_weight=float(new_weight),
-        prev_weight=float(prev_weight),
-        tqqq_dist200=float(dist200),
-        qqq3=float(qqq3),
-        qqq161=float(qqq161),
-    )
 
     slope_cond = "해당 없음"
     if pd.notna(slope) and pd.notna(dist200) and pd.notna(vol20):
@@ -257,19 +281,58 @@ def run_daily_signal_alert(
             slope_cond = "충족"
 
     tqqq_vs200 = dist200 - 100.0 if pd.notna(dist200) else float("nan")
+    state_entry_price = state.get("entry_price")
+    entry_price: float | None = None
+    if isinstance(state_entry_price, (float, int)):
+        entry_price = float(state_entry_price)
+
+    if new_weight <= 1e-9:
+        entry_price = None
+        entry_date = None
+    elif prev_weight <= 1e-9 or new_weight > prev_weight + 1e-9 or entry_price is None:
+        entry_price = tqqq_close
+        entry_date = date_str
+    else:
+        entry_date = state.get("entry_date")
+
+    entry_pnl = ((tqqq_close / entry_price) - 1.0) * 100.0 if entry_price and entry_price > 0 else float("nan")
+    stop_price = entry_price * 0.941 if entry_price is not None else float("nan")
+    tp10_done = prev_weight >= 0.999 and abs(new_weight - 0.95) < 1e-9
+
     price_emoji = _emoji_from_sign(tqqq_day_pct)
     pnl_emoji = _emoji_from_sign(tqqq_day_pct)
     position_emoji = "🟢" if new_weight > 0 else "🔴"
-    loss_cut_line = "해당 없음" if new_weight < 0.8 else "활성(진입가×0.941 모니터링)"
+    entry_emoji = _emoji_from_sign(entry_pnl)
+    loss_cut_line = "해당 없음"
+    if new_weight >= 0.8 and entry_price is not None:
+        loss_cut_line = f"활성 (${stop_price:.2f} | 진입가×0.941)"
+
+    action_line = _build_action_line(prev_weight=prev_weight, new_weight=new_weight)
+    signal_label = _signal_label(new_weight=new_weight, prev_weight=prev_weight, dist200=float(dist200 if pd.notna(dist200) else 0.0))
 
     position_lines = [
+        f"신호: {signal_label}",
         f"현재 포지션: TQQQ({new_weight * 100:.2f}%) {position_emoji}",
         f"교체 포지션: TQQQ({prev_weight * 100:.2f}%)",
-        f"신호코드 전환: {prev_code}->{new_code}",
-        f"{trade_line}(보유대비: {holding_ratio})",
-        f"손익여부: {pnl_emoji}({_format_pct(tqqq_day_pct)}) ✂️100% 시드 기준",
+        f"비중 변화: {prev_weight * 100:.2f}% → {new_weight * 100:.2f}% (보유대비: {holding_ratio})",
+        f"일간 수익: {pnl_emoji}{_format_pct(tqqq_day_pct)} (전일 종가 대비)",
+        (
+            f"진입가 대비: {entry_emoji}{_format_pct(entry_pnl)} (진입가 ${entry_price:.2f})"
+            if entry_price is not None
+            else "진입가 대비: N/A"
+        ),
         f"로스 컷: {loss_cut_line}",
     ]
+
+    reason_lines = _build_reason_lines(
+        vol20=float(vol20),
+        spy_dist200=float(spy_dist200),
+        dist200=float(dist200),
+        qqq3_vs161=float(qqq3_vs161),
+        prev_weight=float(prev_weight),
+        new_weight=float(new_weight),
+        entry_price=entry_price,
+    )
 
     market_lines = [
         f"TQQQ 종가: {price_emoji}{tqqq_close:.4f}({_format_pct(tqqq_day_pct)})",
@@ -305,8 +368,9 @@ def run_daily_signal_alert(
         new_weight=new_weight,
         title="일일현황보고",
         alert_type="긴급 포지션 변경(리스크 관리) 알림" if prev_code != new_code else "일일 신호 점검 알림",
+        action_line=action_line,
         position_lines=position_lines,
-        reason=reason,
+        reason_lines=reason_lines,
         market_lines=market_lines,
         ops_lines=ops_lines,
     )
@@ -326,6 +390,10 @@ def run_daily_signal_alert(
                 "last_alert_key": key,
                 "last_sent_at": datetime.now(timezone.utc).isoformat(),
                 "date": date_str,
+                "position_weight": new_weight,
+                "entry_price": entry_price,
+                "entry_date": entry_date,
+                "tp10_done": tp10_done,
             },
         )
 

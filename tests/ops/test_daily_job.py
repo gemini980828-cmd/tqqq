@@ -72,9 +72,20 @@ def test_run_daily_signal_alert_skips_duplicate_on_second_run(tmp_path) -> None:
 
     assert len(calls) == 1
     assert state_file.exists()
+    saved = state_file.read_text(encoding="utf-8")
+    assert "entry_price" in saved
+    assert "position_weight" in saved
+    assert "tp10_done" in saved
+    assert "📢 [매매 필요]" in first["message"]
+    assert "신호:" in first["message"]
+    assert "일간 수익:" in first["message"]
+    assert "진입가 대비:" in first["message"]
+    assert "로스 컷:" in first["message"]
+    assert "🧩 조건 체크리스트" in first["message"]
+    assert "20일 변동성 < 5.9%" in first["message"]
     assert "현재 포지션" in first["message"]
     assert "시장 데이터 요약" in first["message"]
-    assert "손익여부" in first["message"]
+    assert "일간 수익:" in first["message"]
     assert "SPY 200일 이동평균선 필터" in first["message"]
     assert "QQQ RSI(14)" in first["message"]
 
@@ -116,6 +127,33 @@ def test_run_daily_signal_alert_dry_run_does_not_persist_state(tmp_path) -> None
     assert second["skipped"] is False
     assert not state_file.exists()
     assert len(calls) == 2
+
+
+def test_run_daily_signal_alert_uses_existing_entry_price_when_weight_not_increased(tmp_path) -> None:
+    signal_csv = tmp_path / "signals.csv"
+    data_csv = tmp_path / "data.csv"
+    state_file = tmp_path / "state.json"
+    _write_csv(signal_csv)
+    _write_data_csv(data_csv)
+    state_file.write_text(
+        '{"last_alert_key": "old", "entry_price": 49.2, "entry_date": "2026-03-01", "position_weight": 1.0}',
+        encoding="utf-8",
+    )
+
+    def fake_sender(*, bot_token, chat_id, text, dry_run):
+        return {"sent": True, "dry_run": dry_run}
+
+    result = run_daily_signal_alert(
+        signal_csv_path=signal_csv,
+        data_csv_path=data_csv,
+        state_path=state_file,
+        bot_token="token",
+        chat_id="chat",
+        dry_run=False,
+        sender=fake_sender,
+    )
+
+    assert "진입가 $49.20" in result["message"]
 
 
 def test_run_daily_signal_alert_raises_on_missing_required_columns(tmp_path) -> None:

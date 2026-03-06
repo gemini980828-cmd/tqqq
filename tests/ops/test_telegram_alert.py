@@ -10,6 +10,8 @@ def test_format_s2_change_message_contains_key_fields() -> None:
         prev_weight=1.0,
         new_code="3",
         new_weight=0.25,
+        action_line="📢 [매매 필요] 현금 → TQQQ 25%",
+        reason_lines=["✅ 조건 A", "⬜ 조건 B"],
     )
 
     assert "2026-03-06" in message
@@ -20,6 +22,9 @@ def test_format_s2_change_message_contains_key_fields() -> None:
     assert "->" in message
     assert "현재 포지션" in message
     assert "교체 포지션" in message
+    assert "[매매 필요]" in message
+    assert "🧩 조건 체크리스트" in message
+    assert "✅ 조건 A" in message
 
 
 def test_send_telegram_message_dry_run_returns_sent_without_network_call(monkeypatch) -> None:

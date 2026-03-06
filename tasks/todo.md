@@ -281,3 +281,27 @@
   - 아티팩트 업로드로 실행 결과 추적 가능
 - 사용자 수동작업 최소화:
   - GitHub Actions repository secret 2개만 등록하면 동작
+
+### Phase 3 Task A-4 - Telegram UX 고도화 (액션 우선/체크리스트)
+- [x] 액션 배너를 최상단에 추가 (`[액션 없음]` / `[매매 필요]`)
+- [x] 신호코드 raw 전환 대신 읽기 쉬운 신호 라벨 적용
+- [x] 손익 표시 분리 (일간 수익 vs 진입가 대비)
+- [x] 로스컷 절대값 표시 (`$xx.xx | 진입가×0.941`)
+- [x] 사유 섹션을 조건 체크리스트(✅/⬜/⚠/🚨)로 전환
+- [x] 상태파일 확장 (`position_weight`, `entry_price`, `entry_date`, `tp10_done`)
+- [x] ops 테스트 확장 및 회귀 통과 확인
+
+### Phase 3 Task A-4 Review
+- 구현 파일:
+  - `src/tqqq_strategy/ops/daily_job.py`
+  - `src/tqqq_strategy/ops/telegram_alert.py`
+  - `tests/ops/test_daily_job.py`
+  - `tests/ops/test_telegram_alert.py`
+- 핵심 개선:
+  - 메시지 최상단에서 액션 필요 여부를 즉시 판단 가능
+  - 코드 전환(`2->2`) 대신 신호 라벨 표기
+  - 진입가 상태 기반 손익/로스컷 절대값 제공
+  - 조건 체크리스트로 사유 설명력 향상
+- 검증:
+  - `UV_CACHE_DIR=.uv-cache uv run --with pytest pytest -q tests/ops/test_telegram_alert.py tests/ops/test_daily_job.py` → `7 passed`
+  - `UV_CACHE_DIR=.uv-cache uv run --with pytest pytest -q` → `26 passed`

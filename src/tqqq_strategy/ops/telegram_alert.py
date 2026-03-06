@@ -19,12 +19,15 @@ def format_s2_change_message(
     *,
     title: str = "일일현황보고",
     alert_type: str = "일일 신호 점검 알림",
+    action_line: str | None = None,
     position_lines: Iterable[str] | None = None,
     reason: str = "기본 추세/보유 유지",
+    reason_lines: Iterable[str] | None = None,
     market_lines: Iterable[str] | None = None,
     ops_lines: Iterable[str] | None = None,
 ) -> str:
     pos = list(position_lines or [])
+    reasons = list(reason_lines or [])
     market = list(market_lines or [])
     ops = list(ops_lines or [])
 
@@ -41,13 +44,18 @@ def format_s2_change_message(
     if not ops:
         ops = ["ops log: N/A"]
 
+    if not reasons:
+        reasons = [f"사유: {reason}"]
+
     lines = [
         f"[ {date_str} ] {title}",
         f"🚨 {alert_type}",
+        action_line or "📢 [액션 없음] 포지션 유지",
         "----------------------------------------",
         *pos,
         "----------------------------------------",
-        f"사유: {reason}",
+        "🧩 조건 체크리스트",
+        *reasons,
         "----------------------------------------",
         "📈 시장 데이터 요약",
         *market,
