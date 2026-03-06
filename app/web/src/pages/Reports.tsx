@@ -1,11 +1,11 @@
-import type { DashboardSnapshot } from './Dashboard'
+import type { AppSnapshot } from '../types/appSnapshot'
 
 function formatPct(val?: number) {
   if (val === undefined || Number.isNaN(val)) return 'N/A'
   return `${val > 0 ? '+' : ''}${val.toFixed(2)}%`
 }
 
-export default function Reports({ snapshot }: { snapshot?: DashboardSnapshot }) {
+export default function Reports({ snapshot }: { snapshot?: AppSnapshot }) {
   return (
     <section className="rounded-[24px] border border-white/8 bg-white/[0.04] p-6 shadow-[0_12px_32px_rgba(15,23,42,0.18)]">
       <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">Reports</p>

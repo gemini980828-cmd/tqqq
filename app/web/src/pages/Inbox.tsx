@@ -1,6 +1,6 @@
-import type { DashboardSnapshot } from './Dashboard'
+import type { AppSnapshot } from '../types/appSnapshot'
 
-export default function Inbox({ snapshot }: { snapshot?: DashboardSnapshot }) {
+export default function Inbox({ snapshot }: { snapshot?: AppSnapshot }) {
   const items = [
     `오늘 액션: ${snapshot?.action_hero?.action ?? '유지'} / 목표 ${snapshot?.action_hero?.target_weight_pct ?? 95}%`,
     'Manager summary cache 연결 예정',

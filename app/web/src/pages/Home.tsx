@@ -1,9 +1,9 @@
 import ManagerCard from '../components/ManagerCard'
 import OrchestratorPanel from '../components/OrchestratorPanel'
-import type { DashboardSnapshot } from './Dashboard'
+import type { AppSnapshot } from '../types/appSnapshot'
 
-type WealthOverview = NonNullable<DashboardSnapshot['wealth_overview']>
-type ManagerCards = NonNullable<DashboardSnapshot['manager_cards']>
+type WealthOverview = NonNullable<AppSnapshot['wealth_overview']>
+type ManagerCards = NonNullable<AppSnapshot['manager_cards']>
 
 function formatKrw(value?: number) {
   if (value === undefined || Number.isNaN(value)) return 'N/A'
@@ -26,7 +26,7 @@ const FALLBACK_CARDS: ManagerCards = [
   { manager_id: 'cash_debt', title: 'Cash & Debt', headline: '현금/부채 항목 1개', summary: '현금 여력과 상환일 관리', status: 'tracking' },
 ]
 
-export default function Home({ snapshot }: { snapshot?: DashboardSnapshot }) {
+export default function Home({ snapshot }: { snapshot?: AppSnapshot }) {
   const overview: WealthOverview = snapshot?.wealth_home?.overview ?? snapshot?.wealth_overview ?? {
     invested_krw: 9_720_000,
     investable_assets_krw: 9_720_000,
@@ -37,6 +37,7 @@ export default function Home({ snapshot }: { snapshot?: DashboardSnapshot }) {
   const cards: ManagerCards = snapshot?.wealth_home?.manager_cards ?? snapshot?.manager_cards ?? FALLBACK_CARDS
   const action = snapshot?.action_hero?.action ?? '유지'
   const actionWeight = snapshot?.action_hero?.target_weight_pct ?? 95
+  const timeline = snapshot?.event_timeline ?? []
 
   return (
     <div className="space-y-6">
@@ -89,6 +90,53 @@ export default function Home({ snapshot }: { snapshot?: DashboardSnapshot }) {
         </div>
 
         <OrchestratorPanel />
+      </section>
+
+      <section className="grid gap-6 xl:grid-cols-[minmax(0,1.3fr)_minmax(320px,0.9fr)]">
+        <div className="rounded-[24px] border border-white/8 bg-white/[0.04] p-6 shadow-[0_12px_32px_rgba(15,23,42,0.18)]">
+          <div className="flex items-end justify-between gap-4">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">Recent activity</p>
+              <h3 className="mt-2 text-2xl font-semibold tracking-[-0.04em] text-white">최근 주요 변화</h3>
+            </div>
+            <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs text-slate-300">
+              {timeline.length ? `${timeline.length} events` : 'No recent events'}
+            </span>
+          </div>
+
+          <div className="mt-5 space-y-3">
+            {(timeline.length
+              ? timeline.slice(0, 4)
+              : [{ date: '오늘', type: '유지', detail: 'Step 1.5에서는 Home 활동 로그를 위한 최소 구조를 먼저 고정합니다.' }]
+            ).map((event) => (
+              <div key={`${event.date}:${event.type}:${event.detail}`} className="rounded-2xl border border-white/8 bg-slate-950/40 px-4 py-3">
+                <div className="flex flex-wrap items-center gap-2 text-xs uppercase tracking-[0.16em] text-slate-500">
+                  <span>{event.date}</span>
+                  <span className="rounded-full border border-white/10 bg-white/[0.04] px-2 py-1 text-[10px] text-slate-300">
+                    {event.type}
+                  </span>
+                </div>
+                <p className="mt-2 text-sm leading-6 text-slate-300">{event.detail}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="rounded-[24px] border border-white/8 bg-white/[0.04] p-6 shadow-[0_12px_32px_rgba(15,23,42,0.18)]">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">Inbox preview</p>
+          <h3 className="mt-2 text-2xl font-semibold tracking-[-0.04em] text-white">오늘 확인할 것</h3>
+          <div className="mt-5 space-y-3 text-sm text-slate-300">
+            <div className="rounded-2xl border border-white/8 bg-slate-950/40 px-4 py-3">
+              오늘 액션: {action} / 목표 {actionWeight}%
+            </div>
+            <div className="rounded-2xl border border-white/8 bg-slate-950/40 px-4 py-3">
+              핵심 사유: {snapshot?.action_hero?.reason_summary ?? 'action summary cache 연결 예정'}
+            </div>
+            <div className="rounded-2xl border border-white/8 bg-slate-950/40 px-4 py-3">
+              Manual truth source: {snapshot?.meta?.manual_source_version ?? 'wealth_manual.json'}
+            </div>
+          </div>
+        </div>
       </section>
     </div>
   )

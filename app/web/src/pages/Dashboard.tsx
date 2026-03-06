@@ -3,7 +3,7 @@ import type { AppSnapshot, RiskGaugeValue, RiskStatus } from '../types/appSnapsh
 
 type MockState = 'action-needed' | 'no-action';
 
-export type DashboardSnapshot = AppSnapshot;
+type DashboardSnapshot = AppSnapshot;
 
 const MOCK_SNAPSHOTS: Record<MockState, DashboardSnapshot> = {
   'action-needed': {

@@ -1,11 +1,11 @@
-import type { DashboardSnapshot } from '../Dashboard'
+import type { AppSnapshot } from '../../types/appSnapshot'
 
 function formatKrw(value?: number) {
   if (value === undefined || Number.isNaN(value)) return 'N/A'
   return `${new Intl.NumberFormat('ko-KR', { maximumFractionDigits: 0 }).format(value)}원`
 }
 
-export default function CashDebtManager({ snapshot }: { snapshot?: DashboardSnapshot }) {
+export default function CashDebtManager({ snapshot }: { snapshot?: AppSnapshot }) {
   const overview = snapshot?.wealth_overview
 
   return (

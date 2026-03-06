@@ -484,3 +484,37 @@
   - `python3 ops/scripts/export_dashboard_snapshot.py` → `Saved dashboard snapshot to app/web/public/dashboard_snapshot.json`
   - `cd app/web && npm run lint` → `LINT_OK`
   - `cd app/web && npm run build` → production build 성공
+
+---
+
+# TODO - Wealth Management Step 1.5 Hardening
+
+- [x] Task 1: Core Strategy Manager에서 Dashboard embedded 모드 완전 적용
+- [x] Task 2: Home에 recent activity + inbox preview 추가
+- [x] Task 3: frontend snapshot 타입 단일화
+- [x] Task 4: Step 2 범위(`transactions`, `summary_store`) 문서/체크리스트 명시
+- [x] Task 5: Step 1.5 전체 검증 및 review 기록
+
+## Review (완료)
+
+- Task 1~3 재검증 결과:
+  - `CoreStrategyManager.tsx`는 `Dashboard`를 `embedded` 모드로 렌더링한다.
+  - `Home.tsx`는 `recent activity`와 `inbox preview`를 포함해 desk 역할을 수행한다.
+  - frontend snapshot 타입은 `app/web/src/types/appSnapshot.ts` 중심으로 공유되고 `Dashboard.tsx`는 alias로 재사용한다.
+- Task 4 문서 정리:
+  - `docs/plans/2026-03-06-wealth-management-system-implementation-plan.md`에 Step 2 이월 범위를 명시했다.
+  - `transactions`, `assets/accounts`, `summary_store`, stale/fresh summary metadata, manager batch summary jobs를 Step 2 선행 의존성으로 분리했다.
+- 검증:
+  - `UV_CACHE_DIR=/tmp/.uv-cache uv run --with pytest pytest -q tests/wealth/test_schema_contract.py tests/wealth/test_derived_foundation.py tests/wealth/test_step1_dashboard_snapshot.py tests/contracts/test_dashboard_snapshot_v2.py tests/contracts/test_wealth_home_snapshot_step1.py` → `13 passed`
+  - `UV_CACHE_DIR=/tmp/.uv-cache uv run --with pytest pytest -q` → `41 passed`
+  - `python3 ops/scripts/export_dashboard_snapshot.py` → `Saved dashboard snapshot to app/web/public/dashboard_snapshot.json`
+  - `cd app/web && npm run lint` → `LINT_OK`
+  - `cd app/web && npm run build` → production build 성공
+
+## Step 2 Preconditions
+
+- `transactions` truth contract는 Step 2에서 추가한다.
+- `assets/accounts` 분리 canonical entity는 Step 2에서 판단/도입한다.
+- `summary_store` + stale/fresh manager cache는 Step 2 첫 작업으로 선행한다.
+- Home inbox 자동 합성은 Step 2의 manager summary jobs 이후 연결한다.
+

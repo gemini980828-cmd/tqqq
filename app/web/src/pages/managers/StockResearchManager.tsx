@@ -1,6 +1,6 @@
-import type { DashboardSnapshot } from '../Dashboard'
+import type { AppSnapshot } from '../../types/appSnapshot'
 
-export default function StockResearchManager({ snapshot }: { snapshot?: DashboardSnapshot }) {
+export default function StockResearchManager({ snapshot }: { snapshot?: AppSnapshot }) {
   const managerCard = snapshot?.manager_cards?.find((card) => card.manager_id === 'stock_research')
 
   return (

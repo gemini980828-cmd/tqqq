@@ -1,11 +1,12 @@
-import Dashboard, { type DashboardSnapshot } from '../Dashboard'
+import type { AppSnapshot } from '../../types/appSnapshot'
+import Dashboard from '../Dashboard'
 
 function formatKrw(value?: number) {
   if (value === undefined || Number.isNaN(value)) return 'N/A'
   return `${new Intl.NumberFormat('ko-KR', { maximumFractionDigits: 0 }).format(value)}원`
 }
 
-export default function CoreStrategyManager({ snapshot }: { snapshot?: DashboardSnapshot }) {
+export default function CoreStrategyManager({ snapshot }: { snapshot?: AppSnapshot }) {
   const position = snapshot?.core_strategy_position ?? snapshot?.core_strategy_actuals
 
   return (
@@ -39,7 +40,7 @@ export default function CoreStrategyManager({ snapshot }: { snapshot?: Dashboard
         )}
       </section>
 
-      <Dashboard snapshot={snapshot} />
+      <Dashboard snapshot={snapshot} embedded />
     </div>
   )
 }

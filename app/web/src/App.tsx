@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { HashRouter, Navigate, Route, Routes } from 'react-router-dom'
 
 import TopNav from './components/TopNav'
-import Dashboard, { type DashboardSnapshot } from './pages/Dashboard'
+import type { AppSnapshot } from './types/appSnapshot'
+import Dashboard from './pages/Dashboard'
 import Home from './pages/Home'
 import Inbox from './pages/Inbox'
 import Managers from './pages/Managers'
@@ -14,7 +15,7 @@ import ManagersLayout from './pages/managers/ManagersLayout'
 import RealEstateManager from './pages/managers/RealEstateManager'
 import StockResearchManager from './pages/managers/StockResearchManager'
 
-function AppShell({ snapshot }: { snapshot?: DashboardSnapshot }) {
+function AppShell({ snapshot }: { snapshot?: AppSnapshot }) {
   return (
     <HashRouter>
       <div className="min-h-screen bg-[#08101b] text-slate-100">
@@ -42,7 +43,7 @@ function AppShell({ snapshot }: { snapshot?: DashboardSnapshot }) {
 }
 
 export default function App() {
-  const [snapshot, setSnapshot] = useState<DashboardSnapshot | undefined>()
+  const [snapshot, setSnapshot] = useState<AppSnapshot | undefined>()
 
   useEffect(() => {
     let cancelled = false
@@ -51,7 +52,7 @@ export default function App() {
       try {
         const response = await fetch('/dashboard_snapshot.json', { cache: 'no-store' })
         if (!response.ok) return
-        const data = (await response.json()) as DashboardSnapshot
+        const data = (await response.json()) as AppSnapshot
         if (!cancelled) {
           setSnapshot(data)
         }

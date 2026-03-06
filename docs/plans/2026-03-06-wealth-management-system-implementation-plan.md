@@ -161,6 +161,26 @@ git commit -m "feat: add wealth management navigation and manager shells"
 - Home clearly reads as wealth desk + manager hub.
 - Frontend lint/build remains green.
 
+### Explicit defer after Step 1 / Step 1.5
+
+The following items are **not Step 1 bugs** and are intentionally deferred into Step 2:
+
+- `transactions` truth contract
+- separate `assets/accounts` canonical entities beyond the current MVP collections
+- `summary_store.py` and persisted manager-summary cache
+- stale/fresh summary metadata surfaced in Home
+- manager batch summary jobs and Home inbox synthesis fed from cached summaries
+
+Step 2 should start by establishing those data/cache dependencies explicitly before any real-time orchestrator work.
+
+> **Step 1 foundation note:** The reviewed Step 1 implementation intentionally stopped at the manual-truth shell (`positions`, `cash_debt`, `stock_watchlist`, `property_watchlist`) plus Home/Core Strategy wiring. The following items are explicitly deferred into Step 2 / later tasks rather than treated as Step 1 bugs:
+> - canonical `transactions` truth,
+> - separate `assets/accounts` entities if still required after transaction modeling,
+> - `summary_store.py` and manager summary freshness/staleness artifacts,
+> - batch manager summary generation and Home inbox synthesis.
+>
+> Executors should not reopen Step 1 to add those features unless a later task in this plan explicitly calls for them.
+
 ### Task 4: Add batch manager-summary jobs and Home inbox generation
 
 **Files:**
