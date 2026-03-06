@@ -1,8 +1,47 @@
 import { useEffect, useState } from 'react'
+import { HashRouter, Navigate, Route, Routes } from 'react-router-dom'
 
+import TopNav from './components/TopNav'
 import Dashboard, { type DashboardSnapshot } from './pages/Dashboard'
+import Home from './pages/Home'
+import Inbox from './pages/Inbox'
+import Managers from './pages/Managers'
+import Reports from './pages/Reports'
+import Research from './pages/Research'
+import CashDebtManager from './pages/managers/CashDebtManager'
+import CoreStrategyManager from './pages/managers/CoreStrategyManager'
+import ManagersLayout from './pages/managers/ManagersLayout'
+import RealEstateManager from './pages/managers/RealEstateManager'
+import StockResearchManager from './pages/managers/StockResearchManager'
 
-function App() {
+function AppShell({ snapshot }: { snapshot?: DashboardSnapshot }) {
+  return (
+    <HashRouter>
+      <div className="min-h-screen bg-[#08101b] text-slate-100">
+        <TopNav />
+        <main className="mx-auto max-w-7xl px-4 py-6 md:px-8 md:py-8">
+          <Routes>
+            <Route path="/" element={<Home snapshot={snapshot} />} />
+            <Route path="/managers" element={<ManagersLayout />}>
+              <Route index element={<Managers snapshot={snapshot} />} />
+              <Route path="core-strategy" element={<CoreStrategyManager snapshot={snapshot} />} />
+              <Route path="stocks" element={<StockResearchManager snapshot={snapshot} />} />
+              <Route path="real-estate" element={<RealEstateManager snapshot={snapshot} />} />
+              <Route path="cash-debt" element={<CashDebtManager snapshot={snapshot} />} />
+            </Route>
+            <Route path="/research" element={<Research />} />
+            <Route path="/inbox" element={<Inbox snapshot={snapshot} />} />
+            <Route path="/reports" element={<Reports snapshot={snapshot} />} />
+            <Route path="/legacy-dashboard" element={<Dashboard snapshot={snapshot} />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </main>
+      </div>
+    </HashRouter>
+  )
+}
+
+export default function App() {
   const [snapshot, setSnapshot] = useState<DashboardSnapshot | undefined>()
 
   useEffect(() => {
@@ -27,7 +66,5 @@ function App() {
     }
   }, [])
 
-  return <Dashboard snapshot={snapshot} />
+  return <AppShell snapshot={snapshot} />
 }
-
-export default App

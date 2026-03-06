@@ -60,5 +60,126 @@
     "alert_key": "2026-01-30:0.95->0.95",
     "last_success_at": "2026-01-30T00:00:00",
     "next_run_at": "2026-03-07T22:30:00+00:00"
+  },
+  "wealth_home": {
+    "overview": {
+      "invested_krw": 9720000,
+      "cash_krw": 1500000,
+      "debt_krw": 0,
+      "net_worth_krw": 11220000
+    },
+    "manager_cards": [
+      {
+        "manager_id": "core_strategy",
+        "title": "Core Strategy",
+        "label": "Core Strategy",
+        "status": "live",
+        "headline": "실보유 86.63% / 목표 95.00%",
+        "summary": "실보유 86.63% / 목표 95.00%"
+      },
+      {
+        "manager_id": "stock_research",
+        "title": "Stock Research",
+        "label": "Stock Research",
+        "status": "tracking",
+        "headline": "관심종목 1개",
+        "summary": "관심종목 1개"
+      },
+      {
+        "manager_id": "real_estate",
+        "title": "Real Estate",
+        "label": "Real Estate",
+        "status": "tracking",
+        "headline": "관심 단지 1개",
+        "summary": "관심 단지 1개"
+      },
+      {
+        "manager_id": "cash_debt",
+        "title": "Cash & Debt",
+        "label": "Cash & Debt",
+        "status": "monitoring",
+        "headline": "현금/부채 항목 1개",
+        "summary": "현금 1,500,000원"
+      }
+    ],
+    "updated_at": "2026-01-30T00:00:00"
+  },
+  "wealth_overview": {
+    "invested_krw": 9720000,
+    "investable_assets_krw": 9720000,
+    "cash_krw": 1500000,
+    "debt_krw": 0,
+    "net_worth_krw": 11220000
+  },
+  "manager_cards": [
+    {
+      "manager_id": "core_strategy",
+      "title": "Core Strategy",
+      "label": "Core Strategy",
+      "status": "live",
+      "headline": "실보유 86.63% / 목표 95.00%",
+      "summary": "실보유 86.63% / 목표 95.00%"
+    },
+    {
+      "manager_id": "stock_research",
+      "title": "Stock Research",
+      "label": "Stock Research",
+      "status": "tracking",
+      "headline": "관심종목 1개",
+      "summary": "관심종목 1개"
+    },
+    {
+      "manager_id": "real_estate",
+      "title": "Real Estate",
+      "label": "Real Estate",
+      "status": "tracking",
+      "headline": "관심 단지 1개",
+      "summary": "관심 단지 1개"
+    },
+    {
+      "manager_id": "cash_debt",
+      "title": "Cash & Debt",
+      "label": "Cash & Debt",
+      "status": "monitoring",
+      "headline": "현금/부채 항목 1개",
+      "summary": "현금 1,500,000원"
+    }
+  ],
+  "core_strategy_position": {
+    "symbol": "TQQQ",
+    "name": "ProShares UltraPro QQQ",
+    "quantity": 120.0,
+    "actual_value_krw": 9720000,
+    "market_value_krw": 9720000,
+    "market_price_krw": 81000,
+    "avg_cost_krw": 76000,
+    "target_weight_pct": 95.0,
+    "actual_weight_pct": 86.63,
+    "gap_weight_pct": 8.37,
+    "gap_pct": -8.37,
+    "target_value_krw": 10659000,
+    "rebalance_gap_krw": 939000,
+    "rebalance_action": "buy",
+    "investable_total_krw": 11220000
+  },
+  "core_strategy_actuals": {
+    "symbol": "TQQQ",
+    "name": "ProShares UltraPro QQQ",
+    "quantity": 120.0,
+    "actual_value_krw": 9720000,
+    "market_value_krw": 9720000,
+    "market_price_krw": 81000,
+    "avg_cost_krw": 76000,
+    "target_weight_pct": 95.0,
+    "actual_weight_pct": 86.63,
+    "gap_weight_pct": 8.37,
+    "gap_pct": -8.37,
+    "target_value_krw": 10659000,
+    "rebalance_gap_krw": 939000,
+    "rebalance_action": "buy",
+    "investable_total_krw": 11220000
+  },
+  "meta": {
+    "manual_source_version": "wealth_manual.json"
   }
 }

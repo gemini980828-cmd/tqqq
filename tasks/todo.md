@@ -453,3 +453,34 @@
 - AI 구조는 `배치/이벤트 기반 manager summaries + 사용자 요청 시 실시간 orchestrator chat`으로 확정했다.
 - 비용 통제 원칙(B)을 문서화했다: 페이지 로드시 AI 호출 금지, cached summary 우선, deep analysis는 명시적 요청 기반.
 - 다음 실행 문서는 `docs/plans/2026-03-06-wealth-management-system-implementation-plan.md` 기준으로 진행한다.
+
+---
+
+# TODO - Wealth Management System Step 1 (Foundation)
+
+- [x] Stream A: app shell / navigation skeleton 구현
+- [x] Stream B: wealth schema + manual truth inputs + 최소 derived helper 구현
+- [x] Stream D: 기존 TQQQ dashboard를 Core Strategy Manager로 승격
+- [x] Snapshot/API를 step-1 shell에 맞게 연결
+- [x] pytest / lint / build 검증
+- [x] 리뷰 기록 및 커밋
+
+## Review
+
+- Stream A (app shell / navigation)
+  - `app/web/src/App.tsx`를 `Home / Managers / Research / Inbox / Reports` 다중 라우팅 구조로 확장했다.
+  - `TopNav`, `ManagerCard`, `OrchestratorPanel`, `Managers`, `ManagersLayout` 및 manager shell 페이지를 추가했다.
+  - 기존 TQQQ 단일 대시보드는 `CoreStrategyManager` 내부에서 재사용하도록 이동했다.
+- Stream B (wealth truth foundation)
+  - `src/tqqq_strategy/wealth/`에 `schema.py`, `manual_inputs.py`, `derived.py`, `__init__.py`를 추가했다.
+  - 수동 truth 입력(`data/manual/wealth_manual.json`)을 기준으로 positions / cash_debt / stock_watchlist / property_watchlist를 canonical 형태로 정규화한다.
+  - derived helper로 `build_wealth_overview`, `build_core_strategy_position`, `build_manager_cards`를 제공한다.
+- Stream D (snapshot / API wiring)
+  - `src/tqqq_strategy/ops/dashboard_snapshot.py`가 기존 action-first snapshot에 `wealth_home`, `wealth_overview`, `manager_cards`, `core_strategy_actuals`, `meta`를 함께 생성하도록 확장되었다.
+  - `app/api/main.py`와 `ops/scripts/export_dashboard_snapshot.py`가 step-1 wealth fields를 정규화/내보내도록 갱신되었다.
+  - `app/web/public/dashboard_snapshot.json`을 실데이터 기준으로 재생성했다.
+- 검증
+  - `UV_CACHE_DIR=/tmp/.uv-cache uv run --offline --with pytest pytest -q` → `41 passed`
+  - `python3 ops/scripts/export_dashboard_snapshot.py` → `Saved dashboard snapshot to app/web/public/dashboard_snapshot.json`
+  - `cd app/web && npm run lint` → `LINT_OK`
+  - `cd app/web && npm run build` → production build 성공

@@ -1,40 +1,9 @@
 import { useMemo, useState } from 'react';
+import type { AppSnapshot, RiskGaugeValue, RiskStatus } from '../types/appSnapshot';
 
-type RiskStatus = 'green' | 'amber' | 'red';
 type MockState = 'action-needed' | 'no-action';
 
-type RiskGaugeValue = { value: number; threshold: number; status: RiskStatus };
-
-export type DashboardSnapshot = {
-  action_hero?: {
-    action: string;
-    target_weight_pct: number;
-    reason_summary: string;
-    updated_at: string;
-  };
-  kpi_cards?: {
-    cagr_pct: number;
-    mdd_pct: number;
-    month_1_return_pct: number;
-    condition_pass_rate: string;
-  };
-  risk_gauges?: {
-    vol20?: RiskGaugeValue;
-    spy200_dist?: RiskGaugeValue;
-    tqqq_dist200?: RiskGaugeValue;
-  };
-  event_timeline?: Array<{
-    date: string;
-    type: string;
-    detail: string;
-  }>;
-  ops_log?: {
-    run_id: string;
-    alert_key: string;
-    last_success_at: string;
-    next_run_at?: string;
-  };
-};
+export type DashboardSnapshot = AppSnapshot;
 
 const MOCK_SNAPSHOTS: Record<MockState, DashboardSnapshot> = {
   'action-needed': {
@@ -293,7 +262,7 @@ const KpiRow = ({ data }: { data?: DashboardSnapshot['kpi_cards'] }) => {
 const RiskGaugeRow = ({ data }: { data?: DashboardSnapshot['risk_gauges'] }) => {
   const gauges: Array<{
     label: string;
-    key: keyof NonNullable<DashboardSnapshot['risk_gauges']>;
+    key: 'vol20' | 'spy200_dist' | 'tqqq_dist200';
     helper: string;
     unit?: string;
     higherIsBetter: boolean;
@@ -423,15 +392,15 @@ const OpsLogAccordion = ({ data }: { data?: DashboardSnapshot['ops_log'] }) => {
   );
 };
 
-export default function Dashboard({ snapshot }: { snapshot?: DashboardSnapshot }) {
+export default function Dashboard({ snapshot, embedded = false }: { snapshot?: DashboardSnapshot; embedded?: boolean }) {
   const mockState = useMemo(() => getMockState(), []);
   const usingMock = !snapshot;
   const effSnapshot = snapshot ?? MOCK_SNAPSHOTS[mockState];
 
   return (
-    <div className="min-h-screen bg-[#08101b] px-4 py-6 text-slate-100 md:px-8 md:py-8">
-      <div className="mx-auto max-w-6xl space-y-6">
-        <header className="flex flex-col gap-3 border-b border-white/8 pb-6 md:flex-row md:items-end md:justify-between">
+    <div className={`${embedded ? "" : "min-h-screen bg-[#08101b] px-4 py-6 md:px-8 md:py-8"} text-slate-100`}>
+      <div className={`${embedded ? "space-y-6" : "mx-auto max-w-6xl space-y-6"}`}>
+        {!embedded && <header className="flex flex-col gap-3 border-b border-white/8 pb-6 md:flex-row md:items-end md:justify-between">
           <div>
             <p className="text-[10px] font-semibold uppercase tracking-[0.32em] text-slate-500">Institutional platform</p>
             <h1 className="mt-3 text-4xl font-semibold tracking-[-0.06em] text-white md:text-5xl">
@@ -442,7 +411,7 @@ export default function Dashboard({ snapshot }: { snapshot?: DashboardSnapshot }
           <div className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-slate-300">
             {usingMock ? '`?mock=action-needed` / `?mock=no-action`' : 'live snapshot'}
           </div>
-        </header>
+        </header>}
 
         <ActionHero data={effSnapshot.action_hero} showingMock={usingMock} />
         <KpiRow data={effSnapshot.kpi_cards} />

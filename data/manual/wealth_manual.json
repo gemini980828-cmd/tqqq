@@ -1,0 +1,39 @@
+{
+  "positions": [
+    {
+      "account_id": "samsung-core",
+      "asset_id": "tqqq-core",
+      "manager_id": "core_strategy",
+      "symbol": "TQQQ",
+      "name": "ProShares UltraPro QQQ",
+      "quantity": 120,
+      "avg_cost_krw": 76000,
+      "market_price_krw": 81000,
+      "market_value_krw": 9720000
+    }
+  ],
+  "cash_debt": [
+    {
+      "entry_id": "cash-main",
+      "kind": "cash",
+      "label": "투자예수금",
+      "balance_krw": 1500000
+    }
+  ],
+  "stock_watchlist": [
+    {
+      "idea_id": "stock-1",
+      "symbol": "NVDA",
+      "status": "관찰",
+      "memo": "AI 수혜 지속 모니터링"
+    }
+  ],
+  "property_watchlist": [
+    {
+      "property_id": "apt-1",
+      "name": "마포래미안푸르지오",
+      "status": "검토",
+      "region": "서울 마포구"
+    }
+  ]
+}

@@ -40,10 +40,56 @@ METRICS = """CAGR,MDD,AnnualVol,Sharpe,Sortino,Calmar,WinRateDaily,ProfitFactor,
 """
 
 EQUITY = "date,weight,equity,taxed_equity\n" + "\n".join(
-    f"2026-02-{day:02d},1.0,{100+idx},{100+idx}" for idx, day in enumerate(range(1, 23), start=0)
+    f"2026-02-{day:02d},1.0,{100 + idx},{100 + idx}" for idx, day in enumerate(range(1, 23), start=0)
 ) + "\n2026-03-05,1.0,124,124\n2026-03-06,1.0,126,126\n"
 
 STATE = '{"last_alert_key":"2026-03-06:1->2","last_sent_at":"2026-03-06T22:30:00+00:00"}'
+
+MANUAL = """{
+  "positions": [
+    {
+      "account_id": "samsung-core",
+      "asset_id": "tqqq-core",
+      "manager_id": "core_strategy",
+      "symbol": "TQQQ",
+      "name": "ProShares UltraPro QQQ",
+      "quantity": 120.0,
+      "avg_cost_krw": 76000,
+      "market_price_krw": 81000,
+      "market_value_krw": 9720000
+    }
+  ],
+  "cash_debt": [
+    {
+      "entry_id": "cash-main",
+      "kind": "cash",
+      "label": "투자대기현금",
+      "balance_krw": 15000000
+    },
+    {
+      "entry_id": "loan-margin",
+      "kind": "debt",
+      "label": "마이너스통장",
+      "balance_krw": 2000000
+    }
+  ],
+  "stock_watchlist": [
+    {
+      "idea_id": "stock-1",
+      "symbol": "NVDA",
+      "status": "관찰",
+      "memo": "AI 인프라 핵심 수혜"
+    }
+  ],
+  "property_watchlist": [
+    {
+      "property_id": "apt-1",
+      "name": "마포래미안푸르지오",
+      "region": "서울 마포구",
+      "status": "관심"
+    }
+  ]
+}"""
 
 
 def _write(path: Path, text: str) -> Path:
@@ -53,13 +99,7 @@ def _write(path: Path, text: str) -> Path:
 
 def test_dashboard_snapshot_v2_keys() -> None:
     snap = build_dashboard_snapshot({})
-    required = {
-        "action_hero",
-        "kpi_cards",
-        "risk_gauges",
-        "event_timeline",
-        "ops_log",
-    }
+    required = {"action_hero", "kpi_cards", "risk_gauges", "event_timeline", "ops_log"}
     assert required.issubset(set(snap.keys()))
 
 
@@ -70,6 +110,7 @@ def test_generate_dashboard_snapshot_uses_real_files(tmp_path: Path) -> None:
         metrics_csv_path=_write(tmp_path / "metrics.csv", METRICS),
         equity_csv_path=_write(tmp_path / "equity.csv", EQUITY),
         state_path=_write(tmp_path / "state.json", STATE),
+        manual_truth_path=_write(tmp_path / "wealth_manual.json", MANUAL),
     )
 
     assert snap["action_hero"]["action"] == "매수"
@@ -79,9 +120,10 @@ def test_generate_dashboard_snapshot_uses_real_files(tmp_path: Path) -> None:
     assert snap["risk_gauges"]["vol20"]["status"] in {"green", "amber", "red"}
     assert snap["event_timeline"], "expected at least one event"
     assert any(
-        item["date"] == "2026-03-06"
-        and item["type"] == "비중 변경"
-        and "10.00% → 100.00%" in item["detail"]
+        item["date"] == "2026-03-06" and item["type"] == "비중 변경" and "10.00% → 100.00%" in item["detail"]
         for item in snap["event_timeline"]
     )
     assert snap["ops_log"]["alert_key"] == "2026-03-06:1->2"
+    assert snap["wealth_overview"]["net_worth_krw"] == 22720000
+    assert snap["core_strategy_actuals"]["symbol"] == "TQQQ"
+    assert snap["manager_cards"][0]["manager_id"] == "core_strategy"

@@ -7,6 +7,11 @@ from typing import Any
 
 import pandas as pd
 
+from tqqq_strategy.wealth import build_core_strategy_position, build_manager_cards, build_wealth_overview, load_manual_inputs
+
+
+DEFAULT_MANUAL_INPUTS_PATH = Path("data/manual/wealth_manual.json")
+
 
 def _status_lower_better(value: float, threshold: float, amber_ratio: float = 0.85) -> str:
     if pd.isna(value):
@@ -94,8 +99,10 @@ def generate_dashboard_snapshot(
     metrics_csv_path: Path | str = Path("reports/backtest_metrics_primary.csv"),
     state_path: Path | str = Path("reports/daily_telegram_alert_state.json"),
     equity_csv_path: Path | str = Path("reports/backtest_equity_primary.csv"),
+    manual_inputs_path: Path | str | None = None,
+    manual_truth_path: Path | str | None = None,
 ) -> dict[str, Any]:
-    """Generate the action-first dashboard snapshot from local signal/backtest artifacts."""
+    """Generate the action-first dashboard snapshot plus wealth-foundation fields."""
     signal_csv = Path(signal_csv_path)
     data_csv = Path(data_csv_path)
     metrics_csv = Path(metrics_csv_path)
@@ -111,13 +118,14 @@ def generate_dashboard_snapshot(
         else pd.DataFrame()
     )
     state = _read_optional_json(state_file)
+    resolved_manual_path = manual_truth_path or manual_inputs_path or DEFAULT_MANUAL_INPUTS_PATH
+    manual_inputs = load_manual_inputs(resolved_manual_path)
 
     latest_signal = signals.iloc[-1]
     prev_signal = signals.iloc[-2] if len(signals) >= 2 else latest_signal
     latest_date = latest_signal["time"]
     market_row = market.loc[market["time"] == latest_date]
     market_latest = market_row.iloc[-1] if not market_row.empty else market.iloc[-1]
-    market_prev = market.iloc[max(int(market_latest.name) - 1, 0)]
 
     target_weight = float(latest_signal["S2_weight"])
     prev_weight = float(prev_signal["S2_weight"])
@@ -144,6 +152,16 @@ def generate_dashboard_snapshot(
     condition_pass_rate = _build_condition_pass_rate(market_latest, vol20, tqqq_dist200, spy200_dist)
     default_next_run = (datetime.now(timezone.utc) + timedelta(days=1)).replace(hour=22, minute=30, second=0, microsecond=0)
 
+    wealth_overview = build_wealth_overview(manual_inputs)
+    home_overview = {
+        "invested_krw": wealth_overview["invested_krw"],
+        "cash_krw": wealth_overview["cash_krw"],
+        "debt_krw": wealth_overview["debt_krw"],
+        "net_worth_krw": wealth_overview["net_worth_krw"],
+    }
+    core_strategy_position = build_core_strategy_position(manual_inputs, target_weight_pct=round(target_weight * 100.0, 2))
+    manager_cards = build_manager_cards(manual_inputs, target_weight_pct=round(target_weight * 100.0, 2))
+
     return {
         "action_hero": {
             "action": action,
@@ -169,4 +187,14 @@ def generate_dashboard_snapshot(
             "last_success_at": str(state.get("last_sent_at") or latest_date.isoformat()),
             "next_run_at": str(state.get("next_run_at") or default_next_run.isoformat()),
         },
+        "wealth_home": {
+            "overview": home_overview,
+            "manager_cards": manager_cards,
+            "updated_at": latest_date.isoformat(),
+        },
+        "wealth_overview": wealth_overview,
+        "manager_cards": manager_cards,
+        "core_strategy_position": core_strategy_position,
+        "core_strategy_actuals": core_strategy_position,
+        "meta": {"manual_source_version": str(Path(resolved_manual_path).name)},
     }
