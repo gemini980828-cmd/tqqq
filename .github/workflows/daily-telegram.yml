@@ -1,0 +1,77 @@
+name: Daily Telegram Signal Alert
+
+on:
+  workflow_dispatch:
+  schedule:
+    # US market close 이후 여유 시간(UTC) - DST/표준시 모두 커버
+    - cron: "30 22 * * 1-5"
+
+concurrency:
+  group: daily-telegram-alert
+  cancel-in-progress: false
+
+jobs:
+  send-telegram-alert:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      TELEGRAM_DRY_RUN: "false"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v3
+
+      - name: Validate required secrets
+        run: |
+          if [ -z "${TELEGRAM_BOT_TOKEN}" ] || [ -z "${TELEGRAM_CHAT_ID}" ]; then
+            echo "TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID is empty."
+            exit 1
+          fi
+
+      - name: Resolve end date in New York timezone
+        id: end_date
+        run: |
+          END_DATE=$(python - <<'PY'
+          from datetime import datetime, timedelta
+          from zoneinfo import ZoneInfo
+          ny_today = datetime.now(ZoneInfo('America/New_York')).date()
+          print((ny_today + timedelta(days=1)).isoformat())
+          PY
+          )
+          echo "value=${END_DATE}" >> "$GITHUB_OUTPUT"
+
+      - name: Prepare user csv
+        run: |
+          uv run python ops/scripts/prepare_user_csv.py \
+            --start 2011-06-23 \
+            --end "${{ steps.end_date.outputs.value }}" \
+            --out data/user_input.csv
+
+      - name: Generate original reference signals
+        run: uv run python ops/scripts/user_original_reference.py
+
+      - name: Send telegram alert
+        run: |
+          PYTHONPATH=src uv run python ops/scripts/run_daily_telegram_alert.py \
+            --signal-csv reports/signals_s1_s2_s3_user_original.csv \
+            --data-csv data/user_input.csv \
+            --state-path reports/daily_telegram_alert_state_gha.json
+
+      - name: Upload run artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: daily-telegram-artifacts
+          path: |
+            data/user_input.csv
+            reports/signals_s1_s2_s3_user_original.csv
+          if-no-files-found: warn

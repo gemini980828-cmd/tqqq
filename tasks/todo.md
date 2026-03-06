@@ -266,3 +266,18 @@
   - `UV_CACHE_DIR=.uv-cache uv run --offline --with pytest pytest -q tests/ops/test_telegram_alert.py tests/ops/test_daily_job.py` → `6 passed`
   - `UV_CACHE_DIR=.uv-cache uv run --offline --with pytest pytest -q` → `25 passed`
   - dry-run 실행으로 실제 메시지 렌더 확인 (`2026-01-30` 샘플)
+
+### Phase 3 Task A-3 - GitHub Actions 서버 자동발송 전환
+- [x] GitHub Actions 스케줄 워크플로 추가 (`.github/workflows/daily-telegram.yml`)
+- [x] workflow_dispatch 수동 실행 경로 추가
+- [x] 필수 secrets 검증 단계 추가 (`TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`)
+- [x] 운영 runbook 추가 (`docs/runbooks/github-actions-telegram.md`)
+- [ ] GitHub 저장소 secrets 등록 후 수동 실행 1회 확인 (사용자 측)
+
+### Phase 3 Task A-3 Review
+- 일일 자동발송 워크플로 작성 완료:
+  - 데이터 준비 → 원본 신호 생성 → 텔레그램 발송
+  - 스케줄: `30 22 * * 1-5` (UTC)
+  - 아티팩트 업로드로 실행 결과 추적 가능
+- 사용자 수동작업 최소화:
+  - GitHub Actions repository secret 2개만 등록하면 동작
