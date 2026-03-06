@@ -432,3 +432,24 @@
   - `UV_CACHE_DIR=/tmp/.uv-cache uv run --offline --with pytest pytest -q` → `30 passed`
   - `python3 ops/scripts/export_dashboard_snapshot.py` → `app/web/public/dashboard_snapshot.json` 생성 확인
   - `npm run build` (`app/web`) → production build 성공
+
+---
+
+# TODO - Wealth Management System Design / Planning
+
+- [x] 투자운영 중심 자산관리 시스템 방향 재정의
+- [x] 웹 레퍼런스 기반 추가 모듈 후보 정리
+- [x] 1안 vs 3안 비교 후 절충안 확정
+- [x] AI 구조 확정 (manager summaries + real-time orchestrator)
+- [x] 데이터 truth / 비용정책 / 홈 UX / MVP 범위 확정
+- [x] 설계 문서 작성 (`docs/plans/2026-03-06-wealth-management-system-design.md`)
+- [x] 구현 계획 문서 작성 (`docs/plans/2026-03-06-wealth-management-system-implementation-plan.md`)
+
+## Review
+
+- 자산관리 시스템을 `Home / Managers / Research / Inbox / Reports` 구조로 재정의했다.
+- 내부 구조는 자산 카탈로그형, 사용자 노출은 매니저형 감성을 유지하는 절충안을 채택했다.
+- MVP 기준 매니저는 `Core Strategy(TQQQ) / Stocks / Real Estate / Cash & Debt`로 확정했다.
+- AI 구조는 `배치/이벤트 기반 manager summaries + 사용자 요청 시 실시간 orchestrator chat`으로 확정했다.
+- 비용 통제 원칙(B)을 문서화했다: 페이지 로드시 AI 호출 금지, cached summary 우선, deep analysis는 명시적 요청 기반.
+- 다음 실행 문서는 `docs/plans/2026-03-06-wealth-management-system-implementation-plan.md` 기준으로 진행한다.
