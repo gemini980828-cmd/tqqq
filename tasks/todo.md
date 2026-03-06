@@ -7,6 +7,7 @@
 - [x] Verify installation with `codex mcp list` and per-server `codex mcp get`
 
 ## Review
+
 - Added MCP servers:
   - `serena` → `uvx --from git+https://github.com/oraios/serena serena start-mcp-server --context codex`
   - `context7` → `npx -y @upstash/context7-mcp@latest`
@@ -26,6 +27,7 @@
 - [x] (6) writing-plans 단계로 전환
 
 ## Review (진행중)
+
 - TradingView 코드 로드 완료(1297 lines)
 - 핵심 엔진 블록 위치 확인:
   - RTH 종가 이벤트: `tradingview.txt:302-315`
@@ -34,8 +36,8 @@
 
 - 아키텍처 재검토 요청 반영: 누락 가능 항목(시간대/세금 환산/데이터 정합/알림 멱등성/실험 거버넌스) 점검 예정
 
-
 ## 설계 섹션 승인 현황
+
 - [x] 섹션1: 전체 아키텍처(2안+3전환 트리거)
 - [x] 섹션2: 데이터 계약 & 정합성
 - [x] 섹션3: 신호엔진/백테스트/검증 게이트
@@ -45,10 +47,12 @@
 - 텔레그램 샘플 UI 반영 요구 확인: `9551781008_192159903_f42a776fa8b229fbdd2105c6cd411d85.webp`
 
 ## 작성된 산출물
+
 - `docs/plans/2026-03-05-tqqq-strategy-design.md`
 - `docs/plans/2026-03-05-tqqq-strategy-implementation-plan.md`
 
 ## 구현 진행 (Subagent-Driven)
+
 - [x] Task 1: 프로젝트 골격 및 테스트 환경 부트스트랩
 - [x] Task 2: 데이터 계약(canonical schema) 및 품질검사
 - [x] Task 3: 원천 수집기(stooq/yfinance)
@@ -56,120 +60,135 @@
 - [x] Task 5: 백테스트 비용/세금 모듈 스캐폴드
 
 ### Task 2 Execution Plan (canonical schema + quality)
+
 - [x] Add failing tests for canonical validation (missing columns, duplicate date+symbol)
 - [x] Implement schema constants in `src/tqqq_strategy/data/schema.py`
 - [x] Implement `validate_canonical(df) -> (ok, errs)` in `src/tqqq_strategy/data/quality.py`
 - [x] Run targeted tests and capture results
 
 ### Task 2 Review
+
 - Added canonical requirement constants in `schema.py` (date,symbol,close,adj_close,source,tz,session_type,is_trading_day).
 - Implemented `validate_canonical(df)` for required-column checks and duplicate `(date,symbol)` rejection.
 - Added TDD tests including duplicate rejection assertion containing "duplicate".
 - Verified with `uv run --with pytest pytest -q tests/data/test_schema_quality.py` (3 passed).
 
-
 ### Task 3 Execution Plan (ingest normalizers)
+
 - [x] Add minimal normalizer modules for yfinance/stooq canonical rows
 - [x] Add ingest contract tests (including required normalize_yf_row example)
 - [x] Run targeted data tests and capture results
 
 ### Task 3 Review
+
 - Created `ingest_yf.py` with `normalize_yf_row(...)` returning canonical fields including `tz`, `session_type`, `is_trading_day`.
 - Created `ingest_stooq.py` with `normalize_stooq_row(...)` and `adj_close=close` defaulting for stooq rows.
 - Added `tests/data/test_ingest_contract.py` covering the required yfinance contract example and stooq canonical defaults.
 - Verified with `UV_CACHE_DIR=/tmp/.uv-cache uv run --with pytest pytest -q tests/data/test_ingest_contract.py tests/data/test_schema_quality.py` (5 passed).
 
-
 ### Task 4 Execution Plan (signal engine v1)
+
 - [x] Add priority test for lock override
 - [x] Implement minimal `decide_code(...)` in `engine_v1.py`
 - [x] Add minimal signal params constants in `params.py`
 - [x] Run targeted signal test and capture result
 
 ### Task 4 Review
+
 - Added `src/tqqq_strategy/signal/engine_v1.py` with priority decision flow from plan spec.
 - Added `src/tqqq_strategy/signal/params.py` for minimal action/overheat constants used by v1 engine.
 - Added `tests/signal/test_engine_v1_priority.py` asserting lock has highest priority (`code == 0`).
 
 ### Task 5 Execution Plan (backtest cost/tax)
+
 - [x] Add failing test for KR overseas tax function behavior
 - [x] Implement minimal KR overseas tax function in `src/tqqq_strategy/backtest/tax_kr.py`
 - [x] Create minimal runner scaffold file required by plan (`src/tqqq_strategy/backtest/runner.py`)
 - [x] Run targeted backtest tax tests and capture result
 
 ### Task 5 Review
+
 - Added `tests/backtest/test_cost_tax.py` first and confirmed initial failure (`ModuleNotFoundError`) before implementation.
 - Implemented `apply_korean_overseas_tax(realized_profit_krw: float) -> float` exactly per plan in `src/tqqq_strategy/backtest/tax_kr.py`.
 - Added required scaffold file `src/tqqq_strategy/backtest/runner.py` for Task 5 scope.
 - Verified with `UV_CACHE_DIR=/tmp/.uv-cache uv run --with pytest pytest -q tests/backtest/test_cost_tax.py` (2 passed).
 
 ### Task 6 Execution Plan (validation tolerance)
+
 - [x] Add failing tolerance test in `tests/validation/test_weight_tolerance.py`
 - [x] Implement minimal `within_tolerance(...)` in `src/tqqq_strategy/validation/golden_diff.py`
 - [x] Create `reports/.gitkeep`
 - [x] Run targeted validation test and capture result
 
-
 ### Task 6 Review
+
 - Added failing test first in `tests/validation/test_weight_tolerance.py` and confirmed import failure before implementation.
 - Implemented minimal `within_tolerance` in `src/tqqq_strategy/validation/golden_diff.py` using `abs(expected - actual) <= tol`.
 - Added required `reports/.gitkeep`.
 - Verified with `UV_CACHE_DIR=/tmp/.uv-cache uv run --offline --with pytest pytest -q tests/validation/test_weight_tolerance.py` (4 passed).
 
 ### Task 7 Execution Plan (WFO OOS gate)
+
 - [x] Add failing test in `tests/experiments/test_oos_gate.py`
 - [x] Implement minimal `passes_oos_gate(...)` in `src/tqqq_strategy/experiments/wfo.py`
 - [x] Run targeted experiment test and capture result
 
-
 ### Task 7 Review
+
 - Added failing test first in `tests/experiments/test_oos_gate.py` and confirmed initial `ModuleNotFoundError` before implementation.
 - Implemented minimal `passes_oos_gate(...)` in `src/tqqq_strategy/experiments/wfo.py` with `is_score <= 0` guard and ratio gate comparison.
 - Verified with `UV_CACHE_DIR=/tmp/.uv-cache uv run --offline --with pytest pytest -q tests/experiments/test_oos_gate.py` (2 passed).
 
 ### Task 8 Execution Plan (telegram snapshot contract)
+
 - [x] Add failing contract test in `tests/contracts/test_telegram_blocks.py`
 - [x] Implement minimal `build_dashboard_snapshot(payload: dict)` in `app/api/main.py`
 - [x] Create required scaffold files for web page and schema contract
 - [x] Run target contract test and capture fail/pass evidence
 
-
 ### Task 8 Review
+
 - Added failing contract test first in `tests/contracts/test_telegram_blocks.py` and captured initial import failure for missing `app` module path.
 - Implemented minimal `build_dashboard_snapshot(payload)` in `app/api/main.py` returning required block keys.
 - Created required Task 8 files: `app/web/src/pages/Dashboard.tsx` and `app/contracts/telegram_snapshot.schema.json`.
 - Verified target test with `UV_CACHE_DIR=/tmp/.uv-cache uv run --offline --with pytest pytest -q tests/contracts/test_telegram_blocks.py` (1 passed).
 
 ### Task 9 Execution Plan (ops idempotency key)
+
 - [x] Add failing test first with exact `build_alert_key` contract
 - [x] Implement minimal `build_alert_key(date_str, prev_code, new_code)`
 - [x] Create minimal non-empty `daily_job.py` scaffold
 - [x] Run targeted ops test and capture output
 
 ### Task 9 Review
+
 - Added `tests/ops/test_idempotency.py` first with the exact required contract and confirmed initial failure: `ModuleNotFoundError: No module named 'tqqq_strategy.ops'`.
 - Implemented `build_alert_key(date_str, prev_code, new_code)` in `src/tqqq_strategy/ops/idempotency.py` as `f"{date_str}:{prev_code}->{new_code}"`.
 - Added minimal non-empty scaffold file `src/tqqq_strategy/ops/daily_job.py`.
 - Verified with `UV_CACHE_DIR=/tmp/.uv-cache uv run --offline --with pytest pytest -q tests/ops/test_idempotency.py` (`1 passed`).
 
 ### Task 10 Execution Plan (integration verification)
+
 - [x] Add runbook checklist doc at `docs/runbooks/backtest-and-ops-checklist.md`
 - [x] Run full test suite (`pytest -q`)
 - [x] Run validation module entry (`python -m tqqq_strategy.validation.golden_diff`)
 - [x] Record verification evidence in review notes
 
 ### Task 10 Review
+
 - Added `docs/runbooks/backtest-and-ops-checklist.md` with required operational verification checklist items.
 - Verified full test suite with `UV_CACHE_DIR=/tmp/.uv-cache uv run --offline --with pytest pytest -q` (`17 passed`).
 - Verified validation module entry with `PYTHONPATH=src python3 -m tqqq_strategy.validation.golden_diff` (exit 0).
 
 ### Backtest Run Execution Plan (Primary window)
+
 - [x] Add executable backtest runner script using current reference strategy logic
 - [x] Run primary window backtest (2011-06-23 ~ 2026-01-30 close) and export metrics/equity
 - [x] Extend metrics beyond CAGR/MDD (risk-adjusted and path metrics)
 - [ ] Review outputs with user and calibrate assumptions (tax/fill/slippage/data-source)
 
 ### Backtest Tax Model Recalibration Review
+
 - Replaced simplified year-end equity tax approximation with realized-gain based annual tax ledger model in `ops/scripts/run_reference_backtest.py`.
 - Tax model now applies 22% only to annual realized gains above 2.5M KRW deduction, based on sell transactions and moving average cost basis.
 - Added FX-aware execution valuation using `KRW=X` close series and exported `reports/backtest_tax_ledger_primary.csv`.
@@ -177,6 +196,7 @@
 - Verified regressions: `UV_CACHE_DIR=.uv-cache uv run --offline --with pytest pytest -q` (17 passed).
 
 ### No-TV Alternative Validation (Signal QA path)
+
 - [x] Added no-TV validation harness: `ops/scripts/generate_no_tv_validation_report.py`
 - [x] Added cost sensitivity runner: `ops/scripts/run_cost_sensitivity.py`
 - [x] Generated reports:
@@ -186,23 +206,27 @@
 - [x] Verified test baseline remains green (`17 passed`)
 
 ### After-tax Sensitivity Run (S2)
+
 - [x] Added runner `ops/scripts/run_aftertax_sensitivity.py` (bps × initial capital)
 - [x] Generated `reports/aftertax_sensitivity_s2.csv`
 - [x] Re-verified baseline tests (`17 passed`)
 - [x] Enhanced after-tax sensitivity report with tax-event-aware risk fields (`aftertax_mdd_raw`, `aftertax_mdd_ex_taxday`, `tax_event_days`)
 
 ### User-Original Signal Engine Backtest (Enforced)
+
 - [x] Re-ran using `reports/signals_s1_s2_s3_user_original.csv` as the only signal source
 - [x] Generated summary: `reports/user_signal_backtest_summary.csv`
 - [x] Generated after-tax sensitivity on user signal: `reports/aftertax_sensitivity_user_signal_s2.csv`
 
 ### Phase 2 Brainstorming Finalization
+
 - [x] 목표/가드레일 확정 (세후 CAGR 우선, MDD -50% 이내)
 - [x] 접근안 확정 (Grid + 안정성 게이트)
 - [x] 설계 문서 작성: `docs/plans/2026-03-06-performance-improvement-design.md`
 - [x] 구현 계획 문서 작성: `docs/plans/2026-03-06-performance-improvement-implementation-plan.md`
 
 ### Phase 2 Execution (Task1~Task7) - Autopilot
+
 - [x] Task1: `src/tqqq_strategy/experiments/phase2_config.py` 구현 (grid + 제약검증)
 - [x] Task2: `src/tqqq_strategy/experiments/phase2_runner.py` 구현 (원본 신호엔진 기반 후보 평가)
 - [x] Task3: `src/tqqq_strategy/experiments/phase2_oos.py` 구현 (IS/OOS 분할 + 유지율 게이트)
@@ -212,12 +236,14 @@
 - [x] Task7: 단위테스트 추가/검증 (`tests/experiments/test_phase2_constraints.py`, `tests/experiments/test_phase2_oos.py`)
 
 ### Phase 2 Key Result
+
 - baseline(after-tax CAGR): 38.60%
 - best(after-tax CAGR): 39.81%
 - delta: +1.22%p
 - hard gates: MDD pass, OOS retention pass(0.704)
 
 ### Phase 2 Overfitting Stress Test
+
 - [x] Added window stress script: `ops/scripts/run_phase2_stress_test.py`
 - [x] Generated: `experiments/stress_test_windows.csv`, `experiments/stress_test_summary.json`
 - [x] Result: best config improved after-tax CAGR in 5/5 windows (avg +0.80%p)
@@ -227,12 +253,14 @@
 - [x] Generated `experiments/ext2000_stress_test_windows.csv` and `experiments/ext2000_stress_test_summary.json`
 
 ### Phase 3 Task A - Telegram Daily Signal Alert
+
 - [x] Implement telegram sender module (message formatter + HTTP send + dry-run)
 - [x] Implement daily job orchestration (latest signal read + idempotency key + send)
 - [x] Add tests for formatter/idempotency/no-duplicate behavior
 - [x] Add CLI script for manual daily run and verify pytest green
 
 ### Phase 3 Task A Review
+
 - Added `src/tqqq_strategy/ops/telegram_alert.py` with stdlib `urllib` Telegram send and dry-run support.
 - Replaced `src/tqqq_strategy/ops/daily_job.py` with latest/previous signal read, idempotency key generation via `build_alert_key`, duplicate-skip state handling, and S2 transition message generation.
 - Added CLI `ops/scripts/run_daily_telegram_alert.py` to read `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`, `TELEGRAM_DRY_RUN` and print result JSON (defaults to dry-run when token/chat is missing).
@@ -250,12 +278,14 @@
 - [x] Registered user crontab (KST Tue-Sat 05:20 & 06:20) with idempotent duplicate protection
 
 ### Phase 3 Task A-2 - WebP 알림 포맷 정합
-- [x] WebP 샘플(9551781008_...webp) 알림 블록/문구 구조 매핑
+
+- [x] WebP 샘플(9551781008\_...webp) 알림 블록/문구 구조 매핑
 - [x] `daily_job.py` 메시지 구성 로직을 샘플 수준으로 확장 (포지션/사유/시장요약/운영로그)
 - [x] `run_daily_telegram_alert.py`에 `--data-csv` 인자 추가
 - [x] ops 테스트 보강 및 회귀 통과 확인
 
 ### Phase 3 Task A-2 Review
+
 - 메시지 포맷을 샘플 기준으로 강화:
   - `현재 포지션`, `교체 포지션`, `신호코드 전환`, `손익여부`, `로스 컷`
   - `📈 시장 데이터 요약` 내 50/100/200 이격도, 기울기 조건, SPY 필터, RSI 상태, 3캔들 이모지, 환율
@@ -268,6 +298,7 @@
   - dry-run 실행으로 실제 메시지 렌더 확인 (`2026-01-30` 샘플)
 
 ### Phase 3 Task A-3 - GitHub Actions 서버 자동발송 전환
+
 - [x] GitHub Actions 스케줄 워크플로 추가 (`.github/workflows/daily-telegram.yml`)
 - [x] workflow_dispatch 수동 실행 경로 추가
 - [x] 필수 secrets 검증 단계 추가 (`TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`)
@@ -275,6 +306,7 @@
 - [ ] GitHub 저장소 secrets 등록 후 수동 실행 1회 확인 (사용자 측)
 
 ### Phase 3 Task A-3 Review
+
 - 일일 자동발송 워크플로 작성 완료:
   - 데이터 준비 → 원본 신호 생성 → 텔레그램 발송
   - 스케줄: `30 22 * * 1-5` (UTC)
@@ -283,6 +315,7 @@
   - GitHub Actions repository secret 2개만 등록하면 동작
 
 ### Phase 3 Task A-4 - Telegram UX 고도화 (액션 우선/체크리스트)
+
 - [x] 액션 배너를 최상단에 추가 (`[액션 없음]` / `[매매 필요]`)
 - [x] 신호코드 raw 전환 대신 읽기 쉬운 신호 라벨 적용
 - [x] 손익 표시 분리 (일간 수익 vs 진입가 대비)
@@ -292,6 +325,7 @@
 - [x] ops 테스트 확장 및 회귀 통과 확인
 
 ### Phase 3 Task A-4 Review
+
 - 구현 파일:
   - `src/tqqq_strategy/ops/daily_job.py`
   - `src/tqqq_strategy/ops/telegram_alert.py`
@@ -307,6 +341,7 @@
   - `UV_CACHE_DIR=.uv-cache uv run --with pytest pytest -q` → `26 passed`
 
 ### Phase 3 Task A-5 - 피드백 라운드 2 (계기판형/액션유무 분리)
+
 - [x] 액션 유무에 따라 템플릿 분리 (무액션=요약형, 액션=상세형)
 - [x] 임계값 병기 라인으로 변경 (`Vol20`, `SPY200`, `Dist200`)
 - [x] 중복 라인 제거 (`현재/교체/코드전환` 반복 축소)
@@ -315,6 +350,7 @@
 - [x] 테스트 보강/회귀 통과
 
 ### Phase 3 Task A-5 Review
+
 - 핵심 반영:
   - 무액션일: 짧은 요약 템플릿 + 핵심 체크 3개
   - 액션일: 상세 템플릿 + 체크리스트 + 시장요약
@@ -324,8 +360,75 @@
   - `UV_CACHE_DIR=.uv-cache uv run --with pytest pytest -q` → `27 passed`
 
 ### Dashboard MVP Brainstorming (Action-First + Risk)
+
 - [x] 목적 확정: A(오늘 액션 판단) + B(성과/리스크 모니터링)
 - [x] 레이아웃 확정: Action Hero 상단 + KPI + 리스크 계기판 + 이벤트 타임라인 + 운영로그
 - [x] 이벤트 타임라인 포함 확정
 - [x] 설계 문서 작성: `docs/plans/2026-03-06-dashboard-action-first-design.md`
 - [x] 구현 계획 문서 작성: `docs/plans/2026-03-06-dashboard-action-first-implementation-plan.md`
+
+### Dashboard MVP Execution (Task 1-8)
+
+- [x] Task 1: `app/api/main.py`의 `build_dashboard_snapshot` 확장
+- [x] Task 2: `ops/dashboard_snapshot.py` 데이터 연동 MVP 구현
+- [x] Task 3: `test_dashboard_snapshot_v2.py` 계약 테스트 통과
+- [x] Task 4~5: `app/web/src/pages/Dashboard.tsx` 컴포넌트(ActionHero, KpiRow, RiskGauge, Timeline 등) 및 반응형 구현
+- [x] Task 6~7: Mock 데이터 기반 wiring 및 컬러코드/fallback(`N/A`) 구현
+- [x] Task 8: 코드 테스트 회귀 검증 완료 (28 passed)
+
+### Dashboard MVP Review
+
+- **Backend**: API 계약 테스트를 추가하고 `build_dashboard_snapshot`이 텔레그램 호환성과 MVP Dashboard(단일 화면) 요구사항을 모두 충족하도록 확장함.
+- **Frontend**: `Dashboard.tsx`에 Action-First UX, Institutional Styling (Dark mode, 최소한의 텍스트 기반) 적용. 화면 상단에 명확하게 ActionHero 계기판, KPI, Risk 게이지가 모두 반응형으로 표현됨.
+
+
+---
+
+# TODO - Frontend dashboard UI polish (Worker 2)
+
+- [x] Inspect current dashboard structure and ownership scope
+- [x] Strengthen action hero and support mock state switching
+- [x] Add KPI accent borders and improved typography/spacing
+- [x] Add visible risk gauge progress bars and status badges
+- [x] Enrich mock event timeline with 3-5 items per state
+- [x] Verify web app build and document results
+
+## Review
+
+- Updated `app/web/src/pages/Dashboard.tsx` with a stronger action hero, KPI accent cards, status-badge risk gauges with progress bars, richer mock timelines, and URL-driven mock state support (`?mock=action-needed` / `?mock=no-action`).
+- Updated `app/web/src/index.css` to apply Inter typography, dark background treatment, and cleaner global spacing primitives.
+- Verified frontend build with `npm run build` in `app/web`.
+
+---
+
+# TODO - Worker 1 Dashboard Snapshot Backend
+
+- [x] Inspect current snapshot/API contract code and available CSV/JSON inputs
+- [x] Implement real-input dashboard snapshot generator in `src/tqqq_strategy/ops/dashboard_snapshot.py`
+- [x] Wire `app/api/main.py` to normalize/generate the snapshot contract
+- [x] Update contract tests for required keys and event timeline coverage using temp sample files
+- [x] Run targeted contract tests and record results
+
+## Review
+- Snapshot generator now reads local CSV/JSON inputs (signals/data/metrics/state, optional equity) and derives action hero, KPI cards, risk gauges, event timeline, and ops log without mocks.
+- API builder now accepts generation kwargs and preserves the required telegram/dashboard contract keys.
+- Verified targeted contract tests with `UV_CACHE_DIR=/tmp/.uv-cache uv run --with pytest pytest -q tests/contracts/test_dashboard_snapshot_v2.py tests/contracts/test_telegram_blocks.py` (`4 passed`).
+
+### Dashboard MVP Finalization (Live Snapshot Wiring)
+
+- [x] 실데이터 snapshot generator를 static dashboard JSON export까지 연결
+- [x] 프론트 App에서 `/dashboard_snapshot.json` fetch 후 live snapshot 우선 사용
+- [x] Risk gauge 진행바/상태 배지/KPI accent/이벤트 뱃지 polish 반영
+- [x] dashboard snapshot export, frontend build, 전체 pytest 검증 완료
+
+### Dashboard MVP Finalization Review
+
+- 추가 구현:
+  - `ops/scripts/export_dashboard_snapshot.py`로 `app/web/public/dashboard_snapshot.json` 생성 경로 확정
+  - `app/web/src/App.tsx`에서 live snapshot fetch + mock fallback 연결
+  - `app/web/src/pages/Dashboard.tsx`에 action/no-action 분기, stronger risk bar, event badge, ops summary 강화
+- 검증:
+  - `UV_CACHE_DIR=/tmp/.uv-cache uv run --offline --with pytest pytest -q tests/contracts/test_dashboard_snapshot_v2.py tests/contracts/test_telegram_blocks.py` → `4 passed`
+  - `UV_CACHE_DIR=/tmp/.uv-cache uv run --offline --with pytest pytest -q` → `30 passed`
+  - `python3 ops/scripts/export_dashboard_snapshot.py` → `app/web/public/dashboard_snapshot.json` 생성 확인
+  - `npm run build` (`app/web`) → production build 성공

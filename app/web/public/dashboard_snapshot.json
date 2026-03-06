@@ -1,0 +1,64 @@
+{
+  "action_hero": {
+    "action": "유지",
+    "target_weight_pct": 95.0,
+    "reason_summary": "추세 조건 유지 (Dist200 117.80 / SPY200 107.94)",
+    "updated_at": "2026-01-30T00:00:00"
+  },
+  "kpi_cards": {
+    "cagr_pct": 32.16,
+    "mdd_pct": -34.22,
+    "month_1_return_pct": -23.81,
+    "condition_pass_rate": "6/6"
+  },
+  "risk_gauges": {
+    "vol20": {
+      "value": 2.54,
+      "threshold": 5.9,
+      "status": "green"
+    },
+    "spy200_dist": {
+      "value": 107.94,
+      "threshold": 97.75,
+      "status": "green"
+    },
+    "tqqq_dist200": {
+      "value": 117.8,
+      "threshold": 101.0,
+      "status": "green"
+    }
+  },
+  "event_timeline": [
+    {
+      "date": "2025-12-10",
+      "type": "TP10",
+      "detail": "100% → 95% 감량"
+    },
+    {
+      "date": "2025-11-24",
+      "type": "재진입",
+      "detail": "0.00% → 100.00% 진입"
+    },
+    {
+      "date": "2025-11-17",
+      "type": "강제청산",
+      "detail": "100.00% → 0.00% 전환"
+    },
+    {
+      "date": "2025-11-07",
+      "type": "비중 변경",
+      "detail": "90.00% → 100.00% 조정"
+    },
+    {
+      "date": "2025-11-04",
+      "type": "비중 변경",
+      "detail": "5.00% → 90.00% 조정"
+    }
+  ],
+  "ops_log": {
+    "run_id": "daily-2026-01-30",
+    "alert_key": "2026-01-30:0.95->0.95",
+    "last_success_at": "2026-01-30T00:00:00",
+    "next_run_at": "2026-03-07T22:30:00+00:00"
+  }
+}
