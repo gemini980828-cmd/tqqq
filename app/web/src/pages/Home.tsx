@@ -1,6 +1,6 @@
 import ManagerCard from '../components/ManagerCard'
 import OrchestratorPanel from '../components/OrchestratorPanel'
-import type { AppSnapshot } from '../types/appSnapshot'
+import type { AppSnapshot, HomeInboxItem } from '../types/appSnapshot'
 
 type WealthOverview = NonNullable<AppSnapshot['wealth_overview']>
 type ManagerCards = NonNullable<AppSnapshot['manager_cards']>
@@ -19,11 +19,39 @@ function SummaryMetric({ label, value }: { label: string; value: string }) {
   )
 }
 
+function getSeverityTone(severity?: HomeInboxItem['severity']) {
+  switch (severity) {
+    case 'high':
+      return 'border-rose-300/15 bg-rose-500/8 text-rose-100'
+    case 'medium':
+      return 'border-amber-300/15 bg-amber-500/8 text-amber-100'
+    default:
+      return 'border-white/8 bg-slate-950/40 text-slate-300'
+  }
+}
+
 const FALLBACK_CARDS: ManagerCards = [
   { manager_id: 'core_strategy', title: 'Core Strategy', headline: '실보유 86.63% / 목표 95.00%', summary: 'TQQQ 코어 전략 운영', status: 'active' },
   { manager_id: 'stock_research', title: 'Stock Research', headline: '관심종목 1개', summary: '후보 발굴/관찰/보류 관리', status: 'tracking' },
   { manager_id: 'real_estate', title: 'Real Estate', headline: '관심 단지 1개', summary: '관심 단지 추적 및 검토', status: 'tracking' },
   { manager_id: 'cash_debt', title: 'Cash & Debt', headline: '현금/부채 항목 1개', summary: '현금 여력과 상환일 관리', status: 'tracking' },
+]
+
+const FALLBACK_INBOX: HomeInboxItem[] = [
+  {
+    id: 'fallback-action',
+    manager_id: 'core_strategy',
+    severity: 'high',
+    title: '코어전략 액션 확인',
+    detail: '오늘 액션과 목표 비중을 먼저 확인하세요.',
+  },
+  {
+    id: 'fallback-manual-source',
+    manager_id: 'cash_debt',
+    severity: 'low',
+    title: 'Manual truth source',
+    detail: 'wealth_manual.json 기준으로 manager summary cache를 갱신합니다.',
+  },
 ]
 
 export default function Home({ snapshot }: { snapshot?: AppSnapshot }) {
@@ -38,6 +66,7 @@ export default function Home({ snapshot }: { snapshot?: AppSnapshot }) {
   const action = snapshot?.action_hero?.action ?? '유지'
   const actionWeight = snapshot?.action_hero?.target_weight_pct ?? 95
   const timeline = snapshot?.event_timeline ?? []
+  const inbox = snapshot?.wealth_home?.inbox_preview ?? snapshot?.home_inbox?.slice(0, 3) ?? FALLBACK_INBOX
 
   return (
     <div className="space-y-6">
@@ -107,7 +136,7 @@ export default function Home({ snapshot }: { snapshot?: AppSnapshot }) {
           <div className="mt-5 space-y-3">
             {(timeline.length
               ? timeline.slice(0, 4)
-              : [{ date: '오늘', type: '유지', detail: 'Step 1.5에서는 Home 활동 로그를 위한 최소 구조를 먼저 고정합니다.' }]
+              : [{ date: '오늘', type: '유지', detail: 'Step 2에서는 Home 활동 로그와 inbox preview를 summary cache 기반으로 연결합니다.' }]
             ).map((event) => (
               <div key={`${event.date}:${event.type}:${event.detail}`} className="rounded-2xl border border-white/8 bg-slate-950/40 px-4 py-3">
                 <div className="flex flex-wrap items-center gap-2 text-xs uppercase tracking-[0.16em] text-slate-500">
@@ -126,12 +155,16 @@ export default function Home({ snapshot }: { snapshot?: AppSnapshot }) {
           <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">Inbox preview</p>
           <h3 className="mt-2 text-2xl font-semibold tracking-[-0.04em] text-white">오늘 확인할 것</h3>
           <div className="mt-5 space-y-3 text-sm text-slate-300">
-            <div className="rounded-2xl border border-white/8 bg-slate-950/40 px-4 py-3">
-              오늘 액션: {action} / 목표 {actionWeight}%
-            </div>
-            <div className="rounded-2xl border border-white/8 bg-slate-950/40 px-4 py-3">
-              핵심 사유: {snapshot?.action_hero?.reason_summary ?? 'action summary cache 연결 예정'}
-            </div>
+            {inbox.map((item) => (
+              <div key={item.id} className={`rounded-2xl border px-4 py-3 ${getSeverityTone(item.severity)}`}>
+                <div className="flex items-center justify-between gap-3">
+                  <p className="font-medium text-white">{item.title}</p>
+                  <span className="text-[11px] uppercase tracking-[0.18em] text-slate-400">{item.manager_id}</span>
+                </div>
+                <p className="mt-2 leading-6">{item.detail}</p>
+                {item.recommended_action ? <p className="mt-2 text-xs text-slate-400">다음 액션: {item.recommended_action}</p> : null}
+              </div>
+            ))}
             <div className="rounded-2xl border border-white/8 bg-slate-950/40 px-4 py-3">
               Manual truth source: {snapshot?.meta?.manual_source_version ?? 'wealth_manual.json'}
             </div>

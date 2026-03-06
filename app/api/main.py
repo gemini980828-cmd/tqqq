@@ -20,7 +20,10 @@ REQUIRED_BLOCK_KEYS = (
 OPTIONAL_BLOCK_DEFAULTS: dict[str, Any] = {
     "wealth_home": {},
     "wealth_overview": {},
+    "liquidity_summary": {},
     "manager_cards": [],
+    "manager_summaries": {},
+    "home_inbox": [],
     "core_strategy_position": {},
     "core_strategy_actuals": {},
     "meta": {},

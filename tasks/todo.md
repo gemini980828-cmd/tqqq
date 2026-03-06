@@ -526,8 +526,8 @@
 
 - [x] Task 1: `summary_store` foundation + cached summary contract/tests 구현
 - [x] Task 2: manager summary batch jobs(`manager_jobs.py`, `run_manager_summaries.py`) 구현
-- [ ] Task 3: Home inbox builder + snapshot export integration 구현
-- [ ] Task 4: Step 2 focused/full verification 및 review 기록
+- [x] Task 3: Home inbox builder + snapshot export integration 구현
+- [x] Task 4: Step 2 focused/full verification 및 review 기록
 
 ### Step 2 Task 2 - Manager Summary Batch Jobs
 
@@ -545,3 +545,24 @@
 - 구현 파일: `src/tqqq_strategy/ai/__init__.py`, `src/tqqq_strategy/ai/manager_jobs.py`, `ops/scripts/run_manager_summaries.py`, `tests/ai/test_manager_jobs.py`.
 - 검증: `UV_CACHE_DIR=/tmp/.uv-cache uv run --offline --with pytest pytest -q tests/wealth/test_schema_contract.py tests/wealth/test_derived_snapshots.py tests/wealth/test_summary_store.py tests/ai/test_manager_jobs.py` → `15 passed`; 스크립트 smoke run → `SCRIPT_SMOKE_OK`.
 
+### Step 2 Task 3/4 - Home Inbox + Snapshot Export Integration
+
+- [x] Add deterministic Home inbox builder (`src/tqqq_strategy/ai/inbox_builder.py`) with severity ordering
+- [x] Extend dashboard snapshot / API contract with `home_inbox`, `manager_summaries`, `liquidity_summary`, `summary_source_version`
+- [x] Refresh manager summaries before `ops/scripts/export_dashboard_snapshot.py` writes the public snapshot
+- [x] Wire Home inbox preview + manager card affordances on the frontend shell
+- [x] Run focused/full verification and capture results
+
+### Step 2 Task 3/4 Review
+
+- Added `src/tqqq_strategy/ai/inbox_builder.py` and `tests/ai/test_inbox_builder.py` so Home inbox items are synthesized from core-strategy action/gap, cash-debt guardrails, and stock/real-estate review states.
+- Extended `src/tqqq_strategy/ops/dashboard_snapshot.py` to load cached manager summaries, compute `liquidity_summary`, expose `manager_summaries`, `home_inbox`, and persist `summary_source_version` in `meta`.
+- Updated `app/api/main.py`, `app/web/src/types/appSnapshot.ts`, `app/web/src/pages/Home.tsx`, and `app/web/src/components/ManagerCard.tsx` so the shell consumes cached inbox items and richer manager-card metadata.
+- `ops/scripts/export_dashboard_snapshot.py` now refreshes manager summaries before writing `app/web/public/dashboard_snapshot.json`; `.github/workflows/daily-telegram.yml` now runs the refresh/export path and uploads the summary cache + snapshot artifact.
+- Verification:
+  - `UV_CACHE_DIR=/tmp/.uv-cache uv run --offline --with pytest pytest -q tests/wealth/test_schema_contract.py tests/wealth/test_derived_snapshots.py tests/wealth/test_summary_store.py tests/ai/test_manager_jobs.py tests/ai/test_inbox_builder.py tests/contracts/test_dashboard_snapshot_v2.py tests/contracts/test_wealth_home_snapshot_step1.py` → `19 passed`
+  - `UV_CACHE_DIR=/tmp/.uv-cache uv run --offline --with pytest pytest -q` → `51 passed`
+  - `python3 ops/scripts/run_manager_summaries.py` → exit 0, four manager summaries printed
+  - `python3 ops/scripts/export_dashboard_snapshot.py` → `Saved dashboard snapshot to app/web/public/dashboard_snapshot.json`
+  - `cd app/web && npm run lint` → exit 0
+  - `cd app/web && npm run build` → production build 성공

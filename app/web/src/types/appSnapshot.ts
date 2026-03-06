@@ -1,6 +1,18 @@
 export type RiskStatus = 'green' | 'amber' | 'red';
+export type InboxSeverity = 'high' | 'medium' | 'low';
 
 export type RiskGaugeValue = { value: number; threshold: number; status: RiskStatus };
+
+export type ManagerSummaryRecord = {
+  manager_id: string;
+  summary_text: string;
+  key_points: string[];
+  warnings: string[];
+  recommended_actions: string[];
+  generated_at: string;
+  source_version: string;
+  stale: boolean;
+};
 
 export type ManagerCardSummary = {
   manager_id: string;
@@ -9,6 +21,12 @@ export type ManagerCardSummary = {
   status: string;
   summary?: string;
   headline?: string;
+  recommended_action?: string;
+  warning_count?: number;
+  stale?: boolean;
+  generated_at?: string;
+  warnings?: string[];
+  key_points?: string[];
 };
 
 export type WealthOverview = {
@@ -17,6 +35,23 @@ export type WealthOverview = {
   cash_krw?: number;
   debt_krw?: number;
   net_worth_krw?: number;
+};
+
+export type LiquiditySummary = {
+  cash_krw?: number;
+  debt_krw?: number;
+  net_liquidity_krw?: number;
+  liquidity_ratio_pct?: number;
+};
+
+export type HomeInboxItem = {
+  id: string;
+  manager_id: string;
+  severity: InboxSeverity;
+  title: string;
+  detail: string;
+  recommended_action?: string;
+  stale?: string;
 };
 
 export type CoreStrategyPosition = {
@@ -67,13 +102,19 @@ export type AppSnapshot = {
   wealth_home?: {
     overview?: WealthOverview;
     manager_cards?: ManagerCardSummary[];
+    inbox_preview?: HomeInboxItem[];
     updated_at?: string;
   };
   wealth_overview?: WealthOverview;
+  liquidity_summary?: LiquiditySummary;
   manager_cards?: ManagerCardSummary[];
+  manager_summaries?: Record<string, ManagerSummaryRecord>;
+  home_inbox?: HomeInboxItem[];
   core_strategy_position?: CoreStrategyPosition;
   core_strategy_actuals?: CoreStrategyPosition;
   meta?: {
     manual_source_version?: string;
+    summary_source_version?: string;
+    summary_store_path?: string;
   };
 };

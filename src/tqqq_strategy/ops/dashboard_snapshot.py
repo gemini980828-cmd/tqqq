@@ -7,8 +7,17 @@ from typing import Any
 
 import pandas as pd
 
-from tqqq_strategy.wealth import build_core_strategy_position, build_manager_cards, build_wealth_overview, load_manual_inputs
-
+from tqqq_strategy.ai.inbox_builder import build_home_inbox
+from tqqq_strategy.wealth import (
+    DEFAULT_SUMMARY_STORE_PATH,
+    build_core_strategy_position,
+    build_liquidity_summary,
+    build_manager_cards,
+    build_summary_source_version,
+    build_wealth_overview,
+    load_manual_inputs,
+    load_summary_store,
+)
 
 DEFAULT_MANUAL_INPUTS_PATH = Path("data/manual/wealth_manual.json")
 
@@ -65,7 +74,7 @@ def _build_condition_pass_rate(row: pd.Series, vol20: float, dist200: float, spy
         dist200 < 139.0 if pd.notna(dist200) else False,
         vol20 < 6.0 if pd.notna(vol20) else False,
     ]
-    return f"{sum(1 for x in checks if x)}/{len(checks)}"
+    return f"{sum(1 for item in checks if item)}/{len(checks)}"
 
 
 def _build_event_timeline(signals: pd.DataFrame, limit: int = 5) -> list[dict[str, str]]:
@@ -73,22 +82,22 @@ def _build_event_timeline(signals: pd.DataFrame, limit: int = 5) -> list[dict[st
     recent = signals.tail(90).reset_index(drop=True)
     for i in range(1, len(recent)):
         prev = float(recent.iloc[i - 1]["S2_weight"])
-        cur = float(recent.iloc[i]["S2_weight"])
-        if abs(prev - cur) < 1e-12:
+        current = float(recent.iloc[i]["S2_weight"])
+        if abs(prev - current) < 1e-12:
             continue
         date = recent.iloc[i]["time"].strftime("%Y-%m-%d")
-        if prev <= 1e-9 and cur > 1e-9:
+        if prev <= 1e-9 and current > 1e-9:
             event_type = "재진입"
-            detail = f"{prev * 100:.2f}% → {cur * 100:.2f}% 진입"
-        elif prev > 1e-9 and cur <= 1e-9:
+            detail = f"{prev * 100:.2f}% → {current * 100:.2f}% 진입"
+        elif prev > 1e-9 and current <= 1e-9:
             event_type = "강제청산"
             detail = f"{prev * 100:.2f}% → 0.00% 전환"
-        elif abs(prev - 1.0) < 1e-9 and abs(cur - 0.95) < 1e-9:
+        elif abs(prev - 1.0) < 1e-9 and abs(current - 0.95) < 1e-9:
             event_type = "TP10"
             detail = "100% → 95% 감량"
         else:
             event_type = "비중 변경"
-            detail = f"{prev * 100:.2f}% → {cur * 100:.2f}% 조정"
+            detail = f"{prev * 100:.2f}% → {current * 100:.2f}% 조정"
         timeline.append({"date": date, "type": event_type, "detail": detail})
     return list(reversed(timeline[-limit:]))
 
@@ -101,24 +110,21 @@ def generate_dashboard_snapshot(
     equity_csv_path: Path | str = Path("reports/backtest_equity_primary.csv"),
     manual_inputs_path: Path | str | None = None,
     manual_truth_path: Path | str | None = None,
+    summary_store_path: Path | str = DEFAULT_SUMMARY_STORE_PATH,
 ) -> dict[str, Any]:
-    """Generate the action-first dashboard snapshot plus wealth-foundation fields."""
     signal_csv = Path(signal_csv_path)
     data_csv = Path(data_csv_path)
     metrics_csv = Path(metrics_csv_path)
     state_file = Path(state_path)
     equity_csv = Path(equity_csv_path)
+    summary_store = Path(summary_store_path)
 
     signals = pd.read_csv(signal_csv, parse_dates=["time"]).sort_values("time").reset_index(drop=True)
     market = pd.read_csv(data_csv, parse_dates=["time"]).sort_values("time").reset_index(drop=True)
     metrics = pd.read_csv(metrics_csv)
-    equity = (
-        pd.read_csv(equity_csv, parse_dates=["date"]).sort_values("date").reset_index(drop=True)
-        if equity_csv.exists()
-        else pd.DataFrame()
-    )
+    equity = pd.read_csv(equity_csv, parse_dates=["date"]).sort_values("date").reset_index(drop=True) if equity_csv.exists() else pd.DataFrame()
     state = _read_optional_json(state_file)
-    resolved_manual_path = manual_truth_path or manual_inputs_path or DEFAULT_MANUAL_INPUTS_PATH
+    resolved_manual_path = Path(manual_truth_path or manual_inputs_path or DEFAULT_MANUAL_INPUTS_PATH)
     manual_inputs = load_manual_inputs(resolved_manual_path)
 
     latest_signal = signals.iloc[-1]
@@ -153,6 +159,14 @@ def generate_dashboard_snapshot(
     default_next_run = (datetime.now(timezone.utc) + timedelta(days=1)).replace(hour=22, minute=30, second=0, microsecond=0)
 
     wealth_overview = build_wealth_overview(manual_inputs)
+    liquidity_summary = build_liquidity_summary(manual_inputs)
+    summary_source_version = build_summary_source_version(
+        manual_inputs,
+        latest_date.isoformat(),
+        source_label=resolved_manual_path.name,
+    )
+    manager_summaries = load_summary_store(summary_store, expected_source_version=summary_source_version)
+
     home_overview = {
         "invested_krw": wealth_overview["invested_krw"],
         "cash_krw": wealth_overview["cash_krw"],
@@ -160,9 +174,13 @@ def generate_dashboard_snapshot(
         "net_worth_krw": wealth_overview["net_worth_krw"],
     }
     core_strategy_position = build_core_strategy_position(manual_inputs, target_weight_pct=round(target_weight * 100.0, 2))
-    manager_cards = build_manager_cards(manual_inputs, target_weight_pct=round(target_weight * 100.0, 2))
+    manager_cards = build_manager_cards(
+        manual_inputs,
+        target_weight_pct=round(target_weight * 100.0, 2),
+        summary_by_manager=manager_summaries,
+    )
 
-    return {
+    snapshot = {
         "action_hero": {
             "action": action,
             "target_weight_pct": round(target_weight * 100.0, 2),
@@ -193,8 +211,23 @@ def generate_dashboard_snapshot(
             "updated_at": latest_date.isoformat(),
         },
         "wealth_overview": wealth_overview,
+        "liquidity_summary": liquidity_summary,
         "manager_cards": manager_cards,
+        "manager_summaries": manager_summaries,
         "core_strategy_position": core_strategy_position,
         "core_strategy_actuals": core_strategy_position,
-        "meta": {"manual_source_version": str(Path(resolved_manual_path).name)},
+        "meta": {
+            "manual_source_version": resolved_manual_path.name,
+            "summary_source_version": summary_source_version,
+            "summary_store_path": str(summary_store),
+        },
     }
+
+    home_inbox = build_home_inbox(
+        snapshot=snapshot,
+        manual_inputs=manual_inputs,
+        manager_summaries=manager_summaries,
+    )
+    snapshot["home_inbox"] = home_inbox
+    snapshot["wealth_home"]["inbox_preview"] = home_inbox[:3]
+    return snapshot
