@@ -79,7 +79,15 @@
         "warning_count": 1,
         "recommended_action": "현재 전략 비중 유지",
         "stale": false,
-        "generated_at": "2026-01-30T00:00:00"
+        "generated_at": "2026-01-30T00:00:00",
+        "warnings": [
+          "목표 대비 괴리 8.37%p가 커서 리밸런싱 우선순위가 높습니다."
+        ],
+        "key_points": [
+          "실보유 86.63%",
+          "목표 95.00%",
+          "리밸런싱 gap 939,000원"
+        ]
       },
       {
         "manager_id": "stock_research",
@@ -91,7 +99,13 @@
         "warning_count": 0,
         "recommended_action": "관심종목 신규 발굴",
         "stale": false,
-        "generated_at": "2026-01-30T00:00:00"
+        "generated_at": "2026-01-30T00:00:00",
+        "warnings": [],
+        "key_points": [
+          "관심종목 1개",
+          "후보 0개",
+          "관찰 1개"
+        ]
       },
       {
         "manager_id": "real_estate",
@@ -103,7 +117,13 @@
         "warning_count": 0,
         "recommended_action": "검토 단지 체크리스트 업데이트",
         "stale": false,
-        "generated_at": "2026-01-30T00:00:00"
+        "generated_at": "2026-01-30T00:00:00",
+        "warnings": [],
+        "key_points": [
+          "관심 단지 1개",
+          "검토 1개",
+          "관심 0개"
+        ]
       },
       {
         "manager_id": "cash_debt",
@@ -115,7 +135,13 @@
         "warning_count": 0,
         "recommended_action": "현금/부채 현황 유지",
         "stale": false,
-        "generated_at": "2026-01-30T00:00:00"
+        "generated_at": "2026-01-30T00:00:00",
+        "warnings": [],
+        "key_points": [
+          "현금 1,500,000원",
+          "부채 0원",
+          "유동성 비중 13.37%"
+        ]
       }
     ],
     "updated_at": "2026-01-30T00:00:00",
@@ -173,7 +199,15 @@
       "warning_count": 1,
       "recommended_action": "현재 전략 비중 유지",
       "stale": false,
-      "generated_at": "2026-01-30T00:00:00"
+      "generated_at": "2026-01-30T00:00:00",
+      "warnings": [
+        "목표 대비 괴리 8.37%p가 커서 리밸런싱 우선순위가 높습니다."
+      ],
+      "key_points": [
+        "실보유 86.63%",
+        "목표 95.00%",
+        "리밸런싱 gap 939,000원"
+      ]
     },
     {
       "manager_id": "stock_research",
@@ -185,7 +219,13 @@
       "warning_count": 0,
       "recommended_action": "관심종목 신규 발굴",
       "stale": false,
-      "generated_at": "2026-01-30T00:00:00"
+      "generated_at": "2026-01-30T00:00:00",
+      "warnings": [],
+      "key_points": [
+        "관심종목 1개",
+        "후보 0개",
+        "관찰 1개"
+      ]
     },
     {
       "manager_id": "real_estate",
@@ -197,7 +237,13 @@
       "warning_count": 0,
       "recommended_action": "검토 단지 체크리스트 업데이트",
       "stale": false,
-      "generated_at": "2026-01-30T00:00:00"
+      "generated_at": "2026-01-30T00:00:00",
+      "warnings": [],
+      "key_points": [
+        "관심 단지 1개",
+        "검토 1개",
+        "관심 0개"
+      ]
     },
     {
       "manager_id": "cash_debt",
@@ -209,7 +255,13 @@
       "warning_count": 0,
       "recommended_action": "현금/부채 현황 유지",
       "stale": false,
-      "generated_at": "2026-01-30T00:00:00"
+      "generated_at": "2026-01-30T00:00:00",
+      "warnings": [],
+      "key_points": [
+        "현금 1,500,000원",
+        "부채 0원",
+        "유동성 비중 13.37%"
+      ]
     }
   ],
   "manager_summaries": {
@@ -228,7 +280,7 @@
         "현재 전략 비중 유지"
       ],
       "generated_at": "2026-01-30T00:00:00",
-      "source_version": "wealth_manual.json:2026-01-30T00:00:00:92c2b05fa5e1",
+      "source_version": "wealth_manual.json:2026-01-30:92c2b05fa5e1",
       "stale": false
     },
     "stock_research": {
@@ -244,7 +296,7 @@
         "관심종목 신규 발굴"
       ],
       "generated_at": "2026-01-30T00:00:00",
-      "source_version": "wealth_manual.json:2026-01-30T00:00:00:92c2b05fa5e1",
+      "source_version": "wealth_manual.json:2026-01-30:92c2b05fa5e1",
       "stale": false
     },
     "real_estate": {
@@ -260,7 +312,7 @@
         "검토 단지 체크리스트 업데이트"
       ],
       "generated_at": "2026-01-30T00:00:00",
-      "source_version": "wealth_manual.json:2026-01-30T00:00:00:92c2b05fa5e1",
+      "source_version": "wealth_manual.json:2026-01-30:92c2b05fa5e1",
       "stale": false
     },
     "cash_debt": {
@@ -276,7 +328,7 @@
         "현금/부채 현황 유지"
       ],
       "generated_at": "2026-01-30T00:00:00",
-      "source_version": "wealth_manual.json:2026-01-30T00:00:00:92c2b05fa5e1",
+      "source_version": "wealth_manual.json:2026-01-30:92c2b05fa5e1",
       "stale": false
     }
   },
@@ -316,7 +368,7 @@
   },
   "meta": {
     "manual_source_version": "wealth_manual.json",
-    "summary_source_version": "wealth_manual.json:2026-01-30T00:00:00:92c2b05fa5e1",
+    "summary_source_version": "wealth_manual.json:2026-01-30:92c2b05fa5e1",
     "summary_store_path": "reports/wealth_manager_summaries.json"
   },
   "home_inbox": [

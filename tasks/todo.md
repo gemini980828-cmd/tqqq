@@ -564,5 +564,6 @@
   - `UV_CACHE_DIR=/tmp/.uv-cache uv run --offline --with pytest pytest -q` → `51 passed`
   - `python3 ops/scripts/run_manager_summaries.py` → exit 0, four manager summaries printed
   - `python3 ops/scripts/export_dashboard_snapshot.py` → `Saved dashboard snapshot to app/web/public/dashboard_snapshot.json`
+- Final hardening: `summary_source_version`를 signal as-of date 기준으로 정규화해 export 직후에도 manager summary cache가 `stale: false`로 유지되도록 맞췄다.
   - `cd app/web && npm run lint` → exit 0
   - `cd app/web && npm run build` → production build 성공
