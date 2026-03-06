@@ -518,3 +518,13 @@
 - `summary_store` + stale/fresh manager cache는 Step 2 첫 작업으로 선행한다.
 - Home inbox 자동 합성은 Step 2의 manager summary jobs 이후 연결한다.
 
+
+
+---
+
+# TODO - Wealth Management Step 2 (Manager Summaries + Inbox)
+
+- [x] Task 1: `summary_store` foundation + cached summary contract/tests 구현
+- [ ] Task 2: manager summary batch jobs(`manager_jobs.py`, `run_manager_summaries.py`) 구현
+- [ ] Task 3: Home inbox builder + snapshot export integration 구현
+- [ ] Task 4: Step 2 focused/full verification 및 review 기록
