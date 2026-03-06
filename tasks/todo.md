@@ -525,6 +525,23 @@
 # TODO - Wealth Management Step 2 (Manager Summaries + Inbox)
 
 - [x] Task 1: `summary_store` foundation + cached summary contract/tests 구현
-- [ ] Task 2: manager summary batch jobs(`manager_jobs.py`, `run_manager_summaries.py`) 구현
+- [x] Task 2: manager summary batch jobs(`manager_jobs.py`, `run_manager_summaries.py`) 구현
 - [ ] Task 3: Home inbox builder + snapshot export integration 구현
 - [ ] Task 4: Step 2 focused/full verification 및 review 기록
+
+### Step 2 Task 2 - Manager Summary Batch Jobs
+
+- [x] Confirm RED state for `tests/ai/test_manager_jobs.py`
+- [x] Implement deterministic manager summary builders in `src/tqqq_strategy/ai/manager_jobs.py`
+- [x] Add package/script wiring (`src/tqqq_strategy/ai/__init__.py`, `ops/scripts/run_manager_summaries.py`)
+- [x] Run targeted pytest + script smoke and capture exact results
+
+### Step 2 Task 2 Review
+
+- Fresh verification (this session): `UV_CACHE_DIR=/tmp/.uv-cache uv run --offline --with pytest pytest -q tests/ai/test_manager_jobs.py` → `2 passed`.
+- Fresh CLI smoke (this session): `python3 ops/scripts/run_manager_summaries.py --signals <tmp>/signals.csv --data <tmp>/data.csv --metrics <tmp>/metrics.csv --state <tmp>/state.json --manual-truth <tmp>/wealth_manual.json --summary-store <tmp>/manager_summaries.json` → exit 0, wrote four manager summaries.
+- RED 확인: `UV_CACHE_DIR=/tmp/.uv-cache uv run --offline --with pytest pytest -q tests/ai/test_manager_jobs.py`에서 `ModuleNotFoundError: No module named 'tqqq_strategy.ai.manager_jobs'`로 실패를 확인했다.
+- Step 2 선행조건으로 `transactions` canonical support와 `build_liquidity_summary`/summary-source helper를 추가하고 관련 테스트(`tests/wealth/test_schema_contract.py`, `tests/wealth/test_derived_snapshots.py`)를 보강했다.
+- 구현 파일: `src/tqqq_strategy/ai/__init__.py`, `src/tqqq_strategy/ai/manager_jobs.py`, `ops/scripts/run_manager_summaries.py`, `tests/ai/test_manager_jobs.py`.
+- 검증: `UV_CACHE_DIR=/tmp/.uv-cache uv run --offline --with pytest pytest -q tests/wealth/test_schema_contract.py tests/wealth/test_derived_snapshots.py tests/wealth/test_summary_store.py tests/ai/test_manager_jobs.py` → `15 passed`; 스크립트 smoke run → `SCRIPT_SMOKE_OK`.
+

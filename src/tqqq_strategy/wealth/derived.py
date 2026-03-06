@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import hashlib
+import json
 from typing import Any
 
 
@@ -23,6 +25,18 @@ def build_wealth_overview(manual_inputs: dict[str, list[dict[str, Any]]]) -> dic
         "cash_krw": _round_krw(cash),
         "debt_krw": _round_krw(debt),
         "net_worth_krw": _round_krw(invested + cash - debt),
+    }
+
+
+def build_liquidity_summary(manual_inputs: dict[str, list[dict[str, Any]]]) -> dict[str, float | int]:
+    overview = build_wealth_overview(manual_inputs)
+    denominator = float(overview["invested_krw"] + overview["cash_krw"])
+    ratio = (float(overview["cash_krw"]) / denominator) * 100.0 if denominator else 0.0
+    return {
+        "cash_krw": overview["cash_krw"],
+        "debt_krw": overview["debt_krw"],
+        "net_liquidity_krw": overview["cash_krw"] - overview["debt_krw"],
+        "liquidity_ratio_pct": round(ratio, 2),
     }
 
 
@@ -89,12 +103,14 @@ def summarize_manager_counts(manual_inputs: dict[str, list[dict[str, Any]]]) -> 
 def build_manager_cards(
     manual_inputs: dict[str, list[dict[str, Any]]],
     target_weight_pct: float | None = None,
+    summary_by_manager: dict[str, dict[str, Any]] | None = None,
 ) -> list[dict[str, Any]]:
     target = 0.0 if target_weight_pct is None else target_weight_pct
     counts = summarize_manager_counts(manual_inputs)
     overview = build_wealth_overview(manual_inputs)
     core_position = build_core_strategy_position(manual_inputs, target)
-    return [
+    summary_by_manager = summary_by_manager or {}
+    base_cards = [
         {
             "manager_id": "core_strategy",
             "title": "Core Strategy",
@@ -128,3 +144,31 @@ def build_manager_cards(
             "summary": f"현금 {overview['cash_krw']:,}원",
         },
     ]
+
+    enriched_cards: list[dict[str, Any]] = []
+    for card in base_cards:
+        summary = summary_by_manager.get(card["manager_id"])
+        if not summary:
+            enriched_cards.append(card)
+            continue
+
+        warnings = [str(item) for item in summary.get("warnings", [])]
+        actions = [str(item) for item in summary.get("recommended_actions", [])]
+        enriched_cards.append(
+            {
+                **card,
+                "status": "stale" if bool(summary.get("stale")) else card["status"],
+                "summary": str(summary.get("summary_text") or card["summary"]),
+                "warning_count": len(warnings),
+                "recommended_action": actions[0] if actions else "",
+                "stale": bool(summary.get("stale")),
+                "generated_at": str(summary.get("generated_at", "")),
+            }
+        )
+    return enriched_cards
+
+
+def build_summary_source_version(manual_inputs: dict[str, list[dict[str, Any]]], as_of: str) -> str:
+    payload = json.dumps(manual_inputs, ensure_ascii=False, sort_keys=True)
+    digest = hashlib.sha1(payload.encode("utf-8")).hexdigest()[:12]
+    return f"{as_of}:{digest}"

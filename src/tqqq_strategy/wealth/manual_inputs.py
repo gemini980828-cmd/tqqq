@@ -69,6 +69,28 @@ def _normalize_property_watch(record: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _normalize_transaction(record: dict[str, Any]) -> dict[str, Any]:
+    fx_rate = _coerce_float(record.get("fx_rate_krw"), default=1.0) or 1.0
+    quantity = _coerce_float(record.get("quantity"))
+    price_krw = _coerce_float(record.get("price_krw", record.get("price_usd")))
+    total_value_krw = record.get("total_value_krw")
+
+    if record.get("price_usd") is not None and record.get("price_krw") is None:
+        price_krw *= fx_rate
+    if total_value_krw is None and record.get("total_value_usd") is not None:
+        total_value_krw = _coerce_float(record.get("total_value_usd")) * fx_rate
+    if total_value_krw is None:
+        total_value_krw = quantity * price_krw
+
+    return {
+        **record,
+        "transaction_id": record.get("transaction_id", record.get("id", "manual-transaction")),
+        "quantity": quantity,
+        "price_krw": round(price_krw, 2),
+        "total_value_krw": round(_coerce_float(total_value_krw), 2),
+    }
+
+
 def _normalize_records(collection: str, records: list[dict[str, Any]]) -> list[dict[str, Any]]:
     if collection == "positions":
         return [_normalize_position(record) for record in records]
@@ -78,6 +100,8 @@ def _normalize_records(collection: str, records: list[dict[str, Any]]) -> list[d
         return [_normalize_stock_watch(record) for record in records]
     if collection == "property_watchlist":
         return [_normalize_property_watch(record) for record in records]
+    if collection == "transactions":
+        return [_normalize_transaction(record) for record in records]
     return records
 
 

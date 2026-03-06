@@ -58,8 +58,28 @@ def _write_store(path: Path, payload: dict[str, dict[str, Any]]) -> None:
     os.replace(tmp, path)
 
 
-def load_summary_store(path: str | Path = DEFAULT_SUMMARY_STORE_PATH) -> dict[str, dict[str, Any]]:
-    return _read_store(Path(path))
+def load_summary_store(
+    path: str | Path = DEFAULT_SUMMARY_STORE_PATH,
+    *,
+    expected_source_version: str | None = None,
+) -> dict[str, dict[str, Any]]:
+    summary_path = Path(path)
+    store = _read_store(summary_path)
+    if expected_source_version is None:
+        return store
+
+    expected = str(expected_source_version)
+    changed = False
+    normalized_store: dict[str, dict[str, Any]] = {}
+    for manager_id, record in store.items():
+        stale = record["source_version"] != expected
+        updated = {**record, "stale": stale}
+        normalized_store[manager_id] = updated
+        changed = changed or updated["stale"] != record["stale"]
+
+    if changed:
+        _write_store(summary_path, normalized_store)
+    return normalized_store
 
 
 def save_manager_summary(
@@ -68,7 +88,7 @@ def save_manager_summary(
     path: str | Path = DEFAULT_SUMMARY_STORE_PATH,
 ) -> dict[str, Any]:
     summary_path = Path(path)
-    store = _read_store(summary_path)
+    store = load_summary_store(summary_path)
     normalized = _normalize_summary_record(record)
     store[normalized["manager_id"]] = normalized
     _write_store(summary_path, store)

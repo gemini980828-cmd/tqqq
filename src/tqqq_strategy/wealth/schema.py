@@ -7,6 +7,7 @@ TOP_LEVEL_COLLECTIONS = (
     "cash_debt",
     "stock_watchlist",
     "property_watchlist",
+    "transactions",
 )
 
 REQUIRED_FIELDS: dict[str, tuple[str, ...]] = {
@@ -38,6 +39,17 @@ REQUIRED_FIELDS: dict[str, tuple[str, ...]] = {
         "name",
         "status",
         "region",
+    ),
+    "transactions": (
+        "transaction_id",
+        "account_id",
+        "manager_id",
+        "symbol",
+        "side",
+        "quantity",
+        "price_krw",
+        "total_value_krw",
+        "traded_at",
     ),
 }
 

@@ -34,6 +34,19 @@ MANUAL_PAYLOAD = {
     "property_watchlist": [
         {"property_id": "apt-1", "name": "마포래미안푸르지오", "region": "서울 마포구", "status": "검토"},
     ],
+    "transactions": [
+        {
+            "transaction_id": "tx-1",
+            "account_id": "samsung-core",
+            "manager_id": "core_strategy",
+            "symbol": "TQQQ",
+            "side": "buy",
+            "quantity": 10.0,
+            "price_krw": 81000,
+            "total_value_krw": 810000,
+            "traded_at": "2026-03-06T22:30:00+00:00",
+        }
+    ],
 }
 
 
@@ -57,6 +70,19 @@ ALTERNATE_MANUAL_PAYLOAD = {
     ],
     "property_watchlist": [
         {"item_id": "apt-1", "name": "래미안", "region": "서울", "status": "검토"},
+    ],
+    "transactions": [
+        {
+            "id": "tx-alias-1",
+            "account_id": "samsung-core",
+            "manager_id": "core_strategy",
+            "symbol": "TQQQ",
+            "side": "buy",
+            "quantity": "2",
+            "price_usd": "55",
+            "fx_rate_krw": "1400",
+            "traded_at": "2026-03-06T22:30:00+00:00",
+        }
     ],
 }
 
@@ -92,6 +118,7 @@ def test_load_manual_truth_from_json_file(tmp_path: Path) -> None:
     assert loaded["cash_debt"][0]["kind"] == "cash"
     assert loaded["stock_watchlist"][0]["status"] == "관찰"
     assert loaded["property_watchlist"][0]["name"] == "마포래미안푸르지오"
+    assert loaded["transactions"][0]["transaction_id"] == "tx-1"
 
 
 def test_load_manual_truth_normalizes_alias_fields_and_usd_values(tmp_path: Path) -> None:
@@ -109,6 +136,9 @@ def test_load_manual_truth_normalizes_alias_fields_and_usd_values(tmp_path: Path
     assert loaded["stock_watchlist"][0]["idea_id"] == "nvda"
     assert loaded["stock_watchlist"][0]["memo"] == "AI 인프라"
     assert loaded["property_watchlist"][0]["property_id"] == "apt-1"
+    assert loaded["transactions"][0]["transaction_id"] == "tx-alias-1"
+    assert loaded["transactions"][0]["price_krw"] == 77000.0
+    assert loaded["transactions"][0]["total_value_krw"] == 154000.0
 
 
 def test_load_manual_truth_missing_file_returns_empty_collections(tmp_path: Path) -> None:
@@ -119,4 +149,5 @@ def test_load_manual_truth_missing_file_returns_empty_collections(tmp_path: Path
         "cash_debt": [],
         "stock_watchlist": [],
         "property_watchlist": [],
+        "transactions": [],
     }
