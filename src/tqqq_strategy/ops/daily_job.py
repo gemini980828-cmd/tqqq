@@ -175,7 +175,8 @@ def _build_reason_lines(
     tp10_hit = prev_weight >= 0.999 and abs(new_weight - 0.95) < 1e-9
     lines.append(f"{'✅' if tp10_hit else '⬜'} TP10 조건(신규100% 진입 후 +10%): {'충족' if tp10_hit else '미해당'}")
     stop_active = new_weight >= 0.8 and entry_price is not None
-    lines.append(f"{'⚠' if stop_active else '⬜'} 손절 감시(고비중 & 진입가×0.941): {'활성' if stop_active else '미해당'}")
+    lines.append("")
+    lines.append(f"{'🟠' if stop_active else '⬜'} 손절 감시(고비중 & 진입가×0.941): {'활성' if stop_active else '미해당'}")
     if not np.isnan(qqq3_vs161):
         lines.append(f"{'✅' if qqq3_vs161 > 0 else '⬜'} QQQ3/161: {_format_pct(qqq3_vs161)} (> 0%)")
     return lines
