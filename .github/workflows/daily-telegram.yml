@@ -92,6 +92,4 @@ jobs:
             reports/signals_s1_s2_s3_user_original.csv
             reports/wealth_manager_summaries.json
             app/web/public/dashboard_snapshot.json
-            reports/wealth_manager_summaries.json
-            app/web/public/dashboard_snapshot.json
           if-no-files-found: warn

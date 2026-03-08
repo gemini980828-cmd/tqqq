@@ -14,6 +14,8 @@ artifacts/
 results/
 logs/
 *.sqlite3
+
+# Generated wealth dashboard artifacts
 reports/wealth_manager_summaries.json
 
 .worktrees/
