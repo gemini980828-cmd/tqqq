@@ -28,6 +28,7 @@ OPTIONAL_BLOCK_DEFAULTS: dict[str, Any] = {
     "manager_summaries": {},
     "home_inbox": [],
     "orchestrator_briefs": {},
+    "orchestrator_policy": {},
     "core_strategy_position": {},
     "core_strategy_actuals": {},
     "meta": {},

@@ -118,6 +118,17 @@ export type AppSnapshot = {
     real_estate?: string;
     default_priority?: string;
   };
+  orchestrator_policy?: {
+    quick_prompts?: string[];
+    intent_rules?: Array<{
+      key: string;
+      label: string;
+      source_manager_id: string;
+      priority: number;
+      tokens: string[];
+      support_keys?: string[];
+    }>;
+  };
   core_strategy_position?: CoreStrategyPosition;
   core_strategy_actuals?: CoreStrategyPosition;
   meta?: {

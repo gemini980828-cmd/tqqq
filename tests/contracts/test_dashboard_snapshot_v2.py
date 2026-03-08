@@ -131,6 +131,8 @@ def test_generate_dashboard_snapshot_uses_real_files(tmp_path: Path) -> None:
     assert snap["ops_log"]["next_run_at"] == "2026-03-07T22:30:00+00:00"
     assert "orchestrator_briefs" in snap
     assert "default_priority" in snap["orchestrator_briefs"]
+    assert "orchestrator_policy" in snap
+    assert snap["orchestrator_policy"]["quick_prompts"]
 
 
 def test_refresh_then_generate_snapshot_keeps_cached_summaries_fresh(tmp_path: Path) -> None:
@@ -167,3 +169,4 @@ def test_refresh_then_generate_snapshot_keeps_cached_summaries_fresh(tmp_path: P
     assert all(summary["stale"] is False for summary in snap["manager_summaries"].values())
     assert {"warnings", "key_points"}.issubset(set(snap["manager_cards"][0].keys()))
     assert {"action", "cash", "risk", "default_priority"}.issubset(set(snap["orchestrator_briefs"].keys()))
+    assert snap["orchestrator_policy"]["intent_rules"]

@@ -28,12 +28,15 @@ def build_orchestrator_briefs(context: Mapping[str, Any]) -> dict[str, str]:
     target_weight = action_hero.get("target_weight_pct", "N/A")
     reason = str(action_hero.get("reason_summary") or "").strip()
     inbox_item = dict(home_inbox[0]) if home_inbox else {}
+    core_summary = _summary_text(summaries, "core_strategy")
 
     action_brief = f"현재 가장 중요한 액션은 {action}이며 전략 목표 비중은 {target_weight}%입니다."
     if reason:
         action_brief += f" 근거는 {reason} 입니다."
     if inbox_item:
         action_brief += f" 가장 앞선 inbox는 '{inbox_item.get('title', '오늘 액션')}'이며 {inbox_item.get('detail', '')}"
+    if core_summary:
+        action_brief += f" 현재 코어전략 요약은 {core_summary} 입니다."
 
     cash_krw = liquidity.get("cash_krw", wealth_overview.get("cash_krw"))
     debt_krw = liquidity.get("debt_krw", wealth_overview.get("debt_krw"))
@@ -69,7 +72,14 @@ def build_orchestrator_briefs(context: Mapping[str, Any]) -> dict[str, str]:
         else "부동산 매니저는 현재 cached summary 기준으로 큰 경보가 없습니다."
     )
 
-    default_priority = "현재 캐시된 Home inbox와 manager summary를 기준으로 전체 우선순위는 코어전략 점검 → 현금 여력 확인 순서입니다."
+    priority_steps = ["코어전략 점검", "현금 여력 확인"]
+    if dict(risk_gauges.get("vol20") or {}).get("status") in {"amber", "red"}:
+        priority_steps = ["리스크 계기판 재점검", *priority_steps]
+    if inbox_item.get("recommended_action"):
+        priority_steps[0] = str(inbox_item["recommended_action"])
+    default_priority = f"현재 전체 우선순위는 {' → '.join(priority_steps)} 순서입니다."
+    if inbox_item:
+        default_priority += f" 가장 먼저 확인할 항목은 '{inbox_item.get('title', '오늘 액션')}'입니다."
 
     return {
         "action": action_brief,

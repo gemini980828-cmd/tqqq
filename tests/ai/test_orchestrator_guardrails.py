@@ -110,6 +110,7 @@ def test_run_orchestrator_returns_cache_first_cross_domain_answer() -> None:
     assert reply["highlights"]
     assert reply["metadata"]["mode"] == "cache_first"
     assert reply["metadata"]["source_manager_count"] >= 1
+    assert reply["primary_intent"] == "action"
     assert {"action", "cash"}.issubset(set(reply["brief_keys_used"]))
 
 
@@ -120,6 +121,16 @@ def test_run_orchestrator_can_reference_cross_domain_manager_summaries() -> None
 
     assert "관심종목 1개" in reply["answer"]
     assert "stock_research" in reply["source_manager_ids"]
+
+
+def test_run_orchestrator_uses_default_priority_for_generic_portfolio_question() -> None:
+    context = build_orchestrator_context(SNAPSHOT)
+
+    reply = run_orchestrator(question="지금 우선순위를 전체적으로 요약해줘", context=context, trigger="user_submit")
+
+    assert reply["primary_intent"] == "default_priority"
+    assert reply["brief_keys_used"][:2] == ["default_priority", "action"]
+    assert "전체 우선순위" in reply["answer"]
 
 
 def test_api_build_orchestrator_reply_uses_snapshot_payload_without_live_generation() -> None:

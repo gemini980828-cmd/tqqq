@@ -7,19 +7,23 @@ type OrchestratorReply = {
   answer: string
   highlights: string[]
   sourceManagers: string[]
+  primaryIntent: string
+  briefKeysUsed: string[]
   metadata: {
     mode: string
-    questionChars: number
-    sourceManagerCount: number
+    question_chars: number
+    source_manager_count: number
+    primary_intent: string
   }
 }
 
-const QUICK_PROMPTS = ['오늘 가장 중요한 액션은?', '현금 여력이 충분한가?', 'TQQQ와 개별주 중 어디가 우선인가?', '지금 리스크 상태는 어때?']
+const FALLBACK_QUICK_PROMPTS = ['오늘 가장 중요한 액션은?', '지금 우선순위를 요약해줘', '현금 여력이 충분한가?', '지금 리스크 상태는 어때?']
 
 export default function OrchestratorPanel({ snapshot }: { snapshot?: AppSnapshot }) {
   const [question, setQuestion] = useState('')
   const [reply, setReply] = useState<OrchestratorReply | null>(null)
   const lastUpdated = useMemo(() => snapshot?.action_hero?.updated_at ?? snapshot?.wealth_home?.updated_at ?? 'N/A', [snapshot])
+  const quickPrompts = useMemo(() => snapshot?.orchestrator_policy?.quick_prompts ?? FALLBACK_QUICK_PROMPTS, [snapshot])
 
   function submitQuestion(nextQuestion: string) {
     const prompt = nextQuestion.trim()
@@ -48,7 +52,7 @@ export default function OrchestratorPanel({ snapshot }: { snapshot?: AppSnapshot
       </div>
 
       <div className="mt-4 flex flex-wrap gap-2">
-        {QUICK_PROMPTS.map((item) => (
+        {quickPrompts.map((item) => (
           <button
             key={item}
             type="button"
@@ -84,7 +88,7 @@ export default function OrchestratorPanel({ snapshot }: { snapshot?: AppSnapshot
       {reply ? (
         <div className="mt-5 rounded-2xl border border-white/8 bg-slate-950/40 p-4">
           <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Orchestrator reply</p>
-          <p className="mt-3 text-sm leading-7 text-slate-200">{reply.answer}</p>
+          <p className="mt-3 whitespace-pre-line text-sm leading-7 text-slate-200">{reply.answer}</p>
           <div className="mt-4 flex flex-wrap gap-2">
             {reply.highlights.map((item) => (
               <span key={item} className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[11px] text-slate-300">
@@ -94,7 +98,8 @@ export default function OrchestratorPanel({ snapshot }: { snapshot?: AppSnapshot
           </div>
           <p className="mt-3 text-xs text-slate-500">Sources: {reply.sourceManagers.join(', ') || 'core_strategy'}</p>
           <p className="mt-1 text-xs text-slate-500">
-            Mode: {reply.metadata.mode} · chars: {reply.metadata.questionChars} · source managers: {reply.metadata.sourceManagerCount}
+            Mode: {reply.metadata.mode} · intent: {reply.primaryIntent} · chars: {reply.metadata.question_chars} · source managers:{' '}
+            {reply.metadata.source_manager_count}
           </p>
         </div>
       ) : null}

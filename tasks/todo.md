@@ -654,3 +654,35 @@
   - `cd /home/juwon/tqqq && PYTHONPATH=/home/juwon/tqqq/.worktrees/step4-orchestrator-first:/home/juwon/tqqq/.worktrees/step4-orchestrator-first/src UV_CACHE_DIR=/tmp/.uv-cache uv run --offline --with pytest pytest -q /home/juwon/tqqq/.worktrees/step4-orchestrator-first/tests` → `62 passed`
   - `cd /home/juwon/tqqq/.worktrees/step4-orchestrator-first && PYTHONPATH=.:'src' python3 ops/scripts/run_manager_summaries.py && PYTHONPATH=.:'src' python3 ops/scripts/export_dashboard_snapshot.py` → snapshot export 성공, `orchestrator_briefs` 6개 key 확인
   - Playwright smoke: Home 초기 로드 시 reply 영역 없음, quick prompt 클릭 후 `Orchestrator reply`에 backend-owned brief 문구가 렌더되는 것 확인
+
+---
+
+# TODO - Wealth Management Step 5 (Orchestrator Quality Deepening)
+
+- [x] Task 1: orchestrator intent policy tests 추가 (generic / mixed / domain-specific 질문 분류)
+- [x] Task 2: backend-owned shared routing / prioritization policy 구현
+- [x] Task 3: primary recommendation 중심의 orchestrator reply 품질 개선
+- [x] Task 4: preview/backend metadata naming 및 behavior drift 축소
+- [x] Task 5: focused/full verification 및 review 기록
+
+## Step 5 Scope Note
+
+- `core_strategy`, `stock_research`, `real_estate`, `cash_debt` 매니저는 여전히 **shell + cached summary + navigation surface** 까지만 유지한다.
+- 이번 단계는 **총괄 orchestrator 품질 심화**만 다룬다.
+- 핵심 우선순위는:
+  1. 질문 분류 단일 소스화
+  2. generic / mixed prompt 우선순위 정책 강화
+  3. backend-owned 응답 품질 개선
+  4. explicit-only / cache-first 가드레일 유지
+
+## Review
+
+- `docs/plans/2026-03-08-orchestrator-step5-design.md`와 `docs/plans/2026-03-08-orchestrator-step5-implementation-plan.md`를 추가해 Step 5를 “질문 분류/우선순위 정책/응답 품질 심화” 범위로 고정했고, 섹터 매니저는 scaffold-only로 유지한다는 제한을 다시 명시했다.
+- `src/tqqq_strategy/ai/orchestrator_policy.py`를 추가해 backend가 single-source intent policy를 소유하도록 만들었다. generic portfolio prompts(`전체`, `요약`, `우선순위`)는 `default_priority`로 의도적으로 라우팅되고, mixed prompts는 deterministic priority 순서(`default_priority → action → risk → cash → stock_research → real_estate`)로 정렬되도록 했다.
+- `src/tqqq_strategy/ai/orchestrator_service.py`는 이제 shared policy 분류 결과를 사용해 `primary_intent`, `brief_keys_used`, deduped `source_manager_ids`를 반환한다. 복합 질문은 `1순위 판단` + `보조 판단` 형식으로 답변을 조립해 generic 질문이 action-only로 붕 뜨지 않도록 정리했다.
+- `src/tqqq_strategy/ops/dashboard_snapshot.py`는 `orchestrator_policy`를 snapshot에 export하고, frontend는 `app/web/src/lib/orchestratorPreview.js`에서 snapshot-exported policy를 우선 사용한다. 이에 따라 preview/backend의 metadata naming을 `mode`, `question_chars`, `source_manager_count`, `primary_intent`로 정렬했다.
+- `app/web/src/components/OrchestratorPanel.tsx`는 backend-owned quick prompts를 우선 사용하고, reply 렌더를 `whitespace-pre-line`으로 바꿔 다단 답변의 가독성을 높였다.
+- 테스트:
+  - `cd /home/juwon/tqqq && UV_CACHE_DIR=/tmp/.uv-cache uv run --offline --with pytest pytest -q tests/ai/test_orchestrator_policy.py tests/ai/test_orchestrator_guardrails.py tests/ai/test_orchestrator_briefs.py tests/contracts/test_dashboard_snapshot_v2.py tests/contracts/test_dashboard_snapshot_export_freshness.py` → `14 passed`
+  - `cd /home/juwon/tqqq/app/web && node --test src/lib/orchestratorPreview.test.js && npm run lint && npm run build` → frontend preview test / lint / build 성공
+  - `cd /home/juwon/tqqq && UV_CACHE_DIR=/tmp/.uv-cache uv run --offline --with pytest pytest -q && PYTHONPATH=.:'src' python3 ops/scripts/run_manager_summaries.py && PYTHONPATH=.:'src' python3 ops/scripts/export_dashboard_snapshot.py` → `66 passed`, manager summary refresh / snapshot export 성공

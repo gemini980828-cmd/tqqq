@@ -4,10 +4,13 @@ type PreviewReply = {
   answer: string
   highlights: string[]
   sourceManagers: string[]
+  briefKeysUsed: string[]
+  primaryIntent: string
   metadata: {
     mode: string
-    questionChars: number
-    sourceManagerCount: number
+    question_chars: number
+    source_manager_count: number
+    primary_intent: string
   }
 }
 
