@@ -118,7 +118,7 @@ export default function Home({ snapshot }: { snapshot?: AppSnapshot }) {
           </div>
         </div>
 
-        <OrchestratorPanel />
+        <OrchestratorPanel snapshot={snapshot} />
       </section>
 
       <section className="grid gap-6 xl:grid-cols-[minmax(0,1.3fr)_minmax(320px,0.9fr)]">

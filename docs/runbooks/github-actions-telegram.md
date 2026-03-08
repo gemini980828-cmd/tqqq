@@ -8,7 +8,9 @@
 ## 실행 흐름
 1. `prepare_user_csv.py`로 최신 데이터 생성
 2. `user_original_reference.py`로 S1/S2/S3 신호 산출
-3. `run_daily_telegram_alert.py`로 텔레그램 발송
+3. `run_manager_summaries.py`로 manager summary cache 갱신
+4. `export_dashboard_snapshot.py`로 Home/Manager 대시보드 snapshot 갱신
+5. `run_daily_telegram_alert.py`로 텔레그램 발송
 
 ## 스케줄
 - UTC 기준: `30 22 * * 1-5`
@@ -33,3 +35,4 @@ GitHub > Actions > `Daily Telegram Signal Alert` > `Run workflow`
 ## 참고
 - `reports/daily_telegram_alert_state_gha.json`은 러너가 매번 초기화되므로 장기 멱등 상태 저장 용도로는 쓰지 않는다.
 - 동일 날짜 수동 재실행 시 메시지가 중복 발송될 수 있다.
+- 총괄 Orchestrator 대화는 GitHub Actions에서 자동 호출하지 않는다. Home UI에서 **사용자가 명시적으로 질문했을 때만** cache-first 답변을 사용한다.

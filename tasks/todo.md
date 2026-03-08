@@ -570,7 +570,33 @@
 
 ---
 
-# TODO - Wealth Management Step 2.5 (Housekeeping)
+# TODO - Wealth Management Step 3 (Guarded Orchestrator Chat)
+
+- [x] Task 1: orchestrator context builder와 guardrail 테스트(RED) 추가
+- [x] Task 2: `orchestrator_context.py` / `orchestrator_service.py` 구현
+- [x] Task 3: `app/api/main.py`에 explicit-only orchestrator reply helper 연결
+- [x] Task 4: `OrchestratorPanel`을 opt-in interactive panel로 확장
+- [x] Task 5: Step 3 문서/runbook/todo review 갱신
+- [x] Task 6: targeted/full verification 및 review 기록
+
+## Review
+
+- `src/tqqq_strategy/ai/orchestrator_context.py`를 추가해 Home snapshot에서 action hero / wealth overview / liquidity / inbox / manager summaries / event timeline만 prompt-safe 컨텍스트로 정규화했다. raw market rows나 manual raw inputs는 포함하지 않도록 화이트리스트 방식으로 잘랐다.
+- `src/tqqq_strategy/ai/orchestrator_service.py`를 추가해 explicit user submit guardrail, cache-first 응답, cross-domain source manager 추적, metadata(mode / question_chars / source_manager_count) 반환을 구현했다.
+- `app/api/main.py`에 `build_orchestrator_reply(...)`를 연결해 live provider 없이 snapshot payload만으로도 총괄 응답과 context meta를 조립할 수 있게 했다.
+- `app/web/src/components/OrchestratorPanel.tsx`는 opt-in interactive panel로 확장했다. 페이지 로드 시 자동 호출은 하지 않고, quick prompt/textarea submit 때만 snapshot cache를 바탕으로 응답을 생성한다.
+- `app/web/src/pages/Home.tsx`에서 orchestrator panel에 snapshot을 직접 주입해 Home desk에서 즉시 cross-domain 질문이 가능하도록 연결했다.
+- `docs/runbooks/github-actions-telegram.md`에는 manager summaries → snapshot export → telegram 순서와, orchestrator가 GitHub Actions에서 자동 실행되지 않는다는 cost guardrail을 반영했다.
+- root `main`의 Step 2.5 housekeeping 변경을 맞추기 위해 `src/tqqq_strategy/ops/dashboard_snapshot.py`와 freshness regression test를 worktree에도 반영해 full suite 기준을 최신화했다.
+- 검증:
+  - `cd /home/juwon/tqqq && PYTHONPATH=/home/juwon/tqqq/.worktrees/step3-orchestrator:/home/juwon/tqqq/.worktrees/step3-orchestrator/src UV_CACHE_DIR=/tmp/.uv-cache uv run --offline --with pytest pytest -q /home/juwon/tqqq/.worktrees/step3-orchestrator/tests/ai/test_orchestrator_context.py /home/juwon/tqqq/.worktrees/step3-orchestrator/tests/ai/test_orchestrator_guardrails.py` → `6 passed`
+  - `cd /home/juwon/tqqq && PYTHONPATH=/home/juwon/tqqq/.worktrees/step3-orchestrator:/home/juwon/tqqq/.worktrees/step3-orchestrator/src UV_CACHE_DIR=/tmp/.uv-cache uv run --offline --with pytest pytest -q /home/juwon/tqqq/.worktrees/step3-orchestrator/tests` → `59 passed`
+  - `cd /home/juwon/tqqq/.worktrees/step3-orchestrator/app/web && PATH=/home/juwon/tqqq/app/web/node_modules/.bin:$PATH eslint src && PATH=/home/juwon/tqqq/app/web/node_modules/.bin:$PATH tsc -b && PATH=/home/juwon/tqqq/app/web/node_modules/.bin:$PATH vite build` → production build 성공
+  - `cd /home/juwon/tqqq/.worktrees/step3-orchestrator && PYTHONPATH=.:'src' python3 ops/scripts/run_manager_summaries.py && PYTHONPATH=.:'src' python3 ops/scripts/export_dashboard_snapshot.py` → summary refresh / snapshot export 성공
+
+---
+
+# TODO - Wealth Management Step 2.5 Housekeeping
 
 - [x] Task 1: generated summary cache artifact ignore rule 추가
 - [x] Task 2: export snapshot / summary freshness regression test 추가

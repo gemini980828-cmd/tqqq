@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from tqqq_strategy.ai.orchestrator_context import build_orchestrator_context
+from tqqq_strategy.ai.orchestrator_service import run_orchestrator
 from tqqq_strategy.ops.dashboard_snapshot import generate_dashboard_snapshot
 
 
@@ -42,3 +44,19 @@ def build_dashboard_snapshot(payload: dict[str, Any] | None = None, **snapshot_k
     for key, default in OPTIONAL_BLOCK_DEFAULTS.items():
         normalized[key] = base_payload.get(key, default)
     return normalized
+
+
+def build_orchestrator_reply(
+    question: str,
+    *,
+    payload: dict[str, Any] | None = None,
+    trigger: str = "user_submit",
+    **snapshot_kwargs: Any,
+) -> dict[str, Any]:
+    snapshot = build_dashboard_snapshot(payload, **snapshot_kwargs)
+    context = build_orchestrator_context(snapshot, question=question)
+    reply = run_orchestrator(question=question, context=context, trigger=trigger)
+    return {
+        **reply,
+        "context_meta": dict(context.get("meta") or {}),
+    }
