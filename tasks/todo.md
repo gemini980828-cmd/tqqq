@@ -686,3 +686,34 @@
   - `cd /home/juwon/tqqq && UV_CACHE_DIR=/tmp/.uv-cache uv run --offline --with pytest pytest -q tests/ai/test_orchestrator_policy.py tests/ai/test_orchestrator_guardrails.py tests/ai/test_orchestrator_briefs.py tests/contracts/test_dashboard_snapshot_v2.py tests/contracts/test_dashboard_snapshot_export_freshness.py` → `14 passed`
   - `cd /home/juwon/tqqq/app/web && node --test src/lib/orchestratorPreview.test.js && npm run lint && npm run build` → frontend preview test / lint / build 성공
   - `cd /home/juwon/tqqq && UV_CACHE_DIR=/tmp/.uv-cache uv run --offline --with pytest pytest -q && PYTHONPATH=.:'src' python3 ops/scripts/run_manager_summaries.py && PYTHONPATH=.:'src' python3 ops/scripts/export_dashboard_snapshot.py` → `66 passed`, manager summary refresh / snapshot export 성공
+
+---
+
+# TODO - Wealth Management Step 6 (Orchestrator UX / History / Operational Insights)
+
+- [x] Task 1: orchestrator audit summary / session history helper 테스트 추가
+- [x] Task 2: snapshot-exported orchestrator operational insights 구현
+- [x] Task 3: Home orchestrator panel에 질문 히스토리 / replay / insight cards 추가
+- [x] Task 4: focused/full verification 및 review 기록
+
+## Step 6 Scope Note
+
+- `core_strategy`, `stock_research`, `real_estate`, `cash_debt` 매니저는 계속 **shell + cached summary + navigation surface**까지만 유지한다.
+- 이번 단계는 **총괄 orchestrator 상담 UX / history / operational insight**만 다룬다.
+- 핵심 우선순위는:
+  1. explicit-only 대화 히스토리
+  2. 재사용 가능한 최근 질문/추천 질문
+  3. cache-first 운영 인사이트
+  4. backend-owned semantics 유지
+
+## Review
+
+- `docs/plans/2026-03-08-orchestrator-step6-design.md`와 `docs/plans/2026-03-08-orchestrator-step6-implementation-plan.md`를 추가해 Step 6를 “총괄 orchestrator 상담 UX / 히스토리 / 운영 인사이트” 범위로 고정했다. 섹터 매니저는 여전히 scaffold-only로 유지한다.
+- `src/tqqq_strategy/ai/orchestrator_audit.py`에 `read_orchestrator_audit(...)` / `build_orchestrator_insights(...)`를 추가했고, `src/tqqq_strategy/ops/dashboard_snapshot.py`는 `orchestrator_insights`를 snapshot에 export하도록 확장했다. `app/api/main.py`는 해당 블록을 optional defaults에 포함시켜 정적 payload에서도 안전하게 동작하도록 정리했다.
+- frontend는 `app/web/src/lib/orchestratorSession.js` + `.d.ts` + `orchestratorSession.test.js`를 추가해 질문 히스토리/세션 인사이트를 local session convenience layer로 분리했다. 이는 authority data가 아니라 explicit 질문 UX를 위한 derived state다.
+- `app/web/src/components/OrchestratorPanel.tsx`는 이제 최근 질문/답변 history, replay, clear, session intent mix, audit 기반 recent questions를 표시한다. 첫 질문 전에는 compact empty state만 보이고, explicit 질문 이후에만 history/insight 섹션이 열린다.
+- `app/web/src/types/appSnapshot.ts`에는 `orchestrator_insights` 계약을 추가했고, `tests/ai/test_orchestrator_audit.py`, `tests/contracts/test_dashboard_snapshot_v2.py`는 audit summary / snapshot export contract를 검증한다.
+- 검증:
+  - `cd /home/juwon/tqqq/app/web && node --test src/lib/orchestratorPreview.test.js src/lib/orchestratorSession.test.js && npm run lint && npm run build` → preview/session tests, lint, build 성공
+  - `cd /home/juwon/tqqq && UV_CACHE_DIR=/tmp/.uv-cache uv run --offline --with pytest pytest -q && PYTHONPATH=.:'src' python3 ops/scripts/run_manager_summaries.py && PYTHONPATH=.:'src' python3 ops/scripts/export_dashboard_snapshot.py` → `67 passed`, summary refresh / snapshot export 성공
+  - Playwright smoke: Home 초기 로드 시 reply/history 미표시, quick prompt 클릭 후 reply + session history + insight cards 렌더 확인

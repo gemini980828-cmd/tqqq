@@ -129,6 +129,17 @@ export type AppSnapshot = {
       support_keys?: string[];
     }>;
   };
+  orchestrator_insights?: {
+    total_questions?: number;
+    last_question_at?: string | null;
+    top_intents?: Array<{ intent: string; count: number }>;
+    recent_questions?: Array<{
+      timestamp: string;
+      question: string;
+      primary_intent: string;
+      source_manager_ids: string[];
+    }>;
+  };
   core_strategy_position?: CoreStrategyPosition;
   core_strategy_actuals?: CoreStrategyPosition;
   meta?: {

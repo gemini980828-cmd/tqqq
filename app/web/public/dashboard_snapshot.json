@@ -509,5 +509,11 @@
         "support_keys": []
       }
     ]
+  },
+  "orchestrator_insights": {
+    "total_questions": 0,
+    "last_question_at": null,
+    "top_intents": [],
+    "recent_questions": []
   }
 }

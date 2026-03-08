@@ -8,6 +8,7 @@ from typing import Any
 import pandas as pd
 
 from tqqq_strategy.ai.inbox_builder import build_home_inbox
+from tqqq_strategy.ai.orchestrator_audit import DEFAULT_ORCHESTRATOR_AUDIT_PATH, build_orchestrator_insights
 from tqqq_strategy.ai.orchestrator_brief import build_orchestrator_briefs
 from tqqq_strategy.ai.orchestrator_context import build_orchestrator_context
 from tqqq_strategy.ai.orchestrator_policy import export_orchestrator_policy
@@ -120,6 +121,7 @@ def generate_dashboard_snapshot(
     manual_inputs_path: Path | str | None = None,
     manual_truth_path: Path | str | None = None,
     summary_store_path: Path | str = DEFAULT_SUMMARY_STORE_PATH,
+    audit_path: Path | str = DEFAULT_ORCHESTRATOR_AUDIT_PATH,
 ) -> dict[str, Any]:
     signal_csv = Path(signal_csv_path)
     data_csv = Path(data_csv_path)
@@ -127,6 +129,7 @@ def generate_dashboard_snapshot(
     state_file = Path(state_path)
     equity_csv = Path(equity_csv_path)
     summary_store = Path(summary_store_path)
+    audit_file = Path(audit_path)
 
     signals = pd.read_csv(signal_csv, parse_dates=["time"]).sort_values("time").reset_index(drop=True)
     market = pd.read_csv(data_csv, parse_dates=["time"]).sort_values("time").reset_index(drop=True)
@@ -241,4 +244,5 @@ def generate_dashboard_snapshot(
     snapshot["wealth_home"]["inbox_preview"] = home_inbox[:3]
     snapshot["orchestrator_briefs"] = build_orchestrator_briefs(build_orchestrator_context(snapshot))
     snapshot["orchestrator_policy"] = export_orchestrator_policy()
+    snapshot["orchestrator_insights"] = build_orchestrator_insights(audit_file)
     return snapshot

@@ -45,6 +45,7 @@ EQUITY = "date,weight,equity,taxed_equity\n" + "\n".join(
 ) + "\n2026-03-05,1.0,124,124\n2026-03-06,1.0,126,126\n"
 
 STATE = '{"last_alert_key":"2026-03-06:1->2","last_sent_at":"2026-03-06T22:30:00+00:00"}'
+AUDIT = """{"timestamp":"2026-03-06T22:40:00+00:00","question":"지금 우선순위를 요약해줘","answer":"1순위 판단: ...","source_manager_ids":["core_strategy"],"guardrails":{"explicit_only":true,"live_ai_used":false,"trigger":"user_submit"},"metadata":{"mode":"cache_first","question_chars":13,"source_manager_count":1,"primary_intent":"default_priority"},"context_meta":{"summary_source_version":"wealth_manual.json:2026-03-06:abc123"}}"""
 
 MANUAL = """{
   "positions": [
@@ -112,6 +113,7 @@ def test_generate_dashboard_snapshot_uses_real_files(tmp_path: Path) -> None:
         equity_csv_path=_write(tmp_path / "equity.csv", EQUITY),
         state_path=_write(tmp_path / "state.json", STATE),
         manual_truth_path=_write(tmp_path / "wealth_manual.json", MANUAL),
+        audit_path=_write(tmp_path / "orchestrator_audit.jsonl", AUDIT),
     )
 
     assert snap["action_hero"]["action"] == "매수"
@@ -133,6 +135,7 @@ def test_generate_dashboard_snapshot_uses_real_files(tmp_path: Path) -> None:
     assert "default_priority" in snap["orchestrator_briefs"]
     assert "orchestrator_policy" in snap
     assert snap["orchestrator_policy"]["quick_prompts"]
+    assert snap["orchestrator_insights"]["total_questions"] == 1
 
 
 def test_refresh_then_generate_snapshot_keeps_cached_summaries_fresh(tmp_path: Path) -> None:
@@ -170,3 +173,4 @@ def test_refresh_then_generate_snapshot_keeps_cached_summaries_fresh(tmp_path: P
     assert {"warnings", "key_points"}.issubset(set(snap["manager_cards"][0].keys()))
     assert {"action", "cash", "risk", "default_priority"}.issubset(set(snap["orchestrator_briefs"].keys()))
     assert snap["orchestrator_policy"]["intent_rules"]
+    assert "orchestrator_insights" in snap
