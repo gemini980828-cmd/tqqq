@@ -17,5 +17,6 @@ logs/
 
 # Generated wealth dashboard artifacts
 reports/wealth_manager_summaries.json
+reports/orchestrator_audit.jsonl
 
 .worktrees/

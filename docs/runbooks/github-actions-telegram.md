@@ -36,3 +36,4 @@ GitHub > Actions > `Daily Telegram Signal Alert` > `Run workflow`
 - `reports/daily_telegram_alert_state_gha.json`은 러너가 매번 초기화되므로 장기 멱등 상태 저장 용도로는 쓰지 않는다.
 - 동일 날짜 수동 재실행 시 메시지가 중복 발송될 수 있다.
 - 총괄 Orchestrator 대화는 GitHub Actions에서 자동 호출하지 않는다. Home UI에서 **사용자가 명시적으로 질문했을 때만** cache-first 답변을 사용한다.
+- backend helper를 통해 orchestrator를 호출하는 환경에서는 `reports/orchestrator_audit.jsonl`에 prompt/result metadata가 기록될 수 있다. 이 로그는 비용/디버깅 용도이며 권위 데이터 소스는 아니다.

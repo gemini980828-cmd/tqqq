@@ -618,3 +618,39 @@
   - exported snapshot check → `summary_source_version=wealth_manual.json:2026-01-30:92c2b05fa5e1`, all manager summaries `stale: false`
   - `cd app/web && npm run lint` → exit 0
   - `cd app/web && npm run build` → production build 성공
+
+---
+
+# TODO - Wealth Management Step 4 (Orchestrator First / Manager Scaffolds Only)
+
+- [x] Task 1: Step 4 범위/설계 문서 작성 (manager deepening 제외, orchestrator 집중)
+- [x] Task 2: orchestrator backend-owned brief layer + contract tests 추가
+- [x] Task 3: orchestrator reply path 단일화 (frontend preview가 exported briefs를 소비하도록 정리)
+- [x] Task 4: orchestrator telemetry / audit trail 추가
+- [x] Task 5: frontend preview helper 및 explicit-only behavior smoke/logic test 추가
+- [x] Task 6: focused/full verification 및 review 기록
+
+## Step 4 Scope Note
+
+- `core_strategy`, `stock_research`, `real_estate`, `cash_debt` 매니저는 이 프로젝트에서 **shell + cached summary + navigation surface** 까지만 유지한다.
+- 각 섹터 매니저의 심층 agent UX/도메인별 분석 workflow는 **별도 프로젝트**에서 고도화한다.
+- 이 단계의 주력은 **총괄 orchestrator**이며, 우선순위는:
+  1. backend가 brief/telemetry를 소유
+  2. frontend는 backend-owned brief를 소비하는 얇은 preview client로 정리
+  3. explicit-only guardrail 검증 강화
+
+## Review
+
+- `docs/plans/2026-03-08-orchestrator-first-step4-design.md`와 `docs/plans/2026-03-08-orchestrator-first-step4-implementation-plan.md`를 추가해 Step 4를 “manager scaffolds only / orchestrator first” 범위로 문서화했다.
+- `src/tqqq_strategy/ai/orchestrator_brief.py`를 추가해 backend가 action/cash/risk/stock_research/real_estate/default_priority brief를 생성하도록 만들었고, `src/tqqq_strategy/ai/orchestrator_service.py`는 raw snapshot 문구를 직접 재조합하지 않고 brief key를 선택/조합하는 형태로 정리했다.
+- `src/tqqq_strategy/ops/dashboard_snapshot.py`는 `orchestrator_briefs`를 exported snapshot에 포함하게 확장했고, `app/api/main.py`는 `build_orchestrator_reply(...)` 호출 시 optional JSONL audit(`reports/orchestrator_audit.jsonl`)를 남길 수 있게 바꿨다.
+- `src/tqqq_strategy/ai/orchestrator_audit.py`를 추가했고 `.gitignore`에 audit log를 등록했다. 이 로그는 비용/디버깅용 메타데이터이며 authority data를 갱신하지 않는다.
+- frontend는 `app/web/src/lib/orchestratorPreview.js` + `orchestratorPreview.d.ts` + `orchestratorPreview.test.js`를 추가해 preview helper를 분리했고, `app/web/src/components/OrchestratorPanel.tsx`는 exported `orchestrator_briefs`를 소비하는 얇은 client로 정리했다.
+- manager별 deep-analysis는 이번 Step에서 일부러 건드리지 않았고, 기존 shell/summary/navigation surface만 유지했다.
+- 검증:
+  - `cd /home/juwon/tqqq && PYTHONPATH=/home/juwon/tqqq/.worktrees/step4-orchestrator-first:/home/juwon/tqqq/.worktrees/step4-orchestrator-first/src UV_CACHE_DIR=/tmp/.uv-cache uv run --offline --with pytest pytest -q /home/juwon/tqqq/.worktrees/step4-orchestrator-first/tests/ai/test_orchestrator_briefs.py /home/juwon/tqqq/.worktrees/step4-orchestrator-first/tests/ai/test_orchestrator_audit.py /home/juwon/tqqq/.worktrees/step4-orchestrator-first/tests/ai/test_orchestrator_context.py /home/juwon/tqqq/.worktrees/step4-orchestrator-first/tests/ai/test_orchestrator_guardrails.py /home/juwon/tqqq/.worktrees/step4-orchestrator-first/tests/contracts/test_dashboard_snapshot_v2.py /home/juwon/tqqq/.worktrees/step4-orchestrator-first/tests/contracts/test_dashboard_snapshot_export_freshness.py` → `13 passed`
+  - `node --test app/web/src/lib/orchestratorPreview.test.js` → `1 passed`
+  - `cd app/web && eslint src && tsc -b && vite build` → production build 성공
+  - `cd /home/juwon/tqqq && PYTHONPATH=/home/juwon/tqqq/.worktrees/step4-orchestrator-first:/home/juwon/tqqq/.worktrees/step4-orchestrator-first/src UV_CACHE_DIR=/tmp/.uv-cache uv run --offline --with pytest pytest -q /home/juwon/tqqq/.worktrees/step4-orchestrator-first/tests` → `62 passed`
+  - `cd /home/juwon/tqqq/.worktrees/step4-orchestrator-first && PYTHONPATH=.:'src' python3 ops/scripts/run_manager_summaries.py && PYTHONPATH=.:'src' python3 ops/scripts/export_dashboard_snapshot.py` → snapshot export 성공, `orchestrator_briefs` 6개 key 확인
+  - Playwright smoke: Home 초기 로드 시 reply 영역 없음, quick prompt 클릭 후 `Orchestrator reply`에 backend-owned brief 문구가 렌더되는 것 확인

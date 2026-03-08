@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+
 import pytest
 
 from app.api.main import build_orchestrator_reply
@@ -108,6 +110,7 @@ def test_run_orchestrator_returns_cache_first_cross_domain_answer() -> None:
     assert reply["highlights"]
     assert reply["metadata"]["mode"] == "cache_first"
     assert reply["metadata"]["source_manager_count"] >= 1
+    assert {"action", "cash"}.issubset(set(reply["brief_keys_used"]))
 
 
 def test_run_orchestrator_can_reference_cross_domain_manager_summaries() -> None:
@@ -120,8 +123,20 @@ def test_run_orchestrator_can_reference_cross_domain_manager_summaries() -> None
 
 
 def test_api_build_orchestrator_reply_uses_snapshot_payload_without_live_generation() -> None:
-    reply = build_orchestrator_reply("지금 우선순위가 뭐야?", payload=SNAPSHOT)
+    reply = build_orchestrator_reply("지금 우선순위가 뭐야?", payload=SNAPSHOT, audit_path=None)
 
     assert reply["guardrails"]["live_ai_used"] is False
     assert reply["context_meta"]["summary_source_version"] == "wealth_manual.json:2026-01-30:abc123"
     assert reply["question"] == "지금 우선순위가 뭐야?"
+
+
+def test_api_build_orchestrator_reply_writes_audit_row_when_enabled(tmp_path) -> None:
+    audit_path = tmp_path / "orchestrator_audit.jsonl"
+
+    reply = build_orchestrator_reply("지금 리스크 상태는 어때?", payload=SNAPSHOT, audit_path=str(audit_path))
+
+    rows = audit_path.read_text(encoding="utf-8").strip().splitlines()
+    assert len(rows) == 1
+    payload = json.loads(rows[0])
+    assert payload["question"] == reply["question"]
+    assert payload["guardrails"]["explicit_only"] is True

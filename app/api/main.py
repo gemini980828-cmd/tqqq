@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from tqqq_strategy.ai.orchestrator_audit import DEFAULT_ORCHESTRATOR_AUDIT_PATH, append_orchestrator_audit
 from tqqq_strategy.ai.orchestrator_context import build_orchestrator_context
 from tqqq_strategy.ai.orchestrator_service import run_orchestrator
 from tqqq_strategy.ops.dashboard_snapshot import generate_dashboard_snapshot
@@ -26,6 +27,7 @@ OPTIONAL_BLOCK_DEFAULTS: dict[str, Any] = {
     "manager_cards": [],
     "manager_summaries": {},
     "home_inbox": [],
+    "orchestrator_briefs": {},
     "core_strategy_position": {},
     "core_strategy_actuals": {},
     "meta": {},
@@ -51,12 +53,21 @@ def build_orchestrator_reply(
     *,
     payload: dict[str, Any] | None = None,
     trigger: str = "user_submit",
+    audit_path: str | None = str(DEFAULT_ORCHESTRATOR_AUDIT_PATH),
     **snapshot_kwargs: Any,
 ) -> dict[str, Any]:
     snapshot = build_dashboard_snapshot(payload, **snapshot_kwargs)
     context = build_orchestrator_context(snapshot, question=question)
     reply = run_orchestrator(question=question, context=context, trigger=trigger)
+    context_meta = dict(context.get("meta") or {})
+    if audit_path:
+        append_orchestrator_audit(
+            audit_path,
+            question=question,
+            reply=reply,
+            context_meta=context_meta,
+        )
     return {
         **reply,
-        "context_meta": dict(context.get("meta") or {}),
+        "context_meta": context_meta,
     }

@@ -18,3 +18,6 @@
   특히 Task 3 범위 파일(inbox/export integration)은 섣불리 커밋하지 말고 scope 밖 변경은 되돌리거나 제외한다.
 - 사용자가 특정 skill(예: `$using-superpowers`, `$review`)을 명시하면, 작업/질문 전에 해당 skill 사용을 먼저 명시하고 그 흐름에 맞춰 진행한다.
   skill 이름을 나중에 반영하거나 생략한 채 바로 본론으로 들어가지 않는다.
+- 사용자가 멀티-매니저 구조에서 "각 섹터 매니저는 틀만, 총괄 AI는 제대로"라고 범위를 조정하면,
+  개별 매니저 고도화를 현재 프로젝트 안에서 과하게 진행하지 않는다.
+  우선은 schema/shell/summary contract만 유지하고, 구현 깊이는 총괄 orchestrator에 집중한다.

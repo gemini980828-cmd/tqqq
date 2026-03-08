@@ -8,6 +8,8 @@ from typing import Any
 import pandas as pd
 
 from tqqq_strategy.ai.inbox_builder import build_home_inbox
+from tqqq_strategy.ai.orchestrator_brief import build_orchestrator_briefs
+from tqqq_strategy.ai.orchestrator_context import build_orchestrator_context
 from tqqq_strategy.wealth import (
     DEFAULT_SUMMARY_STORE_PATH,
     build_core_strategy_position,
@@ -236,4 +238,5 @@ def generate_dashboard_snapshot(
     )
     snapshot["home_inbox"] = home_inbox
     snapshot["wealth_home"]["inbox_preview"] = home_inbox[:3]
+    snapshot["orchestrator_briefs"] = build_orchestrator_briefs(build_orchestrator_context(snapshot))
     return snapshot

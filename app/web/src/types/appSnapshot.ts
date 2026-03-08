@@ -110,6 +110,14 @@ export type AppSnapshot = {
   manager_cards?: ManagerCardSummary[];
   manager_summaries?: Record<string, ManagerSummaryRecord>;
   home_inbox?: HomeInboxItem[];
+  orchestrator_briefs?: {
+    action?: string;
+    cash?: string;
+    risk?: string;
+    stock_research?: string;
+    real_estate?: string;
+    default_priority?: string;
+  };
   core_strategy_position?: CoreStrategyPosition;
   core_strategy_actuals?: CoreStrategyPosition;
   meta?: {
