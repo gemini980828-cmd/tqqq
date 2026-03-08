@@ -209,7 +209,7 @@ def generate_dashboard_snapshot(
             "run_id": f"daily-{latest_date.strftime('%Y-%m-%d')}",
             "alert_key": str(state.get("last_alert_key") or f"{latest_date.strftime('%Y-%m-%d')}:{prev_weight}->{target_weight}"),
             "last_success_at": str(state.get("last_sent_at") or latest_date.isoformat()),
-            "next_run_at": default_next_run,
+            "next_run_at": str(state.get("next_run_at") or default_next_run),
         },
         "wealth_home": {
             "overview": home_overview,

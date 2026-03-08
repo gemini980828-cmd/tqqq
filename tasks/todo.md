@@ -570,26 +570,25 @@
 
 ---
 
-# TODO - Wealth Management Step 2.5 Housekeeping
+# TODO - Wealth Management Step 2.5 (Housekeeping)
 
-- [x] Task 1: generated summary artifact ignore rule 추가
-- [x] Task 2: dashboard snapshot 기본 `next_run_at`를 deterministic 하게 고정
-- [x] Task 3: summary refresh/export freshness regression test 추가
-- [x] Task 4: workflow/UI status 문구 drift 정리
-- [x] Task 5: 검증 및 review 기록
+- [x] Task 1: generated summary cache artifact ignore rule 추가
+- [x] Task 2: export snapshot / summary freshness regression test 추가
+- [x] Task 3: workflow artifact upload drift 및 ops_log contract 정리
+- [x] Task 4: stale Step 상태 UI copy와 explicit skill invocation lesson 정리
+- [x] Task 5: focused/full verification 및 review 기록
 
 ## Review
 
-- `.gitignore`에 `reports/wealth_manager_summaries.json`를 추가해 Step 2 summary cache가 로컬 작업트리를 오염시키지 않도록 정리했다.
-- `src/tqqq_strategy/ops/dashboard_snapshot.py`의 기본 `next_run_at`를 현재 시각이 아니라 latest signal date 기준(`+1 day @ 22:30 UTC`)으로 계산하게 바꿔 exported snapshot이 deterministic 하게 유지되도록 했다.
-- `tests/contracts/test_dashboard_snapshot_v2.py`에 refresh → generate 흐름 회귀 테스트를 추가해 `summary_source_version`이 signal as-of date 기준으로 맞고, exported snapshot의 manager summaries가 `stale: false` 상태를 유지함을 검증했다.
-- `.github/workflows/daily-telegram.yml`가 실제로 `reports/wealth_manager_summaries.json`과 `app/web/public/dashboard_snapshot.json`을 아티팩트로 업로드하도록 맞췄다.
-- `OrchestratorPanel`, `Managers`, 각 manager shell의 stale `Step 1` 문구를 `Step 2 Ready` / summary cache 연동 상태 기준으로 정리했다.
+- `tests/contracts/test_dashboard_snapshot_export_freshness.py`를 추가해 `run_manager_summaries.py` → `export_dashboard_snapshot.py` 흐름에서 `summary_source_version` 정렬과 `manager_summaries[*].stale == false`를 회귀 검증한다.
+- `src/tqqq_strategy/ops/dashboard_snapshot.py`는 기존 `ops_log.next_run_at` 계약을 유지하도록 state 우선값을 다시 사용하고, 새 regression test로 export 시 freshness metadata만 별도로 고정 검증한다.
+- `.github/workflows/daily-telegram.yml`는 `reports/wealth_manager_summaries.json`와 `app/web/public/dashboard_snapshot.json`까지 artifact로 업로드하도록 정합성을 맞췄다.
+- stale `Step 1`/준비중 문구는 이미 `Step 2 Ready`/summary cache 연결 상태 기준으로 정리돼 있었고, `tasks/lessons.md`에는 “사용자가 특정 skill을 명시하면 먼저 선언하고 따른다”는 교정 lesson을 기록했다.
 - 검증:
-  - `UV_CACHE_DIR=/tmp/.uv-cache uv run --offline --with pytest pytest -q tests/contracts/test_dashboard_snapshot_v2.py tests/ai/test_manager_jobs.py tests/ai/test_inbox_builder.py tests/wealth/test_summary_store.py tests/wealth/test_derived_snapshots.py` → `13 passed`
-  - `UV_CACHE_DIR=/tmp/.uv-cache uv run --offline --with pytest pytest -q` → `52 passed`
-  - `python3 ops/scripts/run_manager_summaries.py` → exit 0, 4개 manager summary refresh 확인
+  - `UV_CACHE_DIR=/tmp/.uv-cache uv run --offline --with pytest pytest -q tests/contracts/test_dashboard_snapshot_export_freshness.py tests/contracts/test_telegram_blocks.py tests/ai/test_manager_jobs.py tests/ai/test_inbox_builder.py tests/contracts/test_dashboard_snapshot_v2.py tests/contracts/test_wealth_home_snapshot_step1.py` → `10 passed`
+  - `UV_CACHE_DIR=/tmp/.uv-cache uv run --offline --with pytest pytest -q` → `53 passed`
+  - `python3 ops/scripts/run_manager_summaries.py` → exit 0
   - `python3 ops/scripts/export_dashboard_snapshot.py` → `Saved dashboard snapshot to app/web/public/dashboard_snapshot.json`
-  - exported snapshot check → `next_run_at=2026-01-31T22:30:00+00:00`, all manager summaries `stale: false`
+  - exported snapshot check → `summary_source_version=wealth_manual.json:2026-01-30:92c2b05fa5e1`, all manager summaries `stale: false`
   - `cd app/web && npm run lint` → exit 0
   - `cd app/web && npm run build` → production build 성공
