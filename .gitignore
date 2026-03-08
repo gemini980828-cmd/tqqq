@@ -14,5 +14,6 @@ artifacts/
 results/
 logs/
 *.sqlite3
+reports/wealth_manager_summaries.json
 
 .worktrees/

@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from tqqq_strategy.ai.manager_jobs import refresh_manager_summaries
 from app.api.main import build_dashboard_snapshot
 from tqqq_strategy.ops.dashboard_snapshot import generate_dashboard_snapshot
 
@@ -127,3 +128,39 @@ def test_generate_dashboard_snapshot_uses_real_files(tmp_path: Path) -> None:
     assert snap["wealth_overview"]["net_worth_krw"] == 22720000
     assert snap["core_strategy_actuals"]["symbol"] == "TQQQ"
     assert snap["manager_cards"][0]["manager_id"] == "core_strategy"
+    assert snap["ops_log"]["next_run_at"] == "2026-03-07T22:30:00+00:00"
+
+
+def test_refresh_then_generate_snapshot_keeps_cached_summaries_fresh(tmp_path: Path) -> None:
+    signals_path = _write(tmp_path / "signals.csv", SIGNALS)
+    data_path = _write(tmp_path / "data.csv", DATA)
+    metrics_path = _write(tmp_path / "metrics.csv", METRICS)
+    equity_path = _write(tmp_path / "equity.csv", EQUITY)
+    state_path = _write(tmp_path / "state.json", STATE)
+    manual_path = _write(tmp_path / "wealth_manual.json", MANUAL)
+    summary_store_path = tmp_path / "manager_summaries.json"
+
+    refresh_manager_summaries(
+        signal_csv_path=signals_path,
+        data_csv_path=data_path,
+        metrics_csv_path=metrics_path,
+        state_path=state_path,
+        equity_csv_path=equity_path,
+        manual_truth_path=manual_path,
+        summary_store_path=summary_store_path,
+        generated_at="2026-03-06T22:35:00+00:00",
+    )
+    snap = generate_dashboard_snapshot(
+        signal_csv_path=signals_path,
+        data_csv_path=data_path,
+        metrics_csv_path=metrics_path,
+        equity_csv_path=equity_path,
+        state_path=state_path,
+        manual_truth_path=manual_path,
+        summary_store_path=summary_store_path,
+    )
+
+    assert snap["meta"]["summary_source_version"].startswith("wealth_manual.json:2026-03-06:")
+    assert snap["manager_summaries"]
+    assert all(summary["stale"] is False for summary in snap["manager_summaries"].values())
+    assert {"warnings", "key_points"}.issubset(set(snap["manager_cards"][0].keys()))

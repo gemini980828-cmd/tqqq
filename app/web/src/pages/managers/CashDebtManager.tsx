@@ -13,7 +13,7 @@ export default function CashDebtManager({ snapshot }: { snapshot?: AppSnapshot }
       <div className="rounded-[24px] border border-white/8 bg-white/[0.04] p-6 shadow-[0_12px_32px_rgba(15,23,42,0.18)]">
         <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">Cash & Debt Manager</p>
         <h2 className="mt-2 text-3xl font-semibold tracking-[-0.04em] text-white">현금 · 부채 매니저</h2>
-        <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-400">투자 여력과 부채 상태를 투자운영 관점에서 빠르게 확인하기 위한 화면입니다. Step 1에서는 summary 기반 카드만 우선 노출합니다.</p>
+        <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-400">투자 여력과 부채 상태를 투자운영 관점에서 빠르게 확인하기 위한 화면입니다. Step 2에서는 summary cache 기반 카드와 inbox 경보가 연결됐고, 다음 단계에서 상환/자금운용 가이드가 확장됩니다.</p>
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">

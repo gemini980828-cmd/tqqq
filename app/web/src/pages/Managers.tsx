@@ -17,7 +17,7 @@ export default function Managers({ snapshot }: { snapshot?: AppSnapshot }) {
         <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">Managers</p>
         <h2 className="mt-2 text-3xl font-semibold tracking-[-0.05em] text-white">자산군별 Manager 작업실</h2>
         <p className="mt-4 max-w-3xl text-sm leading-7 text-slate-300 md:text-base">
-          Step 1에서는 Core Strategy를 실전 운영판으로 유지하고, 나머지 매니저는 shell과 기본 데이터 연결 상태로 시작합니다.
+          Step 2 기준으로 Core Strategy는 실전 운영판과 summary cache가 연결됐고, 나머지 매니저는 shell + cached summary + inbox 연동 상태까지 올라왔습니다.
         </p>
       </section>
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">

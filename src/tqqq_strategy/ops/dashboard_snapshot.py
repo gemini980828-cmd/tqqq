@@ -77,6 +77,12 @@ def _build_condition_pass_rate(row: pd.Series, vol20: float, dist200: float, spy
     return f"{sum(1 for item in checks if item)}/{len(checks)}"
 
 
+def _default_next_run_at(latest_date: pd.Timestamp) -> str:
+    normalized = pd.Timestamp(latest_date)
+    next_day = normalized.date() + timedelta(days=1)
+    return datetime(next_day.year, next_day.month, next_day.day, 22, 30, tzinfo=timezone.utc).isoformat()
+
+
 def _build_event_timeline(signals: pd.DataFrame, limit: int = 5) -> list[dict[str, str]]:
     timeline: list[dict[str, str]] = []
     recent = signals.tail(90).reset_index(drop=True)
@@ -156,7 +162,7 @@ def generate_dashboard_snapshot(
 
     metrics_row = metrics.iloc[0] if not metrics.empty else pd.Series(dtype=float)
     condition_pass_rate = _build_condition_pass_rate(market_latest, vol20, tqqq_dist200, spy200_dist)
-    default_next_run = (datetime.now(timezone.utc) + timedelta(days=1)).replace(hour=22, minute=30, second=0, microsecond=0)
+    default_next_run = _default_next_run_at(latest_date)
 
     wealth_overview = build_wealth_overview(manual_inputs)
     liquidity_summary = build_liquidity_summary(manual_inputs)
@@ -203,7 +209,7 @@ def generate_dashboard_snapshot(
             "run_id": f"daily-{latest_date.strftime('%Y-%m-%d')}",
             "alert_key": str(state.get("last_alert_key") or f"{latest_date.strftime('%Y-%m-%d')}:{prev_weight}->{target_weight}"),
             "last_success_at": str(state.get("last_sent_at") or latest_date.isoformat()),
-            "next_run_at": str(state.get("next_run_at") or default_next_run.isoformat()),
+            "next_run_at": default_next_run,
         },
         "wealth_home": {
             "overview": home_overview,

@@ -567,3 +567,29 @@
 - Final hardening: `summary_source_version`를 signal as-of date 기준으로 정규화해 export 직후에도 manager summary cache가 `stale: false`로 유지되도록 맞췄다.
   - `cd app/web && npm run lint` → exit 0
   - `cd app/web && npm run build` → production build 성공
+
+---
+
+# TODO - Wealth Management Step 2.5 Housekeeping
+
+- [x] Task 1: generated summary artifact ignore rule 추가
+- [x] Task 2: dashboard snapshot 기본 `next_run_at`를 deterministic 하게 고정
+- [x] Task 3: summary refresh/export freshness regression test 추가
+- [x] Task 4: workflow/UI status 문구 drift 정리
+- [x] Task 5: 검증 및 review 기록
+
+## Review
+
+- `.gitignore`에 `reports/wealth_manager_summaries.json`를 추가해 Step 2 summary cache가 로컬 작업트리를 오염시키지 않도록 정리했다.
+- `src/tqqq_strategy/ops/dashboard_snapshot.py`의 기본 `next_run_at`를 현재 시각이 아니라 latest signal date 기준(`+1 day @ 22:30 UTC`)으로 계산하게 바꿔 exported snapshot이 deterministic 하게 유지되도록 했다.
+- `tests/contracts/test_dashboard_snapshot_v2.py`에 refresh → generate 흐름 회귀 테스트를 추가해 `summary_source_version`이 signal as-of date 기준으로 맞고, exported snapshot의 manager summaries가 `stale: false` 상태를 유지함을 검증했다.
+- `.github/workflows/daily-telegram.yml`가 실제로 `reports/wealth_manager_summaries.json`과 `app/web/public/dashboard_snapshot.json`을 아티팩트로 업로드하도록 맞췄다.
+- `OrchestratorPanel`, `Managers`, 각 manager shell의 stale `Step 1` 문구를 `Step 2 Ready` / summary cache 연동 상태 기준으로 정리했다.
+- 검증:
+  - `UV_CACHE_DIR=/tmp/.uv-cache uv run --offline --with pytest pytest -q tests/contracts/test_dashboard_snapshot_v2.py tests/ai/test_manager_jobs.py tests/ai/test_inbox_builder.py tests/wealth/test_summary_store.py tests/wealth/test_derived_snapshots.py` → `13 passed`
+  - `UV_CACHE_DIR=/tmp/.uv-cache uv run --offline --with pytest pytest -q` → `52 passed`
+  - `python3 ops/scripts/run_manager_summaries.py` → exit 0, 4개 manager summary refresh 확인
+  - `python3 ops/scripts/export_dashboard_snapshot.py` → `Saved dashboard snapshot to app/web/public/dashboard_snapshot.json`
+  - exported snapshot check → `next_run_at=2026-01-31T22:30:00+00:00`, all manager summaries `stale: false`
+  - `cd app/web && npm run lint` → exit 0
+  - `cd app/web && npm run build` → production build 성공
