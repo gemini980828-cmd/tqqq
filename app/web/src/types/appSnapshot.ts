@@ -155,6 +155,16 @@ export interface StockResearchQueueItem {
   score?: number;
 }
 
+export interface StockResearchEvidenceRef {
+  id?: string;
+  label: string;
+  source?: string;
+  url?: string;
+  summary?: string;
+}
+
+export type StockResearchSubscores = Record<string, number>;
+
 export interface StockResearchWorkspaceItem {
   idea_id: string;
   symbol: string;
@@ -170,6 +180,11 @@ export interface StockResearchWorkspaceItem {
   score?: number;
   risk_level?: 'low' | 'medium' | 'high';
   recent_status_change?: string;
+  engine_version?: string;
+  confidence?: 'low' | 'medium' | 'high' | string;
+  reason_codes?: string[];
+  evidence_refs?: StockResearchEvidenceRef[];
+  subscores?: StockResearchSubscores;
 }
 
 export interface StockResearchCompareSeed {

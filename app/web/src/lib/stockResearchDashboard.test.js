@@ -43,6 +43,43 @@ test('resolveStockResearchWorkspace returns snapshot workspace when available', 
   assert.equal(workspace.items[0].symbol, 'NVDA')
 })
 
+test('resolveStockResearchWorkspace preserves and normalizes engine metadata fields', () => {
+  const workspace = resolveStockResearchWorkspace({
+    stock_research_workspace: {
+      generated_at: '2026-03-22T00:00:00Z',
+      items: [
+        {
+          idea_id: 'stock-nvda',
+          symbol: 'NVDA',
+          company_name: 'NVIDIA',
+          status: '관찰',
+          memo: 'AI 수혜 지속 모니터링',
+          is_held: false,
+          overlap_level: 'low',
+          priority: 'medium',
+          priority_reason: '관찰 상태 유지',
+          next_action: 'NVDA 후속 리서치 업데이트',
+          generated_at: '2026-03-22T00:00:00Z',
+          engine_version: 'stock-research/v1',
+          confidence: 'high',
+          reason_codes: ['memo_present', 'watchlist_active'],
+          evidence_refs: ['memo:stock-1', { label: 'sec:10-k' }],
+          subscores: { quality: 72, fit: 64, risk: 18 },
+        },
+      ],
+    },
+  })
+
+  assert.equal(workspace.items[0].engine_version, 'stock-research/v1')
+  assert.equal(workspace.items[0].confidence, 'high')
+  assert.deepEqual(workspace.items[0].reason_codes, ['memo_present', 'watchlist_active'])
+  assert.deepEqual(workspace.items[0].evidence_refs, [
+    { label: 'memo:stock-1' },
+    { label: 'sec:10-k' },
+  ])
+  assert.deepEqual(workspace.items[0].subscores, { quality: 72, fit: 64, risk: 18 })
+})
+
 test('resolveStockResearchWorkspace returns empty aligned workspace when snapshot workspace is missing', () => {
   const workspace = resolveStockResearchWorkspace({
     manager_summaries: {
@@ -91,4 +128,18 @@ test('getStockResearchDetailSummary builds generic copy from workspace fields', 
     }),
     /NVDA.*관찰/,
   )
+})
+
+test('getStockResearchDetailSummary mentions reason codes and evidence count when present', () => {
+  const summary = getStockResearchDetailSummary({
+    symbol: 'NVDA',
+    status: '관찰',
+    reason_codes: ['memo_present', 'watchlist_active'],
+    evidence_refs: [{ label: 'sec:10-k' }, { label: 'earnings:2026-q1' }],
+    confidence: 'high',
+  })
+
+  assert.match(summary, /memo_present/)
+  assert.match(summary, /근거 2건/)
+  assert.match(summary, /신뢰도: high/)
 })
