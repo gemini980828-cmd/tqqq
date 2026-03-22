@@ -21,3 +21,15 @@ class ResearchUniverseEntry:
     memo: str
     is_held: bool
     as_of: str
+
+
+@dataclass(frozen=True)
+class ResearchFeatureSnapshot:
+    symbol: str
+    normalized_status: str
+    overlap_level: str
+    has_memo: bool
+    priority: str
+    recency_label: str
+    has_catalyst: bool
+    as_of: str
