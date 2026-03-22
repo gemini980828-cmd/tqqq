@@ -11,6 +11,7 @@ export function StockResearchEvidencePanel({ item, evidence }: Props) {
   const institutionalFlow = (evidence?.institutional_flow && typeof evidence.institutional_flow === 'object')
     ? evidence.institutional_flow as { stance?: string; confidence?: string; summary?: string }
     : null
+  const evidenceRefs = item.evidence_refs ?? []
 
   // Use evidence data if available, otherwise fallback to static mock UI
   return (
@@ -50,6 +51,25 @@ export function StockResearchEvidencePanel({ item, evidence }: Props) {
         <p className="text-[11px] text-slate-400 leading-relaxed border-t border-[#334155] pt-2">
             {institutionalFlow?.summary ?? news[0]?.summary ?? '최근 2주간 상위 5대 연기금/헤지펀드의 비중 확대 흐름 지속. 확신(Conviction) 점수 상승.'}
         </p>
+        {evidenceRefs.length ? (
+          <div className="mt-3 border-t border-[#334155] pt-3">
+            <div className="mb-2 text-[10px] font-bold uppercase tracking-widest text-slate-500">Evidence refs</div>
+            <div className="space-y-2">
+              {evidenceRefs.map((ref) => (
+                <div key={`${ref.label}-${ref.source ?? 'ref'}`} className="rounded-lg border border-[#334155] bg-[#08101b]/40 px-3 py-2">
+                  <div className="text-[11px] font-semibold text-slate-200">{ref.label}</div>
+                  {ref.source ? <div className="text-[10px] text-slate-500">{ref.source}</div> : null}
+                  {ref.summary ? <div className="mt-1 text-[10px] text-slate-400">{ref.summary}</div> : null}
+                  {ref.url ? (
+                    <a className="mt-1 inline-block text-[10px] text-sky-300 underline-offset-2 hover:underline" href={ref.url} target="_blank" rel="noreferrer">
+                      원문 보기
+                    </a>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
       </div>
     </div>
   )
