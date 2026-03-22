@@ -1,0 +1,49 @@
+{
+  "baseline_original": {
+    "pretax_cagr": 0.4156743616862226,
+    "aftertax_cagr": 0.3859792803756308,
+    "pretax_mdd": -0.40467363761426745,
+    "aftertax_mdd": -0.5343459511576858,
+    "is_aftertax_cagr": 0.4308985010729598,
+    "oos_aftertax_cagr": 0.2936024227756351,
+    "oos_retention": 0.6813725785644408,
+    "oos_pass": false,
+    "turnover_units": 102.35,
+    "total_tax_paid_krw": 4216176717.128256
+  },
+  "baseline_phase2_best": {
+    "pretax_cagr": 0.42808318969856374,
+    "aftertax_cagr": 0.3981461895474141,
+    "pretax_mdd": -0.40877826476573886,
+    "aftertax_mdd": -0.5385868644063143,
+    "is_aftertax_cagr": 0.44083154900011134,
+    "oos_aftertax_cagr": 0.3105096867077948,
+    "oos_retention": 0.7043726507598855,
+    "oos_pass": true,
+    "turnover_units": 103.05,
+    "total_tax_paid_krw": 4785549601.181019
+  },
+  "winner_count": 42,
+  "selected_overlay": {
+    "overlay_type": "soft_overheat_buffer",
+    "overlay_json": "{\"cap_weight\": 0.9, \"enter_dist\": 126.0, \"exit_dist\": 123.0, \"min_risk_weight\": 0.95}",
+    "active_days": 703,
+    "pretax_cagr": 0.4207127345195494,
+    "aftertax_cagr": 0.3908423537447874,
+    "pretax_mdd": -0.39232989150383646,
+    "aftertax_mdd": -0.5161525454553573,
+    "is_aftertax_cagr": 0.43195702850340667,
+    "oos_aftertax_cagr": 0.3065554394854657,
+    "oos_retention": 0.7096896664642373,
+    "oos_pass": true,
+    "turnover_units": 106.30999999999999,
+    "total_tax_paid_krw": 4449192371.626278,
+    "delta_aftertax_cagr_vs_orig": 0.00486307336915659,
+    "delta_pretax_mdd_vs_orig": 0.012343746110430986,
+    "delta_aftertax_mdd_vs_orig": 0.018193405702328524,
+    "delta_aftertax_cagr_vs_phase2": -0.007303835802626724,
+    "delta_pretax_mdd_vs_phase2": 0.016448373261902405
+  },
+  "cost_sensitivity_file": "experiments/overlay_best_cost_sensitivity.csv",
+  "window_comparison_file": "experiments/overlay_best_window_comparison.csv"
+}

@@ -16,6 +16,10 @@ def _summary_text(summaries: Mapping[str, Any], manager_id: str) -> str:
     return str(summary.get("summary_text") or "").strip()
 
 
+def _safe_items(items: Any) -> list[dict[str, Any]]:
+    return [dict(item) for item in list(items or []) if isinstance(item, Mapping)]
+
+
 def build_orchestrator_briefs(context: Mapping[str, Any]) -> dict[str, str]:
     action_hero = dict(context.get("action_hero") or {})
     wealth_overview = dict(context.get("wealth_overview") or {})
@@ -23,6 +27,9 @@ def build_orchestrator_briefs(context: Mapping[str, Any]) -> dict[str, str]:
     risk_gauges = dict(context.get("risk_gauges") or {})
     home_inbox = list(context.get("home_inbox") or [])
     summaries = dict(context.get("manager_summaries") or {})
+    event_timeline = _safe_items(context.get("event_timeline"))
+    report_highlights = _safe_items(context.get("report_highlights"))
+    compare_data = dict(context.get("compare_data") or {})
 
     action = str(action_hero.get("action") or "유지")
     target_weight = action_hero.get("target_weight_pct", "N/A")
@@ -81,11 +88,40 @@ def build_orchestrator_briefs(context: Mapping[str, Any]) -> dict[str, str]:
     if inbox_item:
         default_priority += f" 가장 먼저 확인할 항목은 '{inbox_item.get('title', '오늘 액션')}'입니다."
 
+    recent_event = event_timeline[0] if event_timeline else {}
+    if recent_event:
+        recent_changes = (
+            f"최근 변화는 '{recent_event.get('title') or recent_event.get('type')}'이며 "
+            f"{recent_event.get('detail', '')}"
+        )
+    else:
+        recent_changes = "최근 변화 이벤트 데이터가 충분하지 않습니다."
+
+    overlap = _safe_items(compare_data.get("holding_overlap"))
+    conflicts = _safe_items(compare_data.get("conflicting_recommendations"))
+    if overlap or conflicts:
+        overlap_text = ""
+        if overlap:
+            overlap_text = f"공통 추적 항목은 {', '.join(str(item) for item in overlap[0].get('shared_symbols', [])) or '없음'}입니다."
+        conflict_text = f" 충돌 포인트는 {conflicts[0].get('detail', '')}" if conflicts else ""
+        comparison = (overlap_text + conflict_text).strip()
+    else:
+        comparison = "현재 비교/충돌 데이터가 충분하지 않습니다."
+
+    top_report = report_highlights[0] if report_highlights else {}
+    if top_report:
+        report = f"리포트 핵심은 '{top_report.get('title', '')}'이며 {top_report.get('summary', '')}"
+    else:
+        report = "리포트 하이라이트 데이터가 충분하지 않습니다."
+
     return {
         "action": action_brief,
         "cash": cash_brief,
         "risk": risk_brief,
         "stock_research": stock_brief,
         "real_estate": estate_brief,
+        "recent_changes": recent_changes,
+        "comparison": comparison,
+        "report": report,
         "default_priority": default_priority,
     }

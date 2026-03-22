@@ -30,29 +30,64 @@
   },
   "event_timeline": [
     {
+      "id": "event-core-strategy-2025-12-10-55",
       "date": "2025-12-10",
       "type": "TP10",
-      "detail": "100% → 95% 감량"
+      "title": "코어전략 TP10",
+      "detail": "100% → 95% 감량",
+      "category": "allocation",
+      "severity": "medium",
+      "source_manager_id": "core_strategy",
+      "entity_type": "position",
+      "entity_id": "tqqq-core"
     },
     {
+      "id": "event-core-strategy-2025-11-24-44",
       "date": "2025-11-24",
       "type": "재진입",
-      "detail": "0.00% → 100.00% 진입"
+      "title": "코어전략 재진입",
+      "detail": "0.00% → 100.00% 진입",
+      "category": "allocation",
+      "severity": "high",
+      "source_manager_id": "core_strategy",
+      "entity_type": "position",
+      "entity_id": "tqqq-core"
     },
     {
+      "id": "event-core-strategy-2025-11-17-39",
       "date": "2025-11-17",
       "type": "강제청산",
-      "detail": "100.00% → 0.00% 전환"
+      "title": "코어전략 강제청산",
+      "detail": "100.00% → 0.00% 전환",
+      "category": "allocation",
+      "severity": "high",
+      "source_manager_id": "core_strategy",
+      "entity_type": "position",
+      "entity_id": "tqqq-core"
     },
     {
+      "id": "event-core-strategy-2025-11-07-33",
       "date": "2025-11-07",
       "type": "비중 변경",
-      "detail": "90.00% → 100.00% 조정"
+      "title": "코어전략 비중 변경",
+      "detail": "90.00% → 100.00% 조정",
+      "category": "allocation",
+      "severity": "medium",
+      "source_manager_id": "core_strategy",
+      "entity_type": "position",
+      "entity_id": "tqqq-core"
     },
     {
+      "id": "event-core-strategy-2025-11-04-30",
       "date": "2025-11-04",
       "type": "비중 변경",
-      "detail": "5.00% → 90.00% 조정"
+      "title": "코어전략 비중 변경",
+      "detail": "5.00% → 90.00% 조정",
+      "category": "allocation",
+      "severity": "medium",
+      "source_manager_id": "core_strategy",
+      "entity_type": "position",
+      "entity_id": "tqqq-core"
     }
   ],
   "ops_log": {
@@ -64,6 +99,7 @@
   "wealth_home": {
     "overview": {
       "invested_krw": 9720000,
+      "investable_assets_krw": 9720000,
       "cash_krw": 1500000,
       "debt_krw": 0,
       "net_worth_krw": 11220000
@@ -347,7 +383,9 @@
     "target_value_krw": 10659000,
     "rebalance_gap_krw": 939000,
     "rebalance_action": "buy",
-    "investable_total_krw": 11220000
+    "investable_total_krw": 11220000,
+    "transaction_count": 0,
+    "last_traded_at": ""
   },
   "core_strategy_actuals": {
     "symbol": "TQQQ",
@@ -364,12 +402,17 @@
     "target_value_krw": 10659000,
     "rebalance_gap_krw": 939000,
     "rebalance_action": "buy",
-    "investable_total_krw": 11220000
+    "investable_total_krw": 11220000,
+    "transaction_count": 0,
+    "last_traded_at": ""
   },
   "meta": {
     "manual_source_version": "wealth_manual.json",
     "summary_source_version": "wealth_manual.json:2026-01-30:92c2b05fa5e1",
-    "summary_store_path": "reports/wealth_manager_summaries.json"
+    "summary_store_path": "reports/wealth_manager_summaries.json",
+    "signal_updated_at": "2026-01-30T00:00:00",
+    "market_updated_at": "2026-01-30T00:00:00",
+    "audit_available": false
   },
   "home_inbox": [
     {
@@ -406,6 +449,9 @@
     "risk": "현재 리스크 계기판은 vol20=2.54 (green), spy200_dist=107.94 (green), tqqq_dist200=117.8 (green) 상태입니다.",
     "stock_research": "개별주 매니저 기준으로는 관심종목 1개를 추적 중입니다.",
     "real_estate": "부동산 매니저 기준으로는 관심 단지 1개를 팔로잉 중입니다.",
+    "recent_changes": "최근 변화는 '코어전략 TP10'이며 100% → 95% 감량",
+    "comparison": "현재 비교/충돌 데이터가 충분하지 않습니다.",
+    "report": "리포트 하이라이트 데이터가 충분하지 않습니다.",
     "default_priority": "현재 전체 우선순위는 현재 전략 비중 유지 → 현금 여력 확인 순서입니다. 가장 먼저 확인할 항목은 '코어전략 유지 점검'입니다."
   },
   "orchestrator_policy": {
@@ -427,7 +473,6 @@
           "정리",
           "포트폴리오",
           "자산",
-          "상황",
           "우선순위"
         ],
         "support_keys": [
@@ -494,6 +539,36 @@
         "support_keys": []
       },
       {
+        "key": "recent_changes",
+        "label": "recent_changes",
+        "source_manager_id": "core_strategy",
+        "priority": 45,
+        "tokens": [
+          "최근",
+          "변화",
+          "바뀌",
+          "이벤트",
+          "변경"
+        ],
+        "support_keys": []
+      },
+      {
+        "key": "comparison",
+        "label": "comparison",
+        "source_manager_id": "core_strategy",
+        "priority": 15,
+        "tokens": [
+          "비교",
+          "대비",
+          "관계",
+          "충돌"
+        ],
+        "support_keys": [
+          "action",
+          "cash"
+        ]
+      },
+      {
         "key": "real_estate",
         "label": "real_estate",
         "source_manager_id": "real_estate",
@@ -515,5 +590,434 @@
     "last_question_at": null,
     "top_intents": [],
     "recent_questions": []
+  },
+  "priority_actions": [
+    {
+      "id": "core_strategy-action",
+      "title": "코어전략 유지 점검",
+      "detail": "실보유 86.63% / 목표 95.00% / 리밸런싱 gap 939,000원",
+      "severity": "high",
+      "manager_id": "core_strategy",
+      "source": "home_inbox",
+      "recommended_action": "현재 전략 비중 유지",
+      "goto_screen": "managers/core_strategy"
+    },
+    {
+      "id": "priority-core_strategy-warning",
+      "title": "실보유 86.63% / 목표 95.00%",
+      "detail": "목표 대비 괴리 8.37%p가 커서 리밸런싱 우선순위가 높습니다.",
+      "severity": "high",
+      "manager_id": "core_strategy",
+      "source": "manager_summary",
+      "recommended_action": "현재 전략 비중 유지",
+      "goto_screen": "managers/core_strategy"
+    },
+    {
+      "id": "real_estate-review",
+      "title": "부동산 검토 큐 확인",
+      "detail": "검토 단지 체크리스트 업데이트",
+      "severity": "medium",
+      "manager_id": "real_estate",
+      "source": "home_inbox",
+      "recommended_action": "검토 단지 체크리스트 업데이트",
+      "goto_screen": "managers/real_estate"
+    },
+    {
+      "id": "stock_research-candidates",
+      "title": "개별주 후보 리서치",
+      "detail": "관심종목 신규 발굴",
+      "severity": "medium",
+      "manager_id": "stock_research",
+      "source": "home_inbox",
+      "recommended_action": "관심종목 신규 발굴",
+      "goto_screen": "managers/stock_research"
+    }
+  ],
+  "cross_manager_alerts": [
+    {
+      "id": "alert-core_strategy",
+      "title": "core_strategy 경고",
+      "detail": "목표 대비 괴리 8.37%p가 커서 리밸런싱 우선순위가 높습니다.",
+      "severity": "medium",
+      "manager_ids": [
+        "core_strategy"
+      ],
+      "entity_type": "manager",
+      "entity_id": "core_strategy"
+    }
+  ],
+  "research_candidates": [
+    {
+      "idea_id": "stock-1",
+      "symbol": "NVDA",
+      "status": "관찰",
+      "memo": "AI 수혜 지속 모니터링",
+      "priority": "medium",
+      "priority_reason": "후속 검토 필요",
+      "manager_id": "stock_research",
+      "next_action": "NVDA 후속 리서치 업데이트"
+    }
+  ],
+  "stock_research_workspace": {
+    "generated_at": "2026-01-30T00:00:00",
+    "filters": {
+      "total_count": 1,
+      "held_count": 0,
+      "candidate_count": 0,
+      "observe_count": 1,
+      "status_counts": {
+        "전체": 1,
+        "탐색": 0,
+        "관찰": 1,
+        "후보": 0,
+        "보류": 0,
+        "제외": 0
+      }
+    },
+    "queue": [
+      {
+        "id": "stock-queue-stock-1",
+        "symbol": "NVDA",
+        "title": "NVDA 리서치 우선순위 점검",
+        "reason": "관찰 상태 유지",
+        "severity": "medium",
+        "status": "관찰",
+        "is_held": false,
+        "score": 68,
+        "age_label": "방금 전",
+        "next_action": "NVDA 후속 리서치 업데이트"
+      }
+    ],
+    "items": [
+      {
+        "idea_id": "stock-1",
+        "symbol": "NVDA",
+        "company_name": "NVDA",
+        "status": "관찰",
+        "memo": "AI 수혜 지속 모니터링",
+        "is_held": false,
+        "overlap_level": "low",
+        "score": 68,
+        "risk_level": "medium",
+        "recent_status_change": "관찰 유지",
+        "priority": "medium",
+        "priority_reason": "관찰 상태 유지",
+        "next_action": "NVDA 후속 리서치 업데이트",
+        "generated_at": "2026-01-30T00:00:00"
+      }
+    ],
+    "flow": {
+      "pipeline": [
+        "탐색",
+        "관찰",
+        "후보",
+        "보류",
+        "제외"
+      ],
+      "active_stage": "관찰",
+      "stage_counts": {
+        "전체": 1,
+        "탐색": 0,
+        "관찰": 1,
+        "후보": 0,
+        "보류": 0,
+        "제외": 0
+      }
+    },
+    "evidence": {
+      "chart": {
+        "symbol": "NVDA",
+        "timeframe": "1M",
+        "signal": "관찰 유지"
+      },
+      "news": [
+        {
+          "id": "news-nvda-1",
+          "symbol": "NVDA",
+          "title": "NVDA 최근 핵심 이벤트 점검",
+          "summary": "관찰 상태 유지",
+          "category": "research",
+          "published_at": "2026-01-30T00:00:00"
+        }
+      ],
+      "institutional_flow": {
+        "symbol": "NVDA",
+        "stance": "neutral",
+        "confidence": "medium",
+        "summary": "기관/수급 브리프는 후속 실데이터 연동 전까지 seed 기반 요약을 사용합니다."
+      }
+    },
+    "compare_seed": {
+      "primary_symbol": "NVDA",
+      "candidate_symbols": [],
+      "default_mode": "fit"
+    }
+  },
+  "orchestrator_prompt_starters": [
+    {
+      "id": "prompt-1",
+      "label": "오늘 가장 중요한 액션은",
+      "prompt": "오늘 가장 중요한 액션은?",
+      "source_manager_ids": [
+        "core_strategy"
+      ],
+      "intent": "default_priority"
+    },
+    {
+      "id": "prompt-2",
+      "label": "지금 우선순위를 요약해줘",
+      "prompt": "지금 우선순위를 요약해줘",
+      "source_manager_ids": [
+        "core_strategy"
+      ],
+      "intent": "default_priority"
+    },
+    {
+      "id": "prompt-3",
+      "label": "현금 여력이 충분한가",
+      "prompt": "현금 여력이 충분한가?",
+      "source_manager_ids": [
+        "cash_debt"
+      ],
+      "intent": "cash"
+    },
+    {
+      "id": "prompt-4",
+      "label": "지금 리스크 상태는 어때",
+      "prompt": "지금 리스크 상태는 어때?",
+      "source_manager_ids": [
+        "core_strategy"
+      ],
+      "intent": "risk"
+    }
+  ],
+  "report_highlights": [
+    {
+      "id": "report-action-hero",
+      "title": "오늘 전략 액션: 유지",
+      "summary": "추세 조건 유지 (Dist200 117.80 / SPY200 107.94)",
+      "severity": "medium",
+      "manager_ids": [
+        "core_strategy"
+      ],
+      "updated_at": "2026-01-30T00:00:00"
+    },
+    {
+      "id": "report-core_strategy",
+      "title": "실보유 86.63% / 목표 95.00%",
+      "summary": "실보유 86.63% / 목표 95.00% · 코어전략 목표 비중 95.00% 기준 요약",
+      "severity": "medium",
+      "manager_ids": [
+        "core_strategy"
+      ],
+      "updated_at": "2026-01-30T00:00:00"
+    },
+    {
+      "id": "report-alert-core_strategy",
+      "title": "core_strategy 경고",
+      "summary": "목표 대비 괴리 8.37%p가 커서 리밸런싱 우선순위가 높습니다.",
+      "severity": "medium",
+      "manager_ids": [
+        "core_strategy"
+      ],
+      "updated_at": "2026-01-30T00:00:00"
+    }
+  ],
+  "manager_events": {
+    "core_strategy": [
+      {
+        "id": "summary-warning-core_strategy",
+        "date": "2026-01-30",
+        "type": "summary_warning",
+        "title": "core_strategy 경고",
+        "detail": "목표 대비 괴리 8.37%p가 커서 리밸런싱 우선순위가 높습니다.",
+        "category": "warning",
+        "severity": "medium",
+        "source_manager_id": "core_strategy",
+        "entity_type": "manager",
+        "entity_id": "core_strategy"
+      },
+      {
+        "id": "event-core-strategy-2025-12-10-55",
+        "date": "2025-12-10",
+        "type": "TP10",
+        "title": "코어전략 TP10",
+        "detail": "100% → 95% 감량",
+        "category": "allocation",
+        "severity": "medium",
+        "source_manager_id": "core_strategy",
+        "entity_type": "position",
+        "entity_id": "tqqq-core"
+      },
+      {
+        "id": "event-core-strategy-2025-11-24-44",
+        "date": "2025-11-24",
+        "type": "재진입",
+        "title": "코어전략 재진입",
+        "detail": "0.00% → 100.00% 진입",
+        "category": "allocation",
+        "severity": "high",
+        "source_manager_id": "core_strategy",
+        "entity_type": "position",
+        "entity_id": "tqqq-core"
+      },
+      {
+        "id": "event-core-strategy-2025-11-17-39",
+        "date": "2025-11-17",
+        "type": "강제청산",
+        "title": "코어전략 강제청산",
+        "detail": "100.00% → 0.00% 전환",
+        "category": "allocation",
+        "severity": "high",
+        "source_manager_id": "core_strategy",
+        "entity_type": "position",
+        "entity_id": "tqqq-core"
+      },
+      {
+        "id": "event-core-strategy-2025-11-07-33",
+        "date": "2025-11-07",
+        "type": "비중 변경",
+        "title": "코어전략 비중 변경",
+        "detail": "90.00% → 100.00% 조정",
+        "category": "allocation",
+        "severity": "medium",
+        "source_manager_id": "core_strategy",
+        "entity_type": "position",
+        "entity_id": "tqqq-core"
+      },
+      {
+        "id": "event-core-strategy-2025-11-04-30",
+        "date": "2025-11-04",
+        "type": "비중 변경",
+        "title": "코어전략 비중 변경",
+        "detail": "5.00% → 90.00% 조정",
+        "category": "allocation",
+        "severity": "medium",
+        "source_manager_id": "core_strategy",
+        "entity_type": "position",
+        "entity_id": "tqqq-core"
+      }
+    ],
+    "stock_research": [
+      {
+        "id": "stock-research-watch-stock-1",
+        "date": "2026-01-30",
+        "type": "candidate_update",
+        "title": "NVDA 리서치 추적",
+        "detail": "AI 수혜 지속 모니터링",
+        "category": "research",
+        "severity": "medium",
+        "source_manager_id": "stock_research",
+        "entity_type": "stock",
+        "entity_id": "NVDA"
+      }
+    ],
+    "real_estate": [
+      {
+        "id": "real-estate-watch-apt-1",
+        "date": "2026-01-30",
+        "type": "property_review",
+        "title": "마포래미안푸르지오 검토 상태",
+        "detail": "현재 상태 검토 / 지역 서울 마포구",
+        "category": "property",
+        "severity": "medium",
+        "source_manager_id": "real_estate",
+        "entity_type": "property",
+        "entity_id": "apt-1"
+      }
+    ],
+    "cash_debt": [
+      {
+        "id": "cash-debt-liquidity",
+        "date": "2026-01-30",
+        "type": "liquidity_status",
+        "title": "현금/부채 점검",
+        "detail": "순유동성 1,500,000원 / 유동성 비중 13.37%",
+        "category": "liquidity",
+        "severity": "medium",
+        "source_manager_id": "cash_debt",
+        "entity_type": "cash",
+        "entity_id": "net-liquidity"
+      }
+    ]
+  },
+  "compare_data": {
+    "manager_pairs": [
+      {
+        "pair_id": "core_strategy-vs-cash_debt",
+        "manager_ids": [
+          "core_strategy",
+          "cash_debt"
+        ],
+        "headlines": {
+          "core_strategy": "실보유 86.63% / 목표 95.00%",
+          "cash_debt": "현금/부채 항목 1개"
+        }
+      },
+      {
+        "pair_id": "core_strategy-vs-stock_research",
+        "manager_ids": [
+          "core_strategy",
+          "stock_research"
+        ],
+        "headlines": {
+          "core_strategy": "실보유 86.63% / 목표 95.00%",
+          "stock_research": "관심종목 1개"
+        }
+      },
+      {
+        "pair_id": "stock_research-vs-real_estate",
+        "manager_ids": [
+          "stock_research",
+          "real_estate"
+        ],
+        "headlines": {
+          "stock_research": "관심종목 1개",
+          "real_estate": "관심 단지 1개"
+        }
+      }
+    ],
+    "holding_overlap": [
+      {
+        "overlap_id": "core-vs-research-watchlist",
+        "left_manager_id": "core_strategy",
+        "right_manager_id": "stock_research",
+        "shared_symbols": [
+          "NVDA"
+        ]
+      }
+    ],
+    "conflicting_recommendations": [
+      {
+        "conflict_id": "research-vs-real-estate-focus",
+        "manager_ids": [
+          "stock_research",
+          "real_estate"
+        ],
+        "detail": "개별주 후보 리서치와 부동산 검토 큐가 동시에 열려 있어 우선순위 정리가 필요합니다."
+      }
+    ]
+  },
+  "home_discovery": {
+    "headline": "코어전략 유지 점검",
+    "priority_action_ids": [
+      "core_strategy-action",
+      "priority-core_strategy-warning",
+      "real_estate-review"
+    ],
+    "cross_manager_alert_ids": [
+      "alert-core_strategy"
+    ],
+    "prompt_ids": [
+      "prompt-1",
+      "prompt-2",
+      "prompt-3",
+      "prompt-4"
+    ],
+    "report_highlight_ids": [
+      "report-action-hero",
+      "report-core_strategy",
+      "report-alert-core_strategy"
+    ]
   }
 }

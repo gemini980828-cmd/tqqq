@@ -1,5 +1,6 @@
 import type { AppSnapshot } from '../../types/appSnapshot'
 import Dashboard from '../Dashboard'
+import ManagerActionHeader from '../../components/ManagerActionHeader'
 
 function formatKrw(value?: number) {
   if (value === undefined || Number.isNaN(value)) return 'N/A'
@@ -11,6 +12,7 @@ export default function CoreStrategyManager({ snapshot }: { snapshot?: AppSnapsh
 
   return (
     <div className="space-y-6">
+      <ManagerActionHeader managerId="core_strategy" snapshot={snapshot} />
       <section className="rounded-[24px] border border-white/8 bg-white/[0.04] p-6 shadow-[0_12px_32px_rgba(15,23,42,0.18)]">
         <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">Core Strategy Manager</p>
         <h2 className="mt-2 text-3xl font-semibold tracking-[-0.04em] text-white">TQQQ 코어전략 운영판</h2>

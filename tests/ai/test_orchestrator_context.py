@@ -47,8 +47,62 @@ SNAPSHOT = {
         }
     ],
     "event_timeline": [
-        {"date": "2026-01-30", "type": "비중 변경", "detail": "90% → 95% 조정"}
+        {
+            "id": "event-core-rebalance",
+            "date": "2026-01-30",
+            "type": "비중 변경",
+            "title": "코어 비중 확대",
+            "detail": "90% → 95% 조정",
+            "category": "allocation",
+            "severity": "medium",
+            "source_manager_id": "core_strategy",
+            "entity_type": "position",
+            "entity_id": "tqqq-core",
+        }
     ],
+    "priority_actions": [
+        {
+            "id": "priority-core-close",
+            "title": "장마감 전 코어전략 비중 확인",
+            "detail": "목표 95% 대비 실제 비중 점검",
+            "severity": "high",
+            "manager_id": "core_strategy",
+            "recommended_action": "장마감 기준 주문 판단",
+            "goto_screen": "managers/core_strategy",
+        }
+    ],
+    "cross_manager_alerts": [
+        {
+            "id": "alert-liquidity-vs-risk",
+            "title": "현금과 리스크 동시 점검",
+            "detail": "리스크 재점검 전 현금 여력을 먼저 확인하세요.",
+            "severity": "medium",
+            "manager_ids": ["core_strategy", "cash_debt"],
+        }
+    ],
+    "orchestrator_prompt_starters": [
+        {
+            "id": "prompt-priority",
+            "label": "오늘 우선순위",
+            "prompt": "오늘 무엇부터 해야 하나?",
+            "source_manager_ids": ["core_strategy"],
+            "intent": "default_priority",
+        }
+    ],
+    "report_highlights": [
+        {
+            "id": "report-core-gap",
+            "title": "코어전략 리밸런싱 점검",
+            "summary": "실제 비중과 목표 비중 차이가 남아 있습니다.",
+            "severity": "medium",
+            "manager_ids": ["core_strategy"],
+        }
+    ],
+    "compare_data": {
+        "manager_pairs": [{"pair_id": "core-vs-cash", "manager_ids": ["core_strategy", "cash_debt"]}],
+        "holding_overlap": [],
+        "conflicting_recommendations": [],
+    },
     "ops_log": {
         "run_id": "daily-2026-01-30",
         "alert_key": "2026-01-30:0.90->0.95",
@@ -73,6 +127,11 @@ def test_build_orchestrator_context_keeps_only_cached_cross_domain_state() -> No
     assert context["manager_summaries"]["core_strategy"]["summary_text"].startswith("실보유")
     assert context["home_inbox"][0]["severity"] == "high"
     assert context["event_timeline"][0]["type"] == "비중 변경"
+    assert context["priority_actions"][0]["goto_screen"] == "managers/core_strategy"
+    assert context["cross_manager_alerts"][0]["manager_ids"] == ["core_strategy", "cash_debt"]
+    assert context["orchestrator_prompt_starters"][0]["prompt"] == "오늘 무엇부터 해야 하나?"
+    assert context["report_highlights"][0]["title"] == "코어전략 리밸런싱 점검"
+    assert context["compare_data"]["manager_pairs"][0]["pair_id"] == "core-vs-cash"
     assert "raw_market_rows" not in context
     assert "manual_inputs" not in context
 
@@ -89,4 +148,16 @@ def test_build_orchestrator_context_trims_manager_summary_to_prompt_safe_fields(
         "recommended_actions",
         "generated_at",
         "stale",
+    }
+    assert set(context["event_timeline"][0]) == {
+        "id",
+        "date",
+        "type",
+        "title",
+        "detail",
+        "category",
+        "severity",
+        "source_manager_id",
+        "entity_type",
+        "entity_id",
     }

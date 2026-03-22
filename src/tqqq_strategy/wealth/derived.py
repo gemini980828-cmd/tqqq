@@ -58,6 +58,13 @@ def build_core_strategy_position(
     primary = positions[0] if positions else {}
     market_price_krw = float(primary.get("market_price_krw") or float(primary.get("market_price_usd", 0.0)) * float(primary.get("fx_rate_krw", 1.0)))
     avg_cost_krw = float(primary.get("avg_cost_krw") or float(primary.get("avg_cost_usd", 0.0)) * float(primary.get("fx_rate_krw", 1.0)))
+    transactions = [
+        row for row in manual_inputs.get("transactions", []) if str(row.get("manager_id") or "") == manager_id
+    ]
+    transaction_count = len(transactions)
+    last_traded_at = ""
+    if transactions:
+        last_traded_at = max(str(row.get("traded_at") or "") for row in transactions)
     target = round(target_weight_pct, 2)
     target_value = investable_total * (target / 100.0)
     rebalance_gap = target_value - actual_value
@@ -84,6 +91,8 @@ def build_core_strategy_position(
         "rebalance_gap_krw": _round_krw(rebalance_gap),
         "rebalance_action": rebalance_action,
         "investable_total_krw": _round_krw(investable_total),
+        "transaction_count": transaction_count,
+        "last_traded_at": last_traded_at,
     }
 
 

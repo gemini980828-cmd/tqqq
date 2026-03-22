@@ -1,4 +1,5 @@
 import type { AppSnapshot } from '../../types/appSnapshot'
+import ManagerActionHeader from '../../components/ManagerActionHeader'
 
 function formatKrw(value?: number) {
   if (value === undefined || Number.isNaN(value)) return 'N/A'
@@ -10,6 +11,7 @@ export default function CashDebtManager({ snapshot }: { snapshot?: AppSnapshot }
 
   return (
     <section className="space-y-6">
+      <ManagerActionHeader managerId="cash_debt" snapshot={snapshot} />
       <div className="rounded-[24px] border border-white/8 bg-white/[0.04] p-6 shadow-[0_12px_32px_rgba(15,23,42,0.18)]">
         <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">Cash & Debt Manager</p>
         <h2 className="mt-2 text-3xl font-semibold tracking-[-0.04em] text-white">현금 · 부채 매니저</h2>

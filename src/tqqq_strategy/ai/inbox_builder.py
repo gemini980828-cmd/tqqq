@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import Any, Mapping
 
+from tqqq_strategy.ai.stock_research_status import is_candidate_status
+
 _SEVERITY_ORDER = {"high": 0, "medium": 1, "low": 2}
 _MANAGER_PRIORITY = {
     "core_strategy": 0,
@@ -80,7 +82,7 @@ def build_home_inbox(
             stale=bool(cash_summary.get("stale")),
         )
 
-    stock_candidates = [row for row in manual_inputs.get("stock_watchlist", []) if str(row.get("status", "")).strip() in {"후보", "매수후보", "검토"}]
+    stock_candidates = [row for row in manual_inputs.get("stock_watchlist", []) if is_candidate_status(row.get("status"))]
     stock_summary = dict(manager_summaries.get("stock_research") or {})
     if stock_candidates or stock_summary.get("recommended_actions"):
         first_action = str((stock_summary.get("recommended_actions") or [""])[0])

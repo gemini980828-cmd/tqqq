@@ -8,7 +8,8 @@ MANUAL_PAYLOAD = {
         {"entry_id": "loan-margin", "kind": "debt", "label": "마이너스통장", "balance_krw": 2000000},
     ],
     "stock_watchlist": [
-        {"idea_id": "stock-1", "symbol": "NVDA", "status": "후보", "memo": "AI 인프라 핵심 수혜"},
+        {"idea_id": "stock-1", "symbol": "NVDA", "status": "관찰", "memo": "not candidate anymore"},
+        {"idea_id": "stock-3", "symbol": "AAPL", "status": "매수후보", "memo": "legacy candidate"},
     ],
     "property_watchlist": [
         {"property_id": "apt-1", "name": "마포래미안푸르지오", "region": "서울 마포구", "status": "검토"},
@@ -47,7 +48,7 @@ SUMMARIES = {
         "summary_text": "후보 1개를 유지 중입니다.",
         "key_points": ["후보 1개"],
         "warnings": [],
-        "recommended_actions": ["NVDA 후속 리서치 정리"],
+        "recommended_actions": ["AAPL 후속 리서치 정리"],
         "generated_at": "2026-03-06T22:30:00+00:00",
         "source_version": "wealth:2026-03-06",
         "stale": False,
@@ -76,4 +77,6 @@ def test_build_home_inbox_prioritizes_action_stale_and_cash_warnings() -> None:
     assert items[0]["severity"] == "high"
     assert "목표 100.00%" in items[0]["detail"]
     assert any(item["manager_id"] == "cash_debt" and item["severity"] == "high" for item in items)
-    assert any(item["manager_id"] == "stock_research" and item["severity"] == "medium" for item in items)
+    stock_item = next(item for item in items if item["manager_id"] == "stock_research")
+    assert stock_item["severity"] == "medium"
+    assert "AAPL" in stock_item["detail"] or "AAPL" in stock_item["recommended_action"]

@@ -57,6 +57,34 @@ SNAPSHOT = {
             "stale": False,
         },
     },
+    "event_timeline": [
+        {
+            "id": "event-core-rebalance",
+            "date": "2026-01-30",
+            "type": "비중 변경",
+            "title": "코어 비중 확대",
+            "detail": "10.00% → 95.00% 조정",
+            "category": "allocation",
+            "severity": "high",
+            "source_manager_id": "core_strategy",
+            "entity_type": "position",
+            "entity_id": "tqqq-core",
+        }
+    ],
+    "report_highlights": [
+        {
+            "id": "report-core-gap",
+            "title": "코어전략 리밸런싱 점검",
+            "summary": "실제 비중과 목표 비중 차이가 남아 있습니다.",
+            "severity": "medium",
+            "manager_ids": ["core_strategy"],
+        }
+    ],
+    "compare_data": {
+        "manager_pairs": [{"pair_id": "core-vs-cash", "manager_ids": ["core_strategy", "cash_debt"]}],
+        "holding_overlap": [{"overlap_id": "core-vs-research", "left_manager_id": "core_strategy", "right_manager_id": "stock_research", "shared_symbols": ["NVDA"]}],
+        "conflicting_recommendations": [{"conflict_id": "core-vs-cash", "manager_ids": ["core_strategy", "cash_debt"], "detail": "전략 액션과 현금 방어 여력을 함께 봐야 합니다."}],
+    },
 }
 
 
@@ -71,9 +99,15 @@ def test_build_orchestrator_briefs_emits_backend_owned_sections() -> None:
         "risk",
         "stock_research",
         "real_estate",
+        "recent_changes",
+        "comparison",
+        "report",
         "default_priority",
     }
     assert "95.0%" in briefs["action"]
     assert "1,500,000원" in briefs["cash"]
     assert "vol20" in briefs["risk"].lower()
     assert "관심종목 1개" in briefs["stock_research"]
+    assert "코어 비중 확대" in briefs["recent_changes"]
+    assert "공통" in briefs["comparison"]
+    assert "코어전략 리밸런싱 점검" in briefs["report"]

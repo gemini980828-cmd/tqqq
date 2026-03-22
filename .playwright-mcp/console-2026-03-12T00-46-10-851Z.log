@@ -1,0 +1,15 @@
+[    2312ms] [WARNING] Statsig is not ready to log exposures, will retry in 1 seconds @ https://www.figma.com/webpack-artifacts/assets/vendor-core-c1d527f9b495c128.min.js.br:53
+[    3633ms] [WARNING] Canvas2D: Multiple readback operations using getImageData are faster with the willReadFrequently attribute set to true. See: https://html.spec.whatwg.org/multipage/canvas.html#concept-canvas-will-read-frequently @ https://static.figma.com/fullscreen/237bae41c8ad9856ad5681f0f422c805bd7fa572/fullscreen-wasm/compiled_wasm.js.br:1
+[    3864ms] [WARNING] [Meta Pixel] - Removed URL query parameters due to potential violations. @ https://connect.facebook.net/en_US/fbevents.js:175
+[    4917ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://www.figma.com/api/folders/99016010:0
+[    4952ms] [ERROR] Attestation check for Attribution Reporting on https://www.facebook.com failed. @ https://www.figma.com/design/kI8L58Va0ikbMIaGGhXp2E/Fintech-Dashboard-UI-Kit?node-id=18037-2559&p=f:0
+[    4997ms] E: XHR for "/api/folders/99016010" failed with status 401
+    at C (https://www.figma.com/webpack-artifacts/assets/3910-2e0fe9655acc1745.min.js.br:1089:13967)
+    at async Object.k [as get] (https://www.figma.com/webpack-artifacts/assets/3910-2e0fe9655acc1745.min.js.br:1089:14350)
+    at async https://www.figma.com/webpack-artifacts/assets/3910-2e0fe9655acc1745.min.js.br:886:144080
+    at async _.validate (https://www.figma.com/webpack-artifacts/assets/figma_app_beta-363c7be38a0816d9.min.js.br:376:1522877)
+    at async h.fetchObject (https://www.figma.com/webpack-artifacts/assets/3910-2e0fe9655acc1745.min.js.br:360:136226)
+    at async f (https://www.figma.com/webpack-artifacts/assets/3910-2e0fe9655acc1745.min.js.br:360:116527)
+[    5352ms] [WARNING] [GSI_LOGGER]: Your client application uses one of the Google One Tap prompt UI status methods that may stop functioning when FedCM becomes mandatory. Refer to the migration guide to update your code accordingly and opt-in to FedCM to test your changes. Learn more: https://developers.google.com/identity/gsi/web/guides/fedcm-migration?s=dc#display_moment and https://developers.google.com/identity/gsi/web/guides/fedcm-migration?s=dc#skipped_moment @ https://www.figma.com/webpack-artifacts/assets/vendor-core-c1d527f9b495c128.min.js.br:53
+[    5372ms] [ERROR] Not signed in with the identity provider. @ https://www.figma.com/design/kI8L58Va0ikbMIaGGhXp2E/Fintech-Dashboard-UI-Kit?node-id=18037-2559&p=f:0
+[    7292ms] [ERROR] [GSI_LOGGER]: FedCM get() rejects with NetworkError: Error retrieving a token. @ https://www.figma.com/webpack-artifacts/assets/vendor-core-c1d527f9b495c128.min.js.br:53

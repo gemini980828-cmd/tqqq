@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alpha Wealth Desk - Action Hub Demo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        dark: {
+                            900: '#0F1115',
+                            800: '#161920',
+                            700: '#1F242F',
+                            600: '#2A303D'
+                        },
+                        brand: {
+                            primary: '#3B82F6',
+                            accent: '#60A5FA'
+                        },
+                        alert: {
+                            danger: '#EF4444',
+                            warning: '#F59E0B',
+                            info: '#3B82F6'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #0F1115; color: #F3F4F6; }
+        .glass-panel { background: rgba(22, 25, 32, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05); }
+        .hover-lift { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+        .hover-lift:hover { transform: translateY(-2px); box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5); }
+    </style>
+</head>
+<body class="h-screen w-full overflow-hidden flex flex-col">
+
+    <!-- Header -->
+    <header class="h-16 border-b border-dark-700 flex items-center px-6 justify-between bg-dark-900 z-10">
+        <div class="flex items-center gap-4">
+            <div class="w-8 h-8 rounded bg-brand-primary flex items-center justify-center font-bold text-white">α</div>
+            <h1 class="text-lg font-semibold tracking-wide">Alpha Wealth Desk</h1>
+        </div>
+        <nav class="flex gap-6 text-sm font-medium text-gray-400">
+            <a href="#" class="text-white">Home</a>
+            <a href="#" class="hover:text-white transition">Managers</a>
+            <a href="#" class="hover:text-white transition">Research</a>
+            <a href="#" class="hover:text-white transition">Reports</a>
+        </nav>
+        <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-full bg-dark-700 flex items-center justify-center border border-dark-600">
+                <svg class="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <main class="flex-1 flex overflow-hidden">
+        
+        <!-- Left Content Area (Hub) -->
+        <div class="flex-1 overflow-y-auto p-8 space-y-8 custom-scrollbar relative">
+            
+            <header class="mb-6">
+                <h2 class="text-2xl font-bold text-white">Good Morning.</h2>
+                <p class="text-gray-400 text-sm mt-1">Here is what requires your attention today.</p>
+            </header>
+
+            <!-- 1. Priority Actions -->
+            <section>
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-sm font-semibold text-gray-300 uppercase tracking-wider flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-alert-danger animate-pulse"></span>
+                        Priority Actions
+                    </h3>
+                </div>
+                <div class="grid grid-cols-1 gap-4">
+                    <!-- Action Card 1 -->
+                    <div class="glass-panel p-5 rounded-xl flex items-center justify-between hover-lift">
+                        <div class="flex gap-4 items-start">
+                            <div class="mt-1 flex-shrink-0 w-10 h-10 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+                            </div>
+                            <div>
+                                <div class="flex items-center gap-2 mb-1">
+                                    <span class="text-xs font-bold px-2 py-0.5 rounded bg-red-500/20 text-red-400 border border-red-500/30">HIGH</span>
+                                    <span class="text-xs text-gray-400 bg-dark-700 px-2 py-0.5 rounded">TQQQ Manager</span>
+                                </div>
+                                <h4 class="text-base font-medium text-white">Suggest reducing AAPL exposure by 5%</h4>
+                                <p class="text-sm text-gray-400 mt-1">Tech sector volatility spike detected. Partial profit-taking recommended to rebalance risk.</p>
+                            </div>
+                        </div>
+                        <button class="px-5 py-2 bg-brand-primary hover:bg-brand-accent text-white rounded-lg text-sm font-medium transition shadow-lg shadow-blue-500/20">
+                            Review & Execute
+                        </button>
+                    </div>
+
+                    <!-- Action Card 2 -->
+                    <div class="glass-panel p-5 rounded-xl flex items-center justify-between hover-lift">
+                        <div class="flex gap-4 items-start">
+                            <div class="mt-1 flex-shrink-0 w-10 h-10 rounded-full bg-yellow-500/10 border border-yellow-500/20 flex items-center justify-center text-yellow-500">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            </div>
+                            <div>
+                                <div class="flex items-center gap-2 mb-1">
+                                    <span class="text-xs font-bold px-2 py-0.5 rounded bg-yellow-500/20 text-yellow-500 border border-yellow-500/30">MEDIUM</span>
+                                    <span class="text-xs text-gray-400 bg-dark-700 px-2 py-0.5 rounded">Macro Manager</span>
+                                </div>
+                                <h4 class="text-base font-medium text-white">Quarterly rebalancing window open</h4>
+                                <p class="text-sm text-gray-400 mt-1">Bond yields have shifted. Target allocations drifted by >2%.</p>
+                            </div>
+                        </div>
+                        <button class="px-5 py-2 bg-dark-600 hover:bg-dark-500 text-white border border-dark-600 rounded-lg text-sm font-medium transition">
+                            Go to Details
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 2. Cross-Manager Alerts -->
+            <section>
+                <h3 class="text-sm font-semibold text-gray-300 uppercase tracking-wider mb-4">Cross-Manager Alerts</h3>
+                <div class="glass-panel p-4 rounded-xl border-l-4 border-l-brand-primary">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h4 class="text-sm font-medium text-white">NVDA Earnings & VIX Spike Correlation</h4>
+                            <p class="text-xs text-gray-400 mt-1">Potential conflicting signals between momentum and macro indicators.</p>
+                        </div>
+                        <div class="flex flex-wrap gap-2 justify-end">
+                            <span class="text-xs px-2 py-1 rounded-md bg-dark-700 text-gray-300 border border-dark-600">TQQQ Manager</span>
+                            <span class="text-xs px-2 py-1 rounded-md bg-dark-700 text-gray-300 border border-dark-600">Macro Manager</span>
+                            <button class="text-xs text-brand-accent hover:text-white px-2 py-1 rounded-md bg-brand-primary/10 ml-2">Analyze Conflict rarr; </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 3. Managers Grid -->
+            <section>
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-sm font-semibold text-gray-300 uppercase tracking-wider">Manager Workbench</h3>
+                    <a href="#" class="text-xs text-brand-primary hover:underline">View All</a>
+                </div>
+                <div class="grid grid-cols-3 gap-4">
+                    <!-- Manager 1 -->
+                    <div class="glass-panel p-5 rounded-xl border border-brand-primary/30 relative overflow-hidden group hover:border-brand-primary/60 transition cursor-pointer">
+                        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-500 to-yellow-500"></div>
+                        <h4 class="font-semibold text-white">TQQQ Manager</h4>
+                        <div class="flex items-center gap-2 mt-2">
+                            <span class="w-2 h-2 rounded-full bg-red-500"></span>
+                            <span class="text-xs text-red-400 font-medium">1 Priority Action required</span>
+                        </div>
+                        <div class="mt-4 pt-4 border-t border-dark-700 flex justify-between items-center text-sm text-gray-400">
+                            <span>Exposure: 120%</span>
+                            <span class="group-hover:text-white transition">Enter &rarr;</span>
+                        </div>
+                    </div>
+                    <!-- Manager 2 -->
+                    <div class="glass-panel p-5 rounded-xl border relative overflow-hidden group hover:border-gray-500 transition cursor-pointer">
+                        <div class="absolute top-0 left-0 w-full h-1 bg-yellow-500"></div>
+                        <h4 class="font-semibold text-white">Macro Manager</h4>
+                        <div class="flex items-center gap-2 mt-2">
+                            <span class="w-2 h-2 rounded-full bg-yellow-500"></span>
+                            <span class="text-xs text-yellow-500 font-medium">1 Warning, 1 Action</span>
+                        </div>
+                        <div class="mt-4 pt-4 border-t border-dark-700 flex justify-between items-center text-sm text-gray-400">
+                            <span>P: Neutral</span>
+                            <span class="group-hover:text-white transition">Enter &rarr;</span>
+                        </div>
+                    </div>
+                    <!-- Manager 3 -->
+                    <div class="glass-panel p-5 rounded-xl border relative overflow-hidden group hover:border-gray-500 transition cursor-pointer">
+                        <div class="absolute top-0 left-0 w-full h-1 bg-green-500"></div>
+                        <h4 class="font-semibold text-white">Risk Manager</h4>
+                        <div class="flex items-center gap-2 mt-2">
+                            <span class="w-2 h-2 rounded-full bg-green-500"></span>
+                            <span class="text-xs text-green-400 font-medium">Monitoring Normal</span>
+                        </div>
+                        <div class="mt-4 pt-4 border-t border-dark-700 flex justify-between items-center text-sm text-gray-400">
+                            <span>VaR: 2.1%</span>
+                            <span class="group-hover:text-white transition">Enter &rarr;</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Right Side Orchestrator Panel -->
+        <aside class="w-[420px] bg-dark-800 border-l border-dark-700 flex flex-col shadow-2xl z-20">
+            <div class="p-4 border-b border-dark-700 flex justify-between items-center bg-dark-900/50">
+                <div class="flex items-center gap-2">
+                    <span class="animate-pulse w-2 h-2 bg-brand-accent rounded-full"></span>
+                    <h2 class="font-semibold text-white">Orchestrator</h2>
+                </div>
+                <button class="text-gray-400 hover:text-white">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"></path></svg>
+                </button>
+            </div>
+            
+            <div class="flex-1 overflow-y-auto p-4 space-y-6 flex flex-col">
+                <!-- User Msg -->
+                <div class="self-end max-w-[85%] bg-dark-700 rounded-2xl rounded-tr-sm px-4 py-3 text-sm text-white">
+                    Why did the TQQQ Manager trigger a high priority alert for AAPL?
+                </div>
+
+                <!-- Orchestrator AI Response Structured -->
+                <div class="max-w-[95%]">
+                    <!-- Orchestrator Badge -->
+                    <div class="flex items-center gap-2 mb-2">
+                        <div class="w-6 h-6 rounded bg-brand-primary flex items-center justify-center">
+                            <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                        </div>
+                        <span class="text-xs font-semibold text-brand-accent uppercase">Analysis Completed</span>
+                    </div>
+                    
+                    <div class="glass-panel rounded-xl overflow-hidden border border-brand-primary/20">
+                        <!-- Short Answer (요약) -->
+                        <div class="p-4 bg-brand-primary/5 border-b border-dark-700">
+                            <p class="text-sm font-semibold text-white">
+                                AAPL's recent momentum drop combined with an upcoming macro event (CPI) flagged a potential 8% downside risk within the tech weighting.
+                            </p>
+                        </div>
+                        
+                        <!-- Details (근거) -->
+                        <div class="p-4 text-sm text-gray-300">
+                            The TQQQ strategy strictly limits single-stock concentration risk when sector-wide momentum drops below threshold &beta;. Macro Manager also corroborates a near-term defensive position due to yield curve inversion data updated yesterday.
+                        </div>
+
+                        <!-- Source Details (투명성) -->
+                        <div class="px-4 py-3 bg-dark-800/80 border-t border-dark-700 flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs text-gray-500 uppercase font-semibold">Sources:</span>
+                                <span class="text-xs px-1.5 py-0.5 rounded bg-dark-700 text-gray-300 border border-dark-600">TQQQ Manager</span>
+                                <span class="text-xs px-1.5 py-0.5 rounded bg-dark-700 text-gray-300 border border-dark-600">Macro Mgr (12h Stale)</span>
+                            </div>
+                        </div>
+
+                        <!-- Next Action (다음 행동) -->
+                        <div class="p-4 border-t border-brand-primary/20 bg-dark-900 flex justify-between items-center">
+                            <div>
+                                <h5 class="text-xs font-semibold text-brand-accent uppercase mb-1">Recommended Action</h5>
+                                <p class="text-sm text-white font-medium">Rebalance Portfolio & Review AAPL Risk</p>
+                            </div>
+                            <button class="px-3 py-1.5 bg-brand-primary hover:bg-brand-accent text-white rounded text-xs font-medium transition shadow-lg shadow-blue-500/10">
+                                Go to Workspace
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Input & Prompts -->
+            <div class="p-4 bg-dark-900 border-t border-dark-700">
+                <!-- Prompt Starters -->
+                <div class="flex gap-2 mb-3 overflow-x-auto pb-1 custom-scrollbar">
+                    <button class="flex-shrink-0 text-xs px-3 py-1.5 rounded-full bg-dark-700 border border-dark-600 text-gray-300 hover:text-white hover:border-gray-500 transition whitespace-nowrap">
+                        Compare AAPL with MSFT
+                    </button>
+                    <button class="flex-shrink-0 text-xs px-3 py-1.5 rounded-full bg-dark-700 border border-dark-600 text-gray-300 hover:text-white hover:border-gray-500 transition whitespace-nowrap">
+                        What's the macro outlook?
+                    </button>
+                </div>
+                <!-- Input Box -->
+                <div class="relative flex items-center">
+                    <input type="text" placeholder="Ask Orchestrator for insights..." class="w-full bg-dark-800 border border-dark-600 rounded-lg py-3 px-4 text-sm text-white focus:outline-none focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition">
+                    <button class="absolute right-2 p-1.5 bg-brand-primary rounded-md text-white hover:bg-brand-accent transition">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+    </main>
+    
+    <style>
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #2A303D; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #3B82F6; }
+    </style>
+</body>
+</html>

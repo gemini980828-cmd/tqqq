@@ -1,4 +1,4 @@
-from tqqq_strategy.wealth.derived import build_liquidity_summary, build_manager_cards
+from tqqq_strategy.wealth.derived import build_core_strategy_position, build_liquidity_summary, build_manager_cards
 
 
 MANUAL_PAYLOAD = {
@@ -32,7 +32,30 @@ MANUAL_PAYLOAD = {
     ],
     "stock_watchlist": [{"idea_id": "stock-1", "symbol": "NVDA", "status": "관찰", "memo": "AI 인프라 핵심 수혜"}],
     "property_watchlist": [{"property_id": "apt-1", "name": "마포래미안푸르지오", "region": "서울 마포구", "status": "관심"}],
-    "transactions": [],
+    "transactions": [
+        {
+            "transaction_id": "tx-1",
+            "account_id": "samsung-core",
+            "manager_id": "core_strategy",
+            "symbol": "TQQQ",
+            "side": "buy",
+            "quantity": 3.0,
+            "price_krw": 80000,
+            "total_value_krw": 240000,
+            "traded_at": "2026-03-05T09:00:00+00:00",
+        },
+        {
+            "transaction_id": "tx-2",
+            "account_id": "samsung-growth",
+            "manager_id": "stock_research",
+            "symbol": "NVDA",
+            "side": "buy",
+            "quantity": 1.0,
+            "price_krw": 1200000,
+            "total_value_krw": 1200000,
+            "traded_at": "2026-03-04T09:00:00+00:00",
+        },
+    ],
 }
 
 SUMMARY_CACHE = {
@@ -74,3 +97,9 @@ def test_build_manager_cards_prefers_cached_summary_metadata_when_available() ->
     assert cards[0]["stale"] is False
     assert cards[1]["headline"] == "관심종목 1개"
 
+
+def test_build_core_strategy_position_includes_transaction_metadata() -> None:
+    position = build_core_strategy_position(MANUAL_PAYLOAD, target_weight_pct=95.0)
+
+    assert position["transaction_count"] == 1
+    assert position["last_traded_at"] == "2026-03-05T09:00:00+00:00"

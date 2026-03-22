@@ -34,6 +34,7 @@ MANUAL = {
     "stock_watchlist": [
         {"idea_id": "stock-1", "symbol": "NVDA", "status": "관찰", "memo": "AI"},
         {"idea_id": "stock-2", "symbol": "META", "status": "후보", "memo": "광고 회복"},
+        {"idea_id": "stock-3", "symbol": "AAPL", "status": "매수후보", "memo": "legacy candidate"},
     ],
     "property_watchlist": [
         {"property_id": "apt-1", "name": "마포래미안푸르지오", "region": "서울", "status": "관심"},
@@ -82,7 +83,7 @@ def test_build_manager_summary_records_covers_all_four_managers(tmp_path: Path) 
     assert set(records) == {"core_strategy", "stock_research", "real_estate", "cash_debt"}
     assert records["core_strategy"]["summary_text"].startswith("실보유")
     assert records["core_strategy"]["recommended_actions"] == ["장마감 기준 추가 매수 검토"]
-    assert records["stock_research"]["key_points"] == ["관심종목 2개", "후보 1개", "관찰 1개"]
+    assert records["stock_research"]["key_points"] == ["관심종목 3개", "후보 2개", "관찰 1개"]
     assert records["real_estate"]["key_points"] == ["관심 단지 2개", "검토 1개", "관심 1개"]
     assert records["cash_debt"]["warnings"] == ["부채 500,000원이 있어 상환 우선순위를 함께 점검해야 합니다."]
     assert all(record["source_version"] == "wealth_manual.json:v1" for record in records.values())

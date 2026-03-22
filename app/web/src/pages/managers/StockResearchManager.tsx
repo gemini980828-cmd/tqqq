@@ -1,18 +1,102 @@
+import { useMemo, useState } from 'react'
 import type { AppSnapshot } from '../../types/appSnapshot'
+import ManagerActionHeader from '../../components/ManagerActionHeader'
+import { StockResearchHeader } from '../../components/stock-research/StockResearchHeader'
+import { StockResearchQueue } from '../../components/stock-research/StockResearchQueue'
+import { StockResearchWatchlist, type StockResearchFilterType, type StockResearchSortType } from '../../components/stock-research/StockResearchWatchlist'
+import { StockResearchDetail } from '../../components/stock-research/StockResearchDetail'
+import { resolveStockResearchWorkspace } from '../../lib/stockResearchDashboard'
 
 export default function StockResearchManager({ snapshot }: { snapshot?: AppSnapshot }) {
-  const managerCard = snapshot?.manager_cards?.find((card) => card.manager_id === 'stock_research')
+  const workspace = useMemo(() => resolveStockResearchWorkspace(snapshot), [snapshot])
+  const [selectedSymbol, setSelectedSymbol] = useState<string | null>(workspace.items[0]?.symbol ?? null)
+  const [query, setQuery] = useState('')
+  const [activeFilter, setActiveFilter] = useState<StockResearchFilterType>('all')
+  const [activeSort, setActiveSort] = useState<StockResearchSortType>('score')
+
+  const visibleItems = useMemo(() => {
+    let result = [...workspace.items]
+
+    if (query.trim()) {
+      const q = query.toLowerCase()
+      result = result.filter(item => 
+        item.symbol.toLowerCase().includes(q) || 
+        item.company_name.toLowerCase().includes(q)
+      )
+    }
+
+    switch (activeFilter) {
+      case 'held':
+        result = result.filter(item => item.is_held)
+        break
+      case 'new_focus':
+        result = result.filter(item => !item.is_held && item.priority === 'high')
+        break
+      case 'worsened':
+        result = result.filter(item => item.priority === 'high' && item.is_held)
+        break
+      case 'high_overlap':
+        result = result.filter(item => item.overlap_level === 'high')
+        break
+    }
+
+    result.sort((a, b) => {
+      if (activeSort === 'score') {
+        const priorityOrder = { high: 3, medium: 2, low: 1 }
+        return priorityOrder[b.priority] - priorityOrder[a.priority]
+      }
+      if (activeSort === 'recent') {
+        return new Date(b.generated_at).getTime() - new Date(a.generated_at).getTime()
+      }
+      if (activeSort === 'overlap') {
+        const overlapOrder = { high: 3, medium: 2, low: 1 }
+        return overlapOrder[b.overlap_level] - overlapOrder[a.overlap_level]
+      }
+      if (activeSort === 'risk') {
+        return (b.priority === 'high' ? 1 : 0) - (a.priority === 'high' ? 1 : 0)
+      }
+      return 0
+    })
+
+    return result
+  }, [workspace.items, query, activeFilter, activeSort])
+
+  const selectedItem = useMemo(() => {
+    return workspace.items.find(item => item.symbol === selectedSymbol) ?? visibleItems[0] ?? null
+  }, [workspace.items, selectedSymbol, visibleItems])
 
   return (
-    <section className="rounded-[24px] border border-white/8 bg-white/[0.04] p-6 shadow-[0_12px_32px_rgba(15,23,42,0.18)]">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">Stock Research Manager</p>
-      <h2 className="mt-2 text-3xl font-semibold tracking-[-0.04em] text-white">개별주 서치 매니저</h2>
-      <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-400">카카오톡/캡처 기반 메모, 상태(탐색/관찰/후보/보류/제외), 관심종목 풀을 관리할 화면입니다. Step 2에서는 cached summary와 상태 카드까지 연결하고, 다음 단계에서 실시간 총괄 AI 연동을 붙입니다.</p>
-      <div className="mt-6 rounded-2xl border border-white/8 bg-slate-950/40 p-5">
-        <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Current focus</p>
-        <p className="mt-2 text-2xl font-semibold text-white">{managerCard?.headline ?? '관심종목 0개'}</p>
-        <p className="mt-2 text-sm text-slate-400">다음 단계에서 watchlist 입력 편집, 상태 변경, 메모/첨부 상세와 총괄 AI 질의 흐름이 붙습니다.</p>
+    <div className="flex flex-col">
+      <ManagerActionHeader managerId="stock_research" snapshot={snapshot} />
+      <StockResearchHeader workspace={workspace} />
+      
+      <div className="mb-6">
+        <StockResearchQueue 
+          queue={workspace.queue} 
+          lastSyncAt={new Date(workspace.generated_at).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
+          onSelectCallback={setSelectedSymbol}
+        />
       </div>
-    </section>
+
+      <div className="workspace h-[calc(100vh-350px)] min-h-[600px] flex overflow-hidden rounded-2xl border border-white/5 bg-[#0b1423]">
+        <StockResearchWatchlist 
+          items={visibleItems} 
+          filters={workspace.filters} 
+          selectedItemId={selectedItem?.symbol ?? null}
+          onSelectCallback={setSelectedSymbol}
+          query={query}
+          onQueryChange={setQuery}
+          activeFilter={activeFilter}
+          onFilterChange={setActiveFilter}
+          activeSort={activeSort}
+          onSortChange={setActiveSort}
+        />
+        <StockResearchDetail 
+          item={selectedItem} 
+          compareSeed={workspace.compare_seed} 
+          evidence={workspace.evidence}
+        />
+      </div>
+    </div>
   )
 }

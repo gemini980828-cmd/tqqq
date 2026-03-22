@@ -106,12 +106,23 @@ export function buildPreviewReply(snapshot, question) {
   const answer =
     answerParts.length > 1 ? `1순위 판단: ${answerParts[0]}\n\n보조 판단: ${answerParts.slice(1).join(' ')}` : answerParts.join(' ')
 
+  const short_answer = answerParts.length > 0 ? answerParts[0].substring(0, 80) + '...' : '요약된 판단 결과가 없습니다.'
+  const source_details = sourceManagers.map(mid => ({ manager_id: mid, stale: false }))
+  const supporting_managers = sourceManagers.length > 1 ? sourceManagers.slice(1) : []
+  const next_action = `Review ${classification.primaryIntent} status`
+  const go_to_screen = `/${sourceManagers[0] || 'core-strategy'}`
+
   return {
     answer,
     highlights,
     sourceManagers,
     briefKeysUsed: briefKeys,
     primaryIntent: classification.primaryIntent,
+    short_answer,
+    source_details,
+    supporting_managers,
+    next_action,
+    go_to_screen,
     metadata: {
       mode: 'cache_first',
       question_chars: prompt.length,

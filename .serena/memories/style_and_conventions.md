@@ -1,0 +1,11 @@
+# Style and conventions
+- Follow top-level `AGENTS.md` and user instructions first.
+- Keep diffs small, reviewable, reversible.
+- Prefer deletion over addition; reuse existing utils/patterns before new abstractions.
+- No new dependencies without explicit request.
+- For non-trivial tasks, maintain plans/todo progress in `tasks/todo.md`.
+- After user corrections, record the pattern in `tasks/lessons.md`.
+- Verify before claiming completion.
+- Python style: simple functions, type hints where already used, pydantic/structured dict contracts, pandas-based data shaping. Avoid unnecessary full-file rewrites.
+- Frontend style: React function components, small focused UI components, TypeScript types in `appSnapshot.ts`, Vite/Tailwind utility classes, keep cards responsibility-specific.
+- UX style for this project: decision-first, human-readable Korean, preserve learnable strategy terms (e.g. 과열완충, 목표 비중) while avoiding implementation jargon.

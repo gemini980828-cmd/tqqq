@@ -136,6 +136,55 @@ def test_generate_dashboard_snapshot_uses_real_files(tmp_path: Path) -> None:
     assert "orchestrator_policy" in snap
     assert snap["orchestrator_policy"]["quick_prompts"]
     assert snap["orchestrator_insights"]["total_questions"] == 1
+    assert {"home_discovery", "priority_actions", "cross_manager_alerts", "research_candidates"}.issubset(set(snap))
+    assert {"orchestrator_prompt_starters", "report_highlights", "manager_events", "compare_data"}.issubset(set(snap))
+    assert "stock_research_workspace" in snap
+    assert snap["home_discovery"]["priority_action_ids"]
+    assert snap["priority_actions"][0]["goto_screen"].startswith("managers/")
+    assert snap["cross_manager_alerts"][0]["manager_ids"]
+    assert snap["research_candidates"][0]["symbol"] == "NVDA"
+    assert snap["stock_research_workspace"]["filters"]["total_count"] == 1
+    assert snap["stock_research_workspace"]["items"][0]["symbol"] == "NVDA"
+    assert snap["stock_research_workspace"]["items"][0]["status"] == "관찰"
+    assert snap["stock_research_workspace"]["items"][0]["score"] >= 0
+    assert snap["stock_research_workspace"]["items"][0]["risk_level"] in {"low", "medium", "high"}
+    assert snap["stock_research_workspace"]["items"][0]["recent_status_change"]
+    assert snap["stock_research_workspace"]["queue"][0]["symbol"] == "NVDA"
+    assert snap["stock_research_workspace"]["queue"][0]["score"] == snap["stock_research_workspace"]["items"][0]["score"]
+    assert snap["stock_research_workspace"]["queue"][0]["age_label"]
+    assert snap["stock_research_workspace"]["compare_seed"]["primary_symbol"] == "NVDA"
+    assert snap["stock_research_workspace"]["compare_seed"]["default_mode"] == "fit"
+    assert snap["stock_research_workspace"]["flow"]["pipeline"] == ["탐색", "관찰", "후보", "보류", "제외"]
+    assert snap["stock_research_workspace"]["flow"]["stage_counts"]["관찰"] == 1
+    assert "evidence" in snap["stock_research_workspace"]
+    assert snap["stock_research_workspace"]["evidence"]["chart"]["symbol"] == "NVDA"
+    assert snap["stock_research_workspace"]["evidence"]["news"][0]["symbol"] == "NVDA"
+    assert snap["stock_research_workspace"]["evidence"]["news"][0]["category"] == "research"
+    assert snap["stock_research_workspace"]["evidence"]["institutional_flow"]["symbol"] == "NVDA"
+    assert snap["stock_research_workspace"]["evidence"]["institutional_flow"]["confidence"] in {"low", "medium", "high"}
+    assert "NVDA 후속 리서치 업데이트" in snap["stock_research_workspace"]["items"][0]["next_action"]
+    assert snap["orchestrator_prompt_starters"][0]["prompt"]
+    assert snap["report_highlights"][0]["manager_ids"]
+    assert "core_strategy" in snap["manager_events"]
+    assert "stock_research" in snap["manager_events"]
+    assert "cash_debt" in snap["manager_events"]
+    assert "real_estate" in snap["manager_events"]
+    assert any(event["source_manager_id"] == "stock_research" for event in snap["manager_events"]["stock_research"])
+    assert any(event["source_manager_id"] == "cash_debt" for event in snap["manager_events"]["cash_debt"])
+    assert any(event["source_manager_id"] == "real_estate" for event in snap["manager_events"]["real_estate"])
+    assert {"manager_pairs", "holding_overlap", "conflicting_recommendations"} == set(snap["compare_data"])
+    assert any(pair["pair_id"] == "core_strategy-vs-cash_debt" for pair in snap["compare_data"]["manager_pairs"])
+    assert snap["compare_data"]["holding_overlap"][0]["shared_symbols"] == ["NVDA"]
+    assert snap["compare_data"]["conflicting_recommendations"]
+    assert {
+        "id",
+        "title",
+        "category",
+        "severity",
+        "source_manager_id",
+        "entity_type",
+        "entity_id",
+    }.issubset(set(snap["event_timeline"][0]))
 
 
 def test_refresh_then_generate_snapshot_keeps_cached_summaries_fresh(tmp_path: Path) -> None:

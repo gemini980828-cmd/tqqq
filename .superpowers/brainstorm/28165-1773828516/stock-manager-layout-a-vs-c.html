@@ -1,0 +1,119 @@
+<h2>Stock Research Manager — A안 vs C안</h2>
+<p class="subtitle">A는 스크리닝 보드 중심, C는 분석 워크스테이션 중심입니다. 더 실전적으로 느껴지는 쪽을 골라주세요.</p>
+
+<div class="cards">
+  <div class="card" data-choice="approach-a" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="mockup">
+        <div class="mockup-header">A. 점수 우선 스크리닝 보드 + 우측 상세 패널</div>
+        <div class="mockup-body" style="display:grid;grid-template-columns:1.2fr 1fr;gap:12px;min-height:360px;">
+          <div style="border:1px solid rgba(148,163,184,.25);border-radius:16px;padding:12px;background:rgba(15,23,42,.65);">
+            <div class="label">Watchlist</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin:8px 0 12px;">
+              <strong>Buy Priority</strong>
+              <span style="font-size:12px;opacity:.7;">점수순</span>
+            </div>
+            <div style="display:grid;gap:10px;">
+              <div style="border:1px solid rgba(56,189,248,.45);border-radius:14px;padding:10px;background:rgba(8,47,73,.55);">
+                <div style="display:flex;justify-content:space-between;"><strong>NVDA</strong><strong>91</strong></div>
+                <div style="font-size:12px;opacity:.8;margin-top:4px;">후보 · 보유중 배지 · AI 수요 수혜 지속</div>
+              </div>
+              <div style="border:1px solid rgba(148,163,184,.2);border-radius:14px;padding:10px;">
+                <div style="display:flex;justify-content:space-between;"><strong>TSLA</strong><strong>84</strong></div>
+                <div style="font-size:12px;opacity:.8;margin-top:4px;">관찰 · 변동성 높음 · 선정이유 1줄</div>
+              </div>
+              <div style="border:1px solid rgba(148,163,184,.2);border-radius:14px;padding:10px;">
+                <div style="display:flex;justify-content:space-between;"><strong>AMZN</strong><strong>79</strong></div>
+                <div style="font-size:12px;opacity:.8;margin-top:4px;">탐색 · 포트폴리오 중복 낮음</div>
+              </div>
+              <div style="border:1px dashed rgba(148,163,184,.25);border-radius:14px;padding:10px;font-size:12px;opacity:.75;">상태 필터 / 리스크 플래그 / 보유중 표시</div>
+            </div>
+          </div>
+
+          <div style="border:1px solid rgba(148,163,184,.25);border-radius:16px;padding:12px;background:rgba(15,23,42,.65);">
+            <div class="label">Detail Panel</div>
+            <div style="display:grid;gap:10px;margin-top:8px;">
+              <div style="border:1px solid rgba(16,185,129,.35);border-radius:14px;padding:10px;">
+                <strong>종합점수 91 / Buy</strong>
+                <div style="font-size:12px;opacity:.8;margin-top:4px;">선정 이유: 추세/성장/포트 적합도 우수</div>
+              </div>
+              <div class="placeholder" style="min-height:62px;">매수/보유/축소 판단 요약</div>
+              <div class="placeholder" style="min-height:62px;">리스크 진단</div>
+              <div class="placeholder" style="min-height:62px;">메모 + 다음 액션</div>
+              <div class="placeholder" style="min-height:62px;">캡처 썸네일 2~3장</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A안</h3>
+      <p>점수 높은 종목을 빠르게 훑고, 선택한 1종목을 깊게 파고드는 흐름에 최적화.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="approach-c" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="mockup">
+        <div class="mockup-header">C. 분석 워크스테이션형</div>
+        <div class="mockup-body" style="display:grid;grid-template-rows:auto 1fr auto;gap:12px;min-height:360px;">
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
+            <div style="border:1px solid rgba(16,185,129,.35);border-radius:14px;padding:10px;background:rgba(20,83,45,.28);">
+              <div class="label">Top Pick</div>
+              <strong>NVDA · 91</strong>
+              <div style="font-size:12px;opacity:.8;margin-top:4px;">지금 매수 우선</div>
+            </div>
+            <div class="placeholder" style="min-height:74px;">Top Pick 2</div>
+            <div class="placeholder" style="min-height:74px;">Top Pick 3</div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1.1fr;gap:12px;">
+            <div style="border:1px solid rgba(148,163,184,.25);border-radius:16px;padding:12px;background:rgba(15,23,42,.65);">
+              <div class="label">Watchlist + Filters</div>
+              <div class="placeholder" style="min-height:220px;">리스트 / 필터 / 상태 전이 / 정렬</div>
+            </div>
+            <div style="border:1px solid rgba(148,163,184,.25);border-radius:16px;padding:12px;background:rgba(15,23,42,.65);">
+              <div class="label">Analysis Workspace</div>
+              <div class="placeholder" style="min-height:74px;">종합점수 + 선정 이유</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;">
+                <div class="placeholder" style="min-height:120px;">판단 요약</div>
+                <div class="placeholder" style="min-height:120px;">리스크 맵</div>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
+            <div class="placeholder" style="min-height:68px;">Memo</div>
+            <div class="placeholder" style="min-height:68px;">Capture Strip</div>
+            <div class="placeholder" style="min-height:68px;">Next Actions</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C안</h3>
+      <p>처음부터 분석 도구처럼 넓게 펼쳐 정보량이 많지만, 구현 범위와 복잡도가 빠르게 커질 수 있음.</p>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="pros-cons">
+    <div class="pros">
+      <h4>A안이 좋은 점</h4>
+      <ul>
+        <li>점수순 스캔 흐름이 매우 선명함</li>
+        <li>이번 세션 목표인 usable surface와 잘 맞음</li>
+        <li>Home / Inbox 최소 계약으로 연결하기 쉬움</li>
+      </ul>
+    </div>
+    <div class="cons">
+      <h4>C안의 주의점</h4>
+      <ul>
+        <li>처음부터 정보량이 많아 집중 포인트가 흐려질 수 있음</li>
+        <li>이번 세션 범위를 넘어 과설계될 위험이 큼</li>
+        <li>다른 manager와의 일관성도 더 크게 흔들 수 있음</li>
+      </ul>
+    </div>
+  </div>
+</div>
