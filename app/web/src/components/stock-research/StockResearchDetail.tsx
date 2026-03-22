@@ -20,6 +20,14 @@ export function StockResearchDetail({ item, compareSeed, evidence }: Props) {
 
   const score = getStockResearchItemScore(item)
   const scoreTone = score >= 80 ? 'text-emerald-400' : score >= 60 ? 'text-sky-300' : 'text-rose-400'
+  const confidenceTone =
+    item.confidence === 'high'
+      ? 'text-emerald-300 border-emerald-500/30 bg-emerald-500/10'
+      : item.confidence === 'medium'
+        ? 'text-sky-200 border-sky-500/20 bg-sky-500/10'
+        : 'text-amber-200 border-amber-500/20 bg-amber-500/10'
+  const reasonCodes = item.reason_codes ?? []
+  const subscores = Object.entries(item.subscores ?? {})
   const scoreArrowPath =
     score >= 80
       ? 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6'
@@ -43,6 +51,18 @@ export function StockResearchDetail({ item, compareSeed, evidence }: Props) {
                     ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
                     : 'bg-sky-500/10 text-sky-300 border-sky-500/20'
               }`}>{getStockResearchItemBadge(item)}</span>
+            </div>
+            <div className="mb-3 flex flex-wrap items-center gap-2 text-[11px]">
+              {item.engine_version ? (
+                <span className="rounded border border-slate-600 bg-slate-800/60 px-2 py-1 font-semibold tracking-wide text-slate-300">
+                  엔진 {item.engine_version}
+                </span>
+              ) : null}
+              {item.confidence ? (
+                <span className={`rounded border px-2 py-1 font-semibold tracking-wide ${confidenceTone}`}>
+                  신뢰도 {item.confidence}
+                </span>
+              ) : null}
             </div>
             <p className="text-sm text-slate-400 flex items-center gap-3">
               <span>{item.is_held ? 'Portfolio Holding' : 'Watchlist'}</span>
@@ -78,6 +98,15 @@ export function StockResearchDetail({ item, compareSeed, evidence }: Props) {
             <span className="text-[11px] font-medium text-sky-200/50 bg-sky-500/10 px-2 py-0.5 rounded">판단 기준: workspace contract 기반 요약</span>
           </div>
           <p className="text-slate-200 leading-relaxed text-[15px]">{getStockResearchDetailSummary(item)}</p>
+          {reasonCodes.length ? (
+            <div className="mt-4 flex flex-wrap gap-2">
+              {reasonCodes.map((code) => (
+                <span key={code} className="rounded-full border border-sky-500/20 bg-sky-500/10 px-2.5 py-1 text-[11px] text-sky-100">
+                  {code}
+                </span>
+              ))}
+            </div>
+          ) : null}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -86,10 +115,17 @@ export function StockResearchDetail({ item, compareSeed, evidence }: Props) {
             
             {/* Signals / Metrics */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-              <div className="p-3.5 rounded-lg text-center" style={{ background: 'rgba(15, 23, 42, 0.7)', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
-                <div className="text-[10px] text-slate-500 uppercase tracking-widest mb-1.5 font-bold">기술적 시그널</div>
-                <div className="text-sm font-bold text-emerald-400">강세 (Buy)</div>
-              </div>
+              {subscores.length ? subscores.slice(0, 3).map(([label, value]) => (
+                <div key={label} className="p-3.5 rounded-lg text-center" style={{ background: 'rgba(15, 23, 42, 0.7)', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                  <div className="text-[10px] text-slate-500 uppercase tracking-widest mb-1.5 font-bold">{label}</div>
+                  <div className="text-sm font-bold text-emerald-400">{value}</div>
+                </div>
+              )) : (
+                <div className="p-3.5 rounded-lg text-center" style={{ background: 'rgba(15, 23, 42, 0.7)', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                  <div className="text-[10px] text-slate-500 uppercase tracking-widest mb-1.5 font-bold">기술적 시그널</div>
+                  <div className="text-sm font-bold text-emerald-400">강세 (Buy)</div>
+                </div>
+              )}
               <div className="p-3.5 rounded-lg text-center" style={{ background: 'rgba(15, 23, 42, 0.7)', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
                 <div className="text-[10px] text-slate-500 uppercase tracking-widest mb-1.5 font-bold">주요 리스크</div>
                 <div className="text-sm font-bold text-amber-500">{getStockResearchRiskLabel(item)}</div>
