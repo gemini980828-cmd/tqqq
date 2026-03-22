@@ -26,11 +26,11 @@ function normalizeEvidenceRefs(value) {
       if (!label) return null
 
       return {
-        id: ref.id ? String(ref.id) : undefined,
         label,
-        source: ref.source ? String(ref.source) : undefined,
-        url: ref.url ? String(ref.url) : undefined,
-        summary: ref.summary ? String(ref.summary) : undefined,
+        ...(ref.id ? { id: String(ref.id) } : {}),
+        ...(ref.source ? { source: String(ref.source) } : {}),
+        ...(ref.url ? { url: String(ref.url) } : {}),
+        ...(ref.summary ? { summary: String(ref.summary) } : {}),
       }
     })
     .filter(Boolean)
