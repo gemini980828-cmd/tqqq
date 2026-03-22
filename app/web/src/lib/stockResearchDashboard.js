@@ -4,6 +4,60 @@ function createEmptyStatusCounts() {
   return { 전체: 0, 탐색: 0, 관찰: 0, 후보: 0, 보류: 0, 제외: 0 }
 }
 
+function normalizeReasonCodes(value) {
+  if (!Array.isArray(value)) return []
+  return value
+    .map((code) => String(code || '').trim())
+    .filter(Boolean)
+}
+
+function normalizeEvidenceRefs(value) {
+  if (!Array.isArray(value)) return []
+  return value
+    .map((ref) => {
+      if (typeof ref === 'string') {
+        const label = ref.trim()
+        return label ? { label } : null
+      }
+
+      if (!ref || typeof ref !== 'object') return null
+
+      const label = String(ref.label ?? ref.title ?? ref.id ?? ref.source ?? '').trim()
+      if (!label) return null
+
+      return {
+        id: ref.id ? String(ref.id) : undefined,
+        label,
+        source: ref.source ? String(ref.source) : undefined,
+        url: ref.url ? String(ref.url) : undefined,
+        summary: ref.summary ? String(ref.summary) : undefined,
+      }
+    })
+    .filter(Boolean)
+}
+
+function normalizeSubscores(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined
+
+  const entries = Object.entries(value).filter(([, score]) => Number.isFinite(score))
+  if (!entries.length) return undefined
+  return Object.fromEntries(entries)
+}
+
+function normalizeWorkspaceItem(item) {
+  const reasonCodes = normalizeReasonCodes(item?.reason_codes)
+  const evidenceRefs = normalizeEvidenceRefs(item?.evidence_refs)
+
+  return {
+    ...item,
+    engine_version: item?.engine_version ? String(item.engine_version) : undefined,
+    confidence: item?.confidence ? String(item.confidence) : undefined,
+    reason_codes: reasonCodes,
+    evidence_refs: evidenceRefs,
+    subscores: normalizeSubscores(item?.subscores),
+  }
+}
+
 export function createEmptyStockResearchWorkspace(snapshot) {
   const generatedAt =
     snapshot?.stock_research_workspace?.generated_at ??
@@ -46,6 +100,7 @@ export function resolveStockResearchWorkspace(snapshot) {
   }
 
   const statusCounts = workspace.filters?.status_counts ?? createEmptyStatusCounts()
+  const items = workspace.items.map((item) => normalizeWorkspaceItem(item))
 
   return {
     ...createEmptyStockResearchWorkspace(snapshot),
@@ -61,7 +116,7 @@ export function resolveStockResearchWorkspace(snapshot) {
       },
     },
     queue: Array.isArray(workspace.queue) ? workspace.queue : [],
-    items: workspace.items,
+    items,
     compare_seed: {
       primary_symbol: workspace.compare_seed?.primary_symbol ?? '',
       candidate_symbols: Array.isArray(workspace.compare_seed?.candidate_symbols)
@@ -74,7 +129,7 @@ export function resolveStockResearchWorkspace(snapshot) {
           pipeline: Array.isArray(workspace.flow.pipeline) && workspace.flow.pipeline.length
             ? workspace.flow.pipeline
             : DEFAULT_PIPELINE,
-          active_stage: workspace.flow.active_stage ?? workspace.items[0]?.status ?? '탐색',
+          active_stage: workspace.flow.active_stage ?? items[0]?.status ?? '탐색',
           stage_counts: {
             ...createEmptyStatusCounts(),
             ...(workspace.flow.stage_counts ?? {}),
@@ -82,7 +137,7 @@ export function resolveStockResearchWorkspace(snapshot) {
         }
       : {
           pipeline: DEFAULT_PIPELINE,
-          active_stage: workspace.items[0]?.status ?? '탐색',
+          active_stage: items[0]?.status ?? '탐색',
           stage_counts: {
             ...createEmptyStatusCounts(),
             ...statusCounts,
@@ -121,6 +176,13 @@ export function getStockResearchDetailSummary(item) {
     `${item?.symbol ?? '종목'}는 현재 ${item?.status ?? '탐색'} 상태입니다.`,
     item?.priority_reason ? `${item.priority_reason}.` : null,
     item?.recent_status_change ? `최근 상태 변화: ${item.recent_status_change}.` : null,
+    Array.isArray(item?.reason_codes) && item.reason_codes.length
+      ? `판단 코드: ${item.reason_codes.join(', ')}.`
+      : null,
+    Array.isArray(item?.evidence_refs) && item.evidence_refs.length
+      ? `근거 ${item.evidence_refs.length}건 연결됨.`
+      : null,
+    item?.confidence ? `신뢰도: ${item.confidence}.` : null,
     item?.memo ? `메모: ${item.memo}` : null,
   ].filter(Boolean)
 
