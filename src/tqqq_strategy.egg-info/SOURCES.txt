@@ -14,6 +14,7 @@ src/tqqq_strategy/ai/orchestrator_brief.py
 src/tqqq_strategy/ai/orchestrator_context.py
 src/tqqq_strategy/ai/orchestrator_policy.py
 src/tqqq_strategy/ai/orchestrator_service.py
+src/tqqq_strategy/ai/stock_research_status.py
 src/tqqq_strategy/backtest/runner.py
 src/tqqq_strategy/backtest/tax_kr.py
 src/tqqq_strategy/data/ingest_stooq.py
