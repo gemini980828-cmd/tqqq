@@ -12,6 +12,7 @@ import pandas as pd
 
 from tqqq_strategy.ops.idempotency import build_alert_key
 from tqqq_strategy.ops.telegram_alert import format_s2_change_message, send_telegram_message
+from tqqq_strategy.signal.final_engine import FINAL_RUNTIME_SIGNAL_PATH
 
 SignalRow = dict[str, str]
 SenderFn = Callable[..., dict]
@@ -184,7 +185,7 @@ def _build_reason_lines(
 
 def run_daily_signal_alert(
     *,
-    signal_csv_path: Path | str = Path("reports/signals_s1_s2_s3_user_original.csv"),
+    signal_csv_path: Path | str = FINAL_RUNTIME_SIGNAL_PATH,
     data_csv_path: Path | str = Path("data/user_input.csv"),
     state_path: Path | str = Path("reports/daily_telegram_alert_state.json"),
     bot_token: str | None = None,

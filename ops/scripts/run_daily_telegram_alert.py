@@ -6,6 +6,7 @@ import os
 import sys
 
 from tqqq_strategy.ops.daily_job import run_daily_signal_alert
+from tqqq_strategy.signal.final_engine import FINAL_RUNTIME_SIGNAL_PATH
 
 
 def _parse_bool(value: str | None, default: bool) -> bool:
@@ -16,7 +17,7 @@ def _parse_bool(value: str | None, default: bool) -> bool:
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--signal-csv", default="reports/signals_s1_s2_s3_user_original.csv")
+    ap.add_argument("--signal-csv", default=str(FINAL_RUNTIME_SIGNAL_PATH))
     ap.add_argument("--data-csv", default="data/user_input.csv")
     ap.add_argument("--state-path", default="reports/daily_telegram_alert_state.json")
     args = ap.parse_args()
