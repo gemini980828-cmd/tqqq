@@ -3,22 +3,69 @@ from __future__ import annotations
 import importlib.util
 import json
 import sys
+from dataclasses import dataclass
 from pathlib import Path
 
 import pandas as pd
 
-from tqqq_strategy.experiments.overlay_candidates import SoftOverheatOverlay, apply_soft_overheat_buffer
 from tqqq_strategy.experiments.phase2_config import Phase2Params
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_PHASE2_BEST_CONFIG_PATH = PROJECT_ROOT / "experiments/best_config.json"
+FINAL_RUNTIME_SIGNAL_PATH = Path("reports/signals_core_strategy_final.csv")
+
+
+@dataclass(frozen=True)
+class SoftOverheatOverlay:
+    enter_dist: float
+    exit_dist: float
+    cap_weight: float
+    min_risk_weight: float = 0.95
+
+    def validate(self) -> None:
+        if self.enter_dist <= self.exit_dist:
+            raise ValueError("enter_dist must be > exit_dist")
+        if not (0.0 <= self.cap_weight <= 1.0):
+            raise ValueError("cap_weight must be within [0, 1]")
+        if self.cap_weight > self.min_risk_weight:
+            raise ValueError("cap_weight must be <= min_risk_weight")
+
+
+def apply_soft_overheat_buffer(
+    base_weight: pd.Series,
+    dist200: pd.Series,
+    overlay: SoftOverheatOverlay,
+) -> pd.Series:
+    overlay.validate()
+
+    adjusted = base_weight.astype(float).copy()
+    hot = False
+
+    for i in range(len(adjusted)):
+        dist = dist200.iloc[i]
+        current = float(adjusted.iloc[i])
+        base = float(base_weight.iloc[i])
+
+        if pd.isna(dist):
+            continue
+
+        if (not hot) and base >= overlay.min_risk_weight and dist >= overlay.enter_dist:
+            hot = True
+        elif hot and dist <= overlay.exit_dist:
+            hot = False
+
+        if hot and current > overlay.cap_weight:
+            adjusted.iloc[i] = overlay.cap_weight
+
+    return adjusted
+
+
 DEFAULT_FINAL_OVERLAY = SoftOverheatOverlay(
     enter_dist=129.0,
     exit_dist=123.0,
     cap_weight=0.90,
     min_risk_weight=0.95,
 )
-FINAL_RUNTIME_SIGNAL_PATH = Path("reports/signals_core_strategy_final.csv")
 
 
 def _load_module(path: Path, name: str):
