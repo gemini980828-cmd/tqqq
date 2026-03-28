@@ -126,6 +126,14 @@ def _is_truthy(value: object) -> bool:
     return str(value).strip().lower() in {"1", "true", "yes", "y", "on"}
 
 
+def _distance_to_threshold(current: float, threshold: float) -> float | None:
+    if np.isnan(current) or current <= 0:
+        return None
+    if current >= threshold:
+        return 0.0
+    return (threshold / current - 1.0) * 100.0
+
+
 def _rsi_state(rsi: float) -> str:
     if np.isnan(rsi):
         return "N/A"
@@ -395,6 +403,38 @@ def run_daily_signal_alert(
     ]
     if new_weight >= 0.8 and entry_price is not None:
         lines.append(f"- 로스컷 감시: {_format_usd(stop_price)}")
+
+    if target_weight_pct <= 0 and current_value_krw <= 0:
+        spy_buy_gap = _distance_to_threshold(spy_dist200, 100.25)
+        tqqq_buy_gap = _distance_to_threshold(dist200, 101.19)
+        if spy_buy_gap is None:
+            spy_line = "- SPY bull 회복까지: 계산 불가"
+        elif spy_buy_gap <= 0:
+            spy_line = "- SPY bull 회복: 이미 충족"
+        else:
+            spy_line = f"- SPY bull 회복까지: 약 +{spy_buy_gap:.1f}%"
+
+        if tqqq_buy_gap is None:
+            tqqq_line = "- TQQQ risk-on 회복까지: 계산 불가"
+        elif tqqq_buy_gap <= 0:
+            tqqq_line = "- TQQQ risk-on 회복: 이미 충족"
+        else:
+            tqqq_line = f"- TQQQ risk-on 회복까지: 약 +{tqqq_buy_gap:.1f}%"
+
+        if np.isnan(qqq3_vs161):
+            trend_line = "- QQQ 단기 추세: 계산 불가"
+        elif qqq3_vs161 > 0:
+            trend_line = f"- QQQ 단기 추세: 이미 회복 ({qqq3_vs161:+.2f}%)"
+        else:
+            trend_line = f"- QQQ 단기 추세: 3일선이 161일선 위로 회복 필요 ({qqq3_vs161:+.2f}%)"
+
+        lines += [
+            "",
+            "매수까지 남은 조건",
+            spy_line,
+            tqqq_line,
+            trend_line,
+        ]
 
     message = "\n".join(lines)
 

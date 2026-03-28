@@ -265,6 +265,46 @@ def test_run_daily_signal_alert_compact_template_for_no_action_day(tmp_path) -> 
     assert "기술리포트" in msg
 
 
+def test_run_daily_signal_alert_shows_distance_to_next_buy_when_target_is_zero(tmp_path) -> None:
+    signal_csv = tmp_path / "signals_zero.csv"
+    data_csv = tmp_path / "data_zero.csv"
+    state_file = tmp_path / "state.json"
+    manual_file = tmp_path / "manual.json"
+    signal_csv.write_text(
+        "time,S2_code,S2_weight,base_weight,buffer_active\n"
+        "2026-03-26,0,0.0,0.0,false\n"
+        "2026-03-27,0,0.0,0.0,false\n",
+        encoding="utf-8",
+    )
+    data_csv.write_text(
+        "time,QQQ종가,TQQQ종가,SPY종가,QQQ3일선,QQQ161일선,TQQQ200일선,SPY200일선,원달러환율\n"
+        "2026-03-26,573.79,41.23,645.09,581.86,604.32,49.14,661.48,1500.97\n"
+        "2026-03-27,562.58,38.78,634.09,574.73,604.29,49.15,661.63,1508.36\n",
+        encoding="utf-8",
+    )
+    _write_manual(manual_file, '{"positions":[],"cash_debt":[{"entry_id":"cash-main","kind":"cash","label":"투자예수금","balance_krw":11220000}],"stock_watchlist":[],"property_watchlist":[],"transactions":[]}')
+
+    def fake_sender(*, bot_token, chat_id, text, dry_run):
+        return {"sent": True, "dry_run": dry_run}
+
+    result = run_daily_signal_alert(
+        signal_csv_path=signal_csv,
+        data_csv_path=data_csv,
+        state_path=state_file,
+        manual_truth_path=manual_file,
+        bot_token="token",
+        chat_id="chat",
+        dry_run=False,
+        sender=fake_sender,
+    )
+
+    msg = result["message"]
+    assert "매수까지 남은 조건" in msg
+    assert "SPY bull 회복까지" in msg
+    assert "TQQQ risk-on 회복까지" in msg
+    assert "QQQ 단기 추세" in msg
+
+
 def test_run_daily_signal_alert_raises_on_missing_required_columns(tmp_path) -> None:
     signal_csv = tmp_path / "signals_bad.csv"
     state_file = tmp_path / "state.json"
