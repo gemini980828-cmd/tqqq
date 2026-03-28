@@ -62,6 +62,12 @@ jobs:
             --data-csv data/user_input.csv \
             --out reports/signals_core_strategy_final.csv
 
+      - name: Verify final signal readiness
+        run: |
+          PYTHONPATH=src uv run python ops/scripts/verify_final_signal_ready.py \
+            --signal-csv reports/signals_core_strategy_final.csv \
+            --data-csv data/user_input.csv
+
       - name: Refresh manager summaries
         run: |
           PYTHONPATH=src uv run python ops/scripts/run_manager_summaries.py \
