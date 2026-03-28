@@ -5,6 +5,7 @@ import json
 import os
 import sys
 
+from tqqq_strategy.ops.signal_preflight import verify_signal_ready
 from tqqq_strategy.ops.daily_job import run_daily_signal_alert
 from tqqq_strategy.signal.final_engine import FINAL_RUNTIME_SIGNAL_PATH
 
@@ -29,6 +30,8 @@ def main() -> None:
         dry_run = True
     else:
         dry_run = _parse_bool(os.getenv("TELEGRAM_DRY_RUN"), default=False)
+
+    verify_signal_ready(signal_csv_path=args.signal_csv, data_csv_path=args.data_csv)
 
     result = run_daily_signal_alert(
         signal_csv_path=args.signal_csv,
