@@ -7,6 +7,7 @@ from typing import Any, Mapping
 import pandas as pd
 
 from tqqq_strategy.ai.stock_research_status import normalize_stock_status
+from tqqq_strategy.signal.final_engine import FINAL_RUNTIME_SIGNAL_PATH
 
 from tqqq_strategy.wealth import (
     DEFAULT_MANUAL_TRUTH_PATH,
@@ -196,7 +197,7 @@ def _build_refresh_snapshot(signal_csv_path: str | Path, manual_inputs: Mapping[
 
 def refresh_manager_summaries(
     *,
-    signal_csv_path: str | Path = Path("reports/signals_s1_s2_s3_user_original.csv"),
+    signal_csv_path: str | Path = FINAL_RUNTIME_SIGNAL_PATH,
     data_csv_path: str | Path = Path("data/user_input.csv"),
     metrics_csv_path: str | Path = Path("reports/backtest_metrics_primary.csv"),
     state_path: str | Path = Path("reports/daily_telegram_alert_state.json"),

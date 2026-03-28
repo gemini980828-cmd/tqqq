@@ -13,6 +13,7 @@ from tqqq_strategy.ai.orchestrator_brief import build_orchestrator_briefs
 from tqqq_strategy.ai.orchestrator_context import build_orchestrator_context
 from tqqq_strategy.ai.orchestrator_policy import export_orchestrator_policy
 from tqqq_strategy.ai.stock_research_status import normalize_stock_status
+from tqqq_strategy.signal.final_engine import FINAL_RUNTIME_SIGNAL_PATH
 from tqqq_strategy.wealth import (
     DEFAULT_SUMMARY_STORE_PATH,
     build_core_strategy_position,
@@ -637,7 +638,7 @@ def _build_home_discovery(
 
 
 def generate_dashboard_snapshot(
-    signal_csv_path: Path | str = Path("reports/signals_s1_s2_s3_user_original.csv"),
+    signal_csv_path: Path | str = FINAL_RUNTIME_SIGNAL_PATH,
     data_csv_path: Path | str = Path("data/user_input.csv"),
     metrics_csv_path: Path | str = Path("reports/backtest_metrics_primary.csv"),
     state_path: Path | str = Path("reports/daily_telegram_alert_state.json"),

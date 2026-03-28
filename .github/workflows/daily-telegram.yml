@@ -56,13 +56,16 @@ jobs:
             --end "${{ steps.end_date.outputs.value }}" \
             --out data/user_input.csv
 
-      - name: Generate original reference signals
-        run: uv run python ops/scripts/user_original_reference.py
+      - name: Generate final core strategy signals
+        run: |
+          PYTHONPATH=src uv run python ops/scripts/run_final_core_strategy_signal.py \
+            --data-csv data/user_input.csv \
+            --out reports/signals_core_strategy_final.csv
 
       - name: Refresh manager summaries
         run: |
           PYTHONPATH=src uv run python ops/scripts/run_manager_summaries.py \
-            --signals reports/signals_s1_s2_s3_user_original.csv \
+            --signals reports/signals_core_strategy_final.csv \
             --data data/user_input.csv \
             --metrics reports/backtest_metrics_primary.csv \
             --state reports/daily_telegram_alert_state_gha.json
@@ -70,7 +73,7 @@ jobs:
       - name: Export dashboard snapshot
         run: |
           PYTHONPATH=src uv run python ops/scripts/export_dashboard_snapshot.py \
-            --signals reports/signals_s1_s2_s3_user_original.csv \
+            --signals reports/signals_core_strategy_final.csv \
             --data data/user_input.csv \
             --metrics reports/backtest_metrics_primary.csv \
             --state reports/daily_telegram_alert_state_gha.json
@@ -78,7 +81,7 @@ jobs:
       - name: Send telegram alert
         run: |
           PYTHONPATH=src uv run python ops/scripts/run_daily_telegram_alert.py \
-            --signal-csv reports/signals_s1_s2_s3_user_original.csv \
+            --signal-csv reports/signals_core_strategy_final.csv \
             --data-csv data/user_input.csv \
             --state-path reports/daily_telegram_alert_state_gha.json
 
@@ -89,7 +92,7 @@ jobs:
           name: daily-telegram-artifacts
           path: |
             data/user_input.csv
-            reports/signals_s1_s2_s3_user_original.csv
+            reports/signals_core_strategy_final.csv
             reports/wealth_manager_summaries.json
             app/web/public/dashboard_snapshot.json
           if-no-files-found: warn
