@@ -1,51 +1,49 @@
 import { Link } from 'react-router-dom'
+import { getManagerRoute } from '../lib/navigation'
+import type { ManagerCardSummary } from '../types/appSnapshot'
 
-type ManagerCardData = {
-  manager_id: string
-  title?: string
-  label?: string
-  headline?: string
-  summary?: string
-  status?: string
-  recommended_action?: string
-  warning_count?: number
-  stale?: boolean
-}
+export default function ManagerCard({ card, hasPriorityAction, hasCrossAlert }: { card: ManagerCardSummary, hasPriorityAction?: boolean, hasCrossAlert?: boolean }) {
+  const route = getManagerRoute(card.manager_id)
 
-const managerRoutes: Record<string, string> = {
-  core_strategy: '/managers/core-strategy',
-  stock_research: '/managers/stocks',
-  real_estate: '/managers/real-estate',
-  cash_debt: '/managers/cash-debt',
-}
+  let borderStyle = 'border-dark-700 hover:border-gray-500'
+  let topNavColor = 'bg-green-500'
+  let dotColor = 'bg-green-500'
+  let textColor = 'text-green-400'
+  let statusText = 'Monitoring Normal'
 
-function getStatusTone(card: ManagerCardData) {
-  if (card.stale) return 'border-amber-300/20 text-amber-100 bg-amber-500/10'
-  if ((card.warning_count ?? 0) > 0) return 'border-rose-300/20 text-rose-100 bg-rose-500/10'
-  return 'border-white/10 text-slate-300 bg-white/[0.04]'
-}
-
-export default function ManagerCard({ card }: { card: ManagerCardData }) {
-  const route = managerRoutes[card.manager_id] ?? '/'
+  if (hasPriorityAction) {
+    borderStyle = 'border-brand-primary/30 hover:border-brand-primary/60'
+    topNavColor = 'bg-gradient-to-r from-red-500 to-yellow-500'
+    dotColor = 'bg-red-500'
+    textColor = 'text-red-400'
+    statusText = 'Priority Action required'
+  } else if (hasCrossAlert) {
+    borderStyle = 'border-yellow-500/30 hover:border-yellow-500/60'
+    topNavColor = 'bg-yellow-500'
+    dotColor = 'bg-yellow-500'
+    textColor = 'text-yellow-500'
+    statusText = 'Alerted'
+  }
 
   return (
     <Link
       to={route}
-      className="group rounded-[24px] border border-white/8 bg-white/[0.04] p-5 shadow-[0_18px_36px_rgba(15,23,42,0.18)] transition hover:-translate-y-0.5 hover:border-sky-300/20 hover:bg-white/[0.06]"
+      className={`glass-panel p-5 rounded-xl border ${borderStyle} relative overflow-hidden group transition cursor-pointer`}
+      title={card.summary}
     >
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">{card.status ?? 'tracking'}</p>
-          <h3 className="mt-2 text-xl font-semibold tracking-[-0.03em] text-white">{card.title ?? card.label ?? card.manager_id}</h3>
+        <div className={`absolute top-0 left-0 w-full h-1 ${topNavColor}`}></div>
+        
+        <h4 className="font-semibold text-white">{card.title || card.manager_id.replace('_', ' ').toUpperCase()}</h4>
+        
+        <div className="flex items-center gap-2 mt-2">
+            <span className={`w-2 h-2 rounded-full ${dotColor}`}></span>
+            <span className={`text-xs ${textColor} font-medium`}>{statusText}</span>
         </div>
-        <span className={`rounded-full border px-3 py-1 text-xs transition group-hover:border-sky-300/20 group-hover:text-sky-100 ${getStatusTone(card)}`}>
-          {card.stale ? 'Stale' : 'Open'}
-        </span>
-      </div>
-      <p className="mt-4 text-lg font-medium text-slate-100">{card.headline ?? '준비 중'}</p>
-      <p className="mt-2 text-sm leading-6 text-slate-400">{card.summary ?? 'Manager 상세 화면에서 더 많은 정보를 확인할 수 있습니다.'}</p>
-      {card.recommended_action ? <p className="mt-3 text-xs text-slate-500">다음 액션: {card.recommended_action}</p> : null}
-      {(card.warning_count ?? 0) > 0 ? <p className="mt-2 text-xs text-rose-200">경고 {card.warning_count}건</p> : null}
+        
+        <div className="mt-4 pt-4 border-t border-dark-700 flex justify-between items-center text-sm text-gray-400">
+            <span>{card.headline || 'Status: Active'}</span>
+            <span className="group-hover:text-white transition">Enter &rarr;</span>
+        </div>
     </Link>
   )
 }

@@ -1,0 +1,212 @@
+<h2>Stock Research Manager — 벤치마크 반영 수정안</h2>
+<p class="subtitle">이전 v4 대비 달라진 점: 섹터/테마 겹침을 점수 밖으로 분리해 표시하고, 점수 근거를 더 명시적으로 보여줍니다.</p>
+
+<div class="section">
+  <div class="pros-cons">
+    <div class="pros">
+      <h4>이전안 대비 달라진 점</h4>
+      <ul>
+        <li>워치리스트 row에 <strong>점수 드라이버</strong> 표시</li>
+        <li><strong>섹터/테마 겹침</strong>을 독립 배지로 노출</li>
+        <li>상세 헤더에 <strong>점수 분해(매력도/포트적합도/집중도)</strong> 추가</li>
+        <li>상단에 <strong>포트폴리오 컨텍스트 strip</strong> 추가</li>
+      </ul>
+    </div>
+    <div class="cons">
+      <h4>유지한 점</h4>
+      <ul>
+        <li>좌측 watchlist + 우측 chart workspace 구조</li>
+        <li>차트가 가장 큰 메인 블록</li>
+        <li>매크로/옵션은 오른쪽 보조 요약 카드</li>
+        <li>메모/캡처/다음 액션은 작업 카드로 유지</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="mockup">
+  <div class="mockup-header">TrendSpider / TradingView / thinkorswim / Finviz 패턴 반영</div>
+  <div class="mockup-body" style="display:grid;grid-template-rows:auto auto 1fr;gap:14px;min-height:700px;">
+
+    <div style="display:grid;grid-template-columns:1.15fr .8fr .8fr;gap:12px;">
+      <div style="border:1px solid rgba(56,189,248,.35);border-radius:16px;padding:14px;background:rgba(8,47,73,.42);">
+        <div class="label">Top Screening</div>
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-top:6px;">
+          <div>
+            <div style="font-size:28px;font-weight:700;">NVDA</div>
+            <div style="font-size:13px;opacity:.82;margin-top:4px;">Buy Priority 91 · 후보 · 보유중</div>
+          </div>
+          <div style="font-size:26px;font-weight:800;">91</div>
+        </div>
+        <div style="font-size:13px;opacity:.82;margin-top:10px;">선정 이유: 추세 유지 + 성장성 우수 + 포트 적합도 양호</div>
+      </div>
+
+      <div style="border:1px solid rgba(148,163,184,.22);border-radius:16px;padding:14px;">
+        <div class="label">상태 분포</div>
+        <div style="margin-top:8px;font-size:13px;line-height:1.8;">탐색 12<br/>관찰 7<br/>후보 3<br/>보류 2<br/>제외 4</div>
+      </div>
+
+      <div style="border:1px solid rgba(245,158,11,.28);border-radius:16px;padding:14px;background:rgba(120,53,15,.2);">
+        <div class="label">Home / Inbox</div>
+        <div style="font-size:13px;line-height:1.8;margin-top:8px;">상위 후보 3개<br/>다음 액션 1개<br/>경고 1개</div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;">
+      <div style="border:1px solid rgba(148,163,184,.22);border-radius:14px;padding:10px;background:rgba(15,23,42,.62);">
+        <div class="label">포트 컨텍스트</div>
+        <div style="font-weight:700;margin-top:6px;">대형 기술주 비중 높음</div>
+      </div>
+      <div style="border:1px solid rgba(148,163,184,.22);border-radius:14px;padding:10px;background:rgba(15,23,42,.62);">
+        <div class="label">현금 여력</div>
+        <div style="font-weight:700;margin-top:6px;">보통</div>
+      </div>
+      <div style="border:1px solid rgba(148,163,184,.22);border-radius:14px;padding:10px;background:rgba(15,23,42,.62);">
+        <div class="label">시장 컨텍스트</div>
+        <div style="font-weight:700;margin-top:6px;">성장주 우호</div>
+      </div>
+      <div style="border:1px solid rgba(220,38,38,.28);border-radius:14px;padding:10px;background:rgba(127,29,29,.18);">
+        <div class="label">집중 경고</div>
+        <div style="font-weight:700;margin-top:6px;">반도체 섹터 중복 높음</div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:330px 1fr;gap:14px;">
+      <div style="border:1px solid rgba(148,163,184,.22);border-radius:18px;padding:14px;background:rgba(15,23,42,.66);">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <div class="label">Watchlist Rail</div>
+            <div style="font-weight:700;margin-top:4px;">Buy Priority 순</div>
+          </div>
+          <div style="font-size:12px;opacity:.72;">상태 / 보유 / 위험</div>
+        </div>
+
+        <div style="display:grid;gap:10px;margin-top:12px;">
+          <div style="border:1px solid rgba(56,189,248,.45);border-radius:14px;padding:10px;background:rgba(8,47,73,.5);">
+            <div style="display:flex;justify-content:space-between;"><strong>NVDA</strong><strong>91</strong></div>
+            <div style="font-size:12px;opacity:.86;margin-top:4px;">후보 · 보유중 · 추세 우호</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;">
+              <span style="font-size:11px;padding:2px 6px;border-radius:999px;background:rgba(16,185,129,.18);">현금 적합</span>
+              <span style="font-size:11px;padding:2px 6px;border-radius:999px;background:rgba(245,158,11,.16);">반도체 중복</span>
+              <span style="font-size:11px;padding:2px 6px;border-radius:999px;background:rgba(59,130,246,.16);">성장 모멘텀</span>
+            </div>
+          </div>
+
+          <div style="border:1px solid rgba(148,163,184,.2);border-radius:14px;padding:10px;">
+            <div style="display:flex;justify-content:space-between;"><strong>TSLA</strong><strong>84</strong></div>
+            <div style="font-size:12px;opacity:.86;margin-top:4px;">관찰 · 이벤트 민감</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;">
+              <span style="font-size:11px;padding:2px 6px;border-radius:999px;background:rgba(59,130,246,.16);">변동성 높음</span>
+              <span style="font-size:11px;padding:2px 6px;border-radius:999px;background:rgba(16,185,129,.18);">섹터 분산 도움</span>
+            </div>
+          </div>
+
+          <div style="border:1px solid rgba(148,163,184,.2);border-radius:14px;padding:10px;">
+            <div style="display:flex;justify-content:space-between;"><strong>AMZN</strong><strong>79</strong></div>
+            <div style="font-size:12px;opacity:.86;margin-top:4px;">탐색 · 포트 중복 낮음</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;">
+              <span style="font-size:11px;padding:2px 6px;border-radius:999px;background:rgba(16,185,129,.18);">중복 낮음</span>
+              <span style="font-size:11px;padding:2px 6px;border-radius:999px;background:rgba(148,163,184,.16);">확신 낮음</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-rows:auto 1fr auto;gap:14px;">
+        <div style="display:grid;grid-template-columns:1fr .7fr;gap:12px;">
+          <div style="border:1px solid rgba(16,185,129,.35);border-radius:16px;padding:14px;background:rgba(20,83,45,.25);">
+            <div class="label">판단 헤더</div>
+            <div style="font-size:26px;font-weight:800;margin-top:8px;">종합점수 91 / Buy Candidate</div>
+            <div style="font-size:13px;opacity:.82;margin-top:6px;">선정 이유: 추세·성장성·포트 적합도 균형 우수</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:10px;">
+              <div style="border:1px solid rgba(148,163,184,.2);border-radius:12px;padding:8px;">
+                <div class="label">종목 매력도</div>
+                <div style="font-weight:800;margin-top:4px;">88</div>
+              </div>
+              <div style="border:1px solid rgba(148,163,184,.2);border-radius:12px;padding:8px;">
+                <div class="label">포트 적합도</div>
+                <div style="font-weight:800;margin-top:4px;">82</div>
+              </div>
+              <div style="border:1px solid rgba(220,38,38,.25);border-radius:12px;padding:8px;">
+                <div class="label">집중도 페널티</div>
+                <div style="font-weight:800;margin-top:4px;">-9</div>
+              </div>
+            </div>
+          </div>
+
+          <div style="border:1px solid rgba(148,163,184,.22);border-radius:16px;padding:14px;">
+            <div class="label">행동 판단</div>
+            <div style="font-weight:700;margin-top:8px;">보유 유지 + 추가매수 후보</div>
+            <div style="font-size:13px;opacity:.78;margin-top:6px;">단, 섹터 집중도 때문에 비중 확대는 제한</div>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1.72fr .56fr;gap:12px;min-height:360px;">
+          <div style="border:1px solid rgba(148,163,184,.22);border-radius:18px;padding:14px;background:rgba(15,23,42,.66);">
+            <div class="label">메인 차트 영역</div>
+            <div style="display:grid;grid-template-rows:1fr auto;gap:10px;height:100%;margin-top:10px;">
+              <div style="border:1px dashed rgba(148,163,184,.28);border-radius:14px;display:flex;align-items:center;justify-content:center;min-height:280px;">
+                대형 가격 차트 / 이동평균 / 주요 가격대 / 실적/이벤트 마킹
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
+                <div class="placeholder" style="min-height:58px;">기술적 포인트</div>
+                <div class="placeholder" style="min-height:58px;">변동성</div>
+                <div class="placeholder" style="min-height:58px;">리스크 레벨</div>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-rows:1fr 1fr 1fr;gap:10px;">
+            <div style="border:1px solid rgba(148,163,184,.22);border-radius:16px;padding:12px;">
+              <div class="label">매크로</div>
+              <div style="font-weight:700;margin-top:8px;">요약</div>
+              <div style="font-size:12px;opacity:.78;margin-top:6px;">금리/유동성/지수 breadth</div>
+            </div>
+            <div style="border:1px solid rgba(148,163,184,.22);border-radius:16px;padding:12px;">
+              <div class="label">옵션시장</div>
+              <div style="font-weight:700;margin-top:8px;">요약</div>
+              <div style="font-size:12px;opacity:.78;margin-top:6px;">IV / 콜풋 / 이벤트 기대</div>
+            </div>
+            <div style="border:1px solid rgba(148,163,184,.22);border-radius:16px;padding:12px;">
+              <div class="label">메모/액션</div>
+              <div style="font-weight:700;margin-top:8px;">작업</div>
+              <div style="font-size:12px;opacity:.78;margin-top:6px;">메모 / 캡처 / 다음 액션</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
+          <div class="placeholder" style="min-height:72px;">섹터/테마 겹침 상세</div>
+          <div class="placeholder" style="min-height:72px;">캡처 썸네일 strip</div>
+          <div class="placeholder" style="min-height:72px;">다음 액션</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="options">
+    <div class="option" data-choice="bench-good" onclick="toggleSelect(this)">
+      <div class="letter">A</div>
+      <div class="content">
+        <h3>이 수정안이 더 좋음</h3>
+        <p>이전안보다 점수 이유와 섹터 겹침이 더 실전적으로 보임</p>
+      </div>
+    </div>
+    <div class="option" data-choice="bench-too-busy" onclick="toggleSelect(this)">
+      <div class="letter">B</div>
+      <div class="content">
+        <h3>조금 복잡함</h3>
+        <p>추가된 설명 레이어를 일부 줄이는 게 좋음</p>
+      </div>
+    </div>
+    <div class="option" data-choice="bench-need-more" onclick="toggleSelect(this)">
+      <div class="letter">C</div>
+      <div class="content">
+        <h3>더 바꾸고 싶음</h3>
+        <p>원하는 수정 포인트를 말해주면 한 번 더 재구성 가능</p>
+      </div>
+    </div>
+  </div>
+</div>

@@ -85,7 +85,63 @@ SNAPSHOT = {
             "stale": False,
         },
     },
-    "event_timeline": [{"date": "2026-01-30", "type": "비중 변경", "detail": "10.00% → 95.00% 조정"}],
+    "event_timeline": [
+        {
+            "id": "event-core-rebalance",
+            "date": "2026-01-30",
+            "type": "비중 변경",
+            "title": "코어 비중 확대",
+            "detail": "10.00% → 95.00% 조정",
+            "category": "allocation",
+            "severity": "high",
+            "source_manager_id": "core_strategy",
+            "entity_type": "position",
+            "entity_id": "tqqq-core",
+        }
+    ],
+    "priority_actions": [
+        {
+            "id": "priority-core-close",
+            "title": "장마감 전 비중 확인",
+            "detail": "목표 95% 대비 실제 비중을 점검하세요.",
+            "severity": "high",
+            "manager_id": "core_strategy",
+            "recommended_action": "장마감 전 비중 확인",
+            "goto_screen": "managers/core_strategy",
+        }
+    ],
+    "cross_manager_alerts": [
+        {
+            "id": "alert-liquidity-risk",
+            "title": "현금/리스크 동시 점검",
+            "detail": "현금 여력과 리스크 게이지를 함께 확인하세요.",
+            "severity": "medium",
+            "manager_ids": ["core_strategy", "cash_debt"],
+        }
+    ],
+    "orchestrator_prompt_starters": [
+        {
+            "id": "prompt-priority",
+            "label": "오늘 우선순위",
+            "prompt": "오늘 무엇부터 해야 하나?",
+            "source_manager_ids": ["core_strategy"],
+            "intent": "default_priority",
+        }
+    ],
+    "report_highlights": [
+        {
+            "id": "report-core-gap",
+            "title": "코어전략 리밸런싱 점검",
+            "summary": "실제 비중과 목표 비중 차이가 남아 있습니다.",
+            "severity": "medium",
+            "manager_ids": ["core_strategy"],
+        }
+    ],
+    "compare_data": {
+        "manager_pairs": [{"pair_id": "core-vs-cash", "manager_ids": ["core_strategy", "cash_debt"]}],
+        "holding_overlap": [{"overlap_id": "core-vs-research", "left_manager_id": "core_strategy", "right_manager_id": "stock_research", "shared_symbols": ["NVDA"]}],
+        "conflicting_recommendations": [{"conflict_id": "core-vs-cash", "manager_ids": ["core_strategy", "cash_debt"], "detail": "전략 액션과 현금 방어 여력을 함께 봐야 합니다."}],
+    },
     "ops_log": {"run_id": "daily-2026-01-30", "alert_key": "2026-01-30:1->950"},
     "meta": {"summary_source_version": "wealth_manual.json:2026-01-30:abc123"},
 }
@@ -112,6 +168,11 @@ def test_run_orchestrator_returns_cache_first_cross_domain_answer() -> None:
     assert reply["metadata"]["source_manager_count"] >= 1
     assert reply["primary_intent"] == "action"
     assert {"action", "cash"}.issubset(set(reply["brief_keys_used"]))
+    assert reply["short_answer"].startswith("현재 가장 중요한 액션")
+    assert reply["next_action"] == "장마감 전 비중 확인"
+    assert reply["go_to_screen"] == "managers/core_strategy"
+    assert reply["supporting_managers"][0]["manager_id"] == "core_strategy"
+    assert reply["source_details"][0]["source_manager_id"] == "core_strategy"
 
 
 def test_run_orchestrator_can_reference_cross_domain_manager_summaries() -> None:
@@ -131,6 +192,28 @@ def test_run_orchestrator_uses_default_priority_for_generic_portfolio_question()
     assert reply["primary_intent"] == "default_priority"
     assert reply["brief_keys_used"][:2] == ["default_priority", "action"]
     assert "전체 우선순위" in reply["answer"]
+    assert reply["go_to_screen"] == "home"
+    assert reply["source_details"][0]["source_manager_id"] == "core_strategy"
+
+
+def test_run_orchestrator_can_answer_recent_changes_question() -> None:
+    context = build_orchestrator_context(SNAPSHOT)
+
+    reply = run_orchestrator(question="최근 뭐가 바뀌었어?", context=context, trigger="user_submit")
+
+    assert reply["primary_intent"] == "recent_changes"
+    assert "코어 비중 확대" in reply["answer"]
+    assert "core_strategy" in reply["source_manager_ids"]
+
+
+def test_run_orchestrator_can_answer_compare_question() -> None:
+    context = build_orchestrator_context(SNAPSHOT)
+
+    reply = run_orchestrator(question="코어전략이랑 현금 상황을 비교해줘", context=context, trigger="user_submit")
+
+    assert reply["primary_intent"] == "comparison"
+    assert "NVDA" in reply["answer"] or "현금" in reply["answer"]
+    assert "cash_debt" in reply["source_manager_ids"]
 
 
 def test_api_build_orchestrator_reply_uses_snapshot_payload_without_live_generation() -> None:

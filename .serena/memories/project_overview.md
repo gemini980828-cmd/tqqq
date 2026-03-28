@@ -1,0 +1,14 @@
+# TQQQ project overview
+- Purpose: Python-first TQQQ strategy/backtesting/ops system plus React dashboard for wealth/manager UX.
+- Main domains: strategy research (`src/tqqq_strategy`, `ops/scripts`, `reports`, `experiments`), dashboard/web app (`app/web`, `app/api`), tests (`tests`).
+- Backend stack: Python 3.12, pandas, numpy, duckdb, pyarrow, yfinance, pydantic, FastAPI, uvicorn, apscheduler.
+- Frontend stack: React 19, TypeScript 5.9, Vite 7, React Router 7, Tailwind 4, ESLint.
+- Important folders:
+  - `src/tqqq_strategy/`: strategy/ops/AI logic
+  - `ops/scripts/`: runnable scripts for backtests, exports, alerts
+  - `app/web/`: dashboard frontend
+  - `app/api/`: snapshot/orchestrator API helpers
+  - `tests/`: contracts, ops, AI, data, signal, backtest tests
+  - `docs/plans/`: design and implementation docs
+  - `tasks/`: todo + lessons learned
+- Workspace uses oh-my-codex orchestration and AGENTS.md instructions heavily.

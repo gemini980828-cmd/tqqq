@@ -7,8 +7,8 @@ import Dashboard from './pages/Dashboard'
 import Home from './pages/Home'
 import Inbox from './pages/Inbox'
 import Managers from './pages/Managers'
-import Reports from './pages/Reports'
 import Research from './pages/Research'
+import Reports from './pages/Reports'
 import CashDebtManager from './pages/managers/CashDebtManager'
 import CoreStrategyManager from './pages/managers/CoreStrategyManager'
 import ManagersLayout from './pages/managers/ManagersLayout'
@@ -18,9 +18,9 @@ import StockResearchManager from './pages/managers/StockResearchManager'
 function AppShell({ snapshot }: { snapshot?: AppSnapshot }) {
   return (
     <HashRouter>
-      <div className="min-h-screen bg-[#08101b] text-slate-100">
+      <div className="h-screen w-screen overflow-hidden bg-[#08101b] text-slate-100 flex flex-col">
         <TopNav />
-        <main className="mx-auto max-w-7xl px-4 py-6 md:px-8 md:py-8">
+        <main className="flex-1 overflow-y-auto mx-auto w-full max-w-7xl px-4 py-6 md:px-8 md:py-8">
           <Routes>
             <Route path="/" element={<Home snapshot={snapshot} />} />
             <Route path="/managers" element={<ManagersLayout />}>

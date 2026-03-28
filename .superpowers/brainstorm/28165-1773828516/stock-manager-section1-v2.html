@@ -1,0 +1,155 @@
+<h2>Stock Research Manager — 섹션 1 화면 구조 v2</h2>
+<p class="subtitle">점수순 워치리스트를 훑고, 선택 종목에 대해 차트·판단·매크로·옵션시장까지 이어지는 분석 작업면 구조입니다.</p>
+
+<div class="mockup">
+  <div class="mockup-header">전체 작업면</div>
+  <div class="mockup-body" style="display:grid;grid-template-rows:auto 1fr;gap:14px;min-height:620px;">
+    <div style="display:grid;grid-template-columns:1.2fr .8fr .8fr .9fr;gap:12px;">
+      <div style="border:1px solid rgba(56,189,248,.35);border-radius:16px;padding:14px;background:rgba(8,47,73,.42);">
+        <div class="label">Top Screening</div>
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-top:6px;">
+          <div>
+            <div style="font-size:28px;font-weight:700;">NVDA</div>
+            <div style="font-size:13px;opacity:.82;margin-top:4px;">Buy Priority 91 · 후보 · 보유중</div>
+          </div>
+          <div style="font-size:26px;font-weight:800;">91</div>
+        </div>
+        <div style="font-size:13px;opacity:.82;margin-top:10px;">선정 이유: 추세 유지 + 성장 내러티브 + 현 포트 적합도 양호</div>
+      </div>
+
+      <div style="border:1px solid rgba(148,163,184,.22);border-radius:16px;padding:14px;">
+        <div class="label">상태 분포</div>
+        <div style="margin-top:8px;font-size:13px;line-height:1.8;">
+          탐색 12<br/>관찰 7<br/>후보 3<br/>보류 2<br/>제외 4
+        </div>
+      </div>
+
+      <div style="border:1px solid rgba(148,163,184,.22);border-radius:16px;padding:14px;">
+        <div class="label">오늘의 액션</div>
+        <div style="margin-top:8px;font-weight:600;">후보 3개 재점검</div>
+        <div style="font-size:13px;opacity:.78;margin-top:6px;">실적 발표 전후 리스크 체크</div>
+      </div>
+
+      <div style="border:1px solid rgba(245,158,11,.28);border-radius:16px;padding:14px;background:rgba(120,53,15,.2);">
+        <div class="label">Home / Inbox 계약</div>
+        <div style="font-size:13px;line-height:1.7;margin-top:8px;">
+          상위 후보 1~3개<br/>
+          다음 액션 1개<br/>
+          경고 1개
+        </div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:340px 1fr;gap:14px;">
+      <div style="border:1px solid rgba(148,163,184,.22);border-radius:18px;padding:14px;background:rgba(15,23,42,.66);">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <div class="label">Watchlist Rail</div>
+            <div style="font-weight:700;margin-top:4px;">Buy Priority 순</div>
+          </div>
+          <div style="font-size:12px;opacity:.72;">필터/상태</div>
+        </div>
+
+        <div style="display:grid;gap:10px;margin-top:12px;">
+          <div style="border:1px solid rgba(56,189,248,.45);border-radius:14px;padding:10px;background:rgba(8,47,73,.5);">
+            <div style="display:flex;justify-content:space-between;"><strong>NVDA</strong><strong>91</strong></div>
+            <div style="font-size:12px;opacity:.82;margin-top:4px;">후보 · 보유중 · 추세 우호</div>
+            <div style="font-size:12px;opacity:.72;margin-top:4px;">리스크: 밸류 부담</div>
+          </div>
+          <div style="border:1px solid rgba(148,163,184,.2);border-radius:14px;padding:10px;">
+            <div style="display:flex;justify-content:space-between;"><strong>TSLA</strong><strong>84</strong></div>
+            <div style="font-size:12px;opacity:.82;margin-top:4px;">관찰 · 변동성 큼</div>
+            <div style="font-size:12px;opacity:.72;margin-top:4px;">리스크: 이벤트 민감</div>
+          </div>
+          <div style="border:1px solid rgba(148,163,184,.2);border-radius:14px;padding:10px;">
+            <div style="display:flex;justify-content:space-between;"><strong>AMZN</strong><strong>79</strong></div>
+            <div style="font-size:12px;opacity:.82;margin-top:4px;">탐색 · 포트 중복 낮음</div>
+            <div style="font-size:12px;opacity:.72;margin-top:4px;">리스크: 아직 확신 낮음</div>
+          </div>
+          <div style="border:1px solid rgba(148,163,184,.2);border-radius:14px;padding:10px;">
+            <div style="display:flex;justify-content:space-between;"><strong>META</strong><strong>75</strong></div>
+            <div style="font-size:12px;opacity:.82;margin-top:4px;">관찰 · 실적 체크 필요</div>
+            <div style="font-size:12px;opacity:.72;margin-top:4px;">리스크: 기대치 높음</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-rows:auto 280px 1fr;gap:14px;">
+        <div style="display:grid;grid-template-columns:1.1fr .9fr;gap:12px;">
+          <div style="border:1px solid rgba(16,185,129,.35);border-radius:16px;padding:14px;background:rgba(20,83,45,.25);">
+            <div class="label">판단 헤더</div>
+            <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-top:8px;">
+              <div>
+                <div style="font-size:26px;font-weight:800;">종합점수 91 / Buy Candidate</div>
+                <div style="font-size:13px;opacity:.82;margin-top:6px;">선정 이유: 추세·성장성·포트 적합도 균형 우수</div>
+              </div>
+            </div>
+          </div>
+          <div style="border:1px solid rgba(148,163,184,.22);border-radius:16px;padding:14px;">
+            <div class="label">매수/보유/축소 판단</div>
+            <div style="font-weight:700;margin-top:8px;">현재 판단: 보유 유지 + 추가매수 후보</div>
+            <div style="font-size:13px;opacity:.78;margin-top:6px;">단, 실적 전 추격매수는 보수적으로</div>
+          </div>
+        </div>
+
+        <div style="border:1px solid rgba(148,163,184,.22);border-radius:18px;padding:14px;background:rgba(15,23,42,.66);">
+          <div class="label">차트 영역 (가장 큰 블록)</div>
+          <div style="display:grid;grid-template-columns:1.2fr .8fr;gap:12px;margin-top:10px;height:220px;">
+            <div style="border:1px dashed rgba(148,163,184,.28);border-radius:14px;display:flex;align-items:center;justify-content:center;">
+              가격 차트 / 이동평균 / 주요 구간
+            </div>
+            <div style="display:grid;gap:10px;">
+              <div class="placeholder" style="min-height:64px;">기술적 분석 요약</div>
+              <div class="placeholder" style="min-height:64px;">리스크 레벨</div>
+              <div class="placeholder" style="min-height:64px;">포지션 메모</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
+          <div style="border:1px solid rgba(148,163,184,.22);border-radius:16px;padding:14px;">
+            <div class="label">매크로 상황</div>
+            <div style="font-weight:700;margin-top:8px;">요약 카드</div>
+            <div style="font-size:13px;opacity:.78;margin-top:6px;">금리/유동성/지수 환경이 성장주에 우호적인지 한 줄 요약</div>
+          </div>
+          <div style="border:1px solid rgba(148,163,184,.22);border-radius:16px;padding:14px;">
+            <div class="label">옵션시장</div>
+            <div style="font-weight:700;margin-top:8px;">요약 카드</div>
+            <div style="font-size:13px;opacity:.78;margin-top:6px;">콜/풋 쏠림, 이벤트 전 변동성 힌트 정도만 우선 노출</div>
+          </div>
+          <div style="border:1px solid rgba(148,163,184,.22);border-radius:16px;padding:14px;">
+            <div class="label">메모 / 캡처 / 다음 액션</div>
+            <div style="font-weight:700;margin-top:8px;">작업 카드</div>
+            <div style="font-size:13px;opacity:.78;margin-top:6px;">메모 1줄, 썸네일 strip, 다음 액션 버튼/문구</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="options">
+    <div class="option" data-choice="section1-good" onclick="toggleSelect(this)">
+      <div class="letter">A</div>
+      <div class="content">
+        <h3>이 구조로 진행</h3>
+        <p>좌측 watchlist + 우측 analysis workspace의 균형이 적절함</p>
+      </div>
+    </div>
+    <div class="option" data-choice="section1-more-chart" onclick="toggleSelect(this)">
+      <div class="letter">B</div>
+      <div class="content">
+        <h3>차트 비중 더 키우기</h3>
+        <p>workspace에서 차트가 절반 이상 먹도록 더 강하게</p>
+      </div>
+    </div>
+    <div class="option" data-choice="section1-more-dashboard" onclick="toggleSelect(this)">
+      <div class="letter">C</div>
+      <div class="content">
+        <h3>상단 요약을 더 키우기</h3>
+        <p>top picks / macro snapshot / alerts를 더 dashboard처럼 강화</p>
+      </div>
+    </div>
+  </div>
+</div>

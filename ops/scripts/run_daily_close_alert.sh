@@ -33,8 +33,10 @@ UV_CACHE_DIR=.uv-cache uv run python ops/scripts/prepare_user_csv.py \
   --end "$END_DATE" \
   --out data/user_input.csv
 
-UV_CACHE_DIR=.uv-cache uv run python ops/scripts/user_original_reference.py
+PYTHONPATH=src UV_CACHE_DIR=.uv-cache uv run python ops/scripts/run_final_core_strategy_signal.py \
+  --data-csv data/user_input.csv \
+  --out reports/signals_core_strategy_final.csv
 
 PYTHONPATH=src .venv/bin/python ops/scripts/run_daily_telegram_alert.py \
-  --signal-csv reports/signals_s1_s2_s3_user_original.csv \
+  --signal-csv reports/signals_core_strategy_final.csv \
   --state-path reports/daily_telegram_alert_state.json

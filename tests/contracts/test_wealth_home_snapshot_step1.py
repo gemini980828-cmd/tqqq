@@ -56,6 +56,19 @@ MANUAL = {
             "region": "서울 마포구",
         }
     ],
+    "transactions": [
+        {
+            "transaction_id": "tx-1",
+            "account_id": "samsung-core",
+            "manager_id": "core_strategy",
+            "symbol": "TQQQ",
+            "side": "buy",
+            "quantity": 5,
+            "price_krw": 80000,
+            "total_value_krw": 400000,
+            "traded_at": "2026-03-05T14:10:00+00:00",
+        }
+    ],
 }
 
 
@@ -81,6 +94,7 @@ def test_build_dashboard_snapshot_includes_wealth_home_and_core_strategy_positio
 
     assert wealth["overview"] == {
         "invested_krw": 9720000,
+        "investable_assets_krw": 9720000,
         "cash_krw": 1500000,
         "debt_krw": 0,
         "net_worth_krw": 11220000,
@@ -94,3 +108,7 @@ def test_build_dashboard_snapshot_includes_wealth_home_and_core_strategy_positio
     assert core["actual_weight_pct"] == round(9720000 / 11220000 * 100.0, 2)
     assert core["gap_weight_pct"] == round(100.0 - core["actual_weight_pct"], 2)
     assert core["rebalance_gap_krw"] == 1500000
+    assert core["transaction_count"] == 1
+    assert core["last_traded_at"] == "2026-03-05T14:10:00+00:00"
+    assert snap["meta"]["signal_updated_at"] == "2026-03-06T00:00:00"
+    assert snap["meta"]["market_updated_at"] == "2026-03-06T00:00:00"

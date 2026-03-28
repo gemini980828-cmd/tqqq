@@ -9,7 +9,7 @@ INTENT_RULES: tuple[dict[str, Any], ...] = (
         "label": "portfolio_priority",
         "source_manager_id": "core_strategy",
         "priority": 0,
-        "tokens": ("전체", "요약", "정리", "포트폴리오", "자산", "상황", "우선순위"),
+        "tokens": ("전체", "요약", "정리", "포트폴리오", "자산", "우선순위"),
         "support_keys": ("action",),
     },
     {
@@ -43,6 +43,22 @@ INTENT_RULES: tuple[dict[str, Any], ...] = (
         "priority": 40,
         "tokens": ("개별주", "주식", "종목", "워치리스트", "watchlist"),
         "support_keys": (),
+    },
+    {
+        "key": "recent_changes",
+        "label": "recent_changes",
+        "source_manager_id": "core_strategy",
+        "priority": 45,
+        "tokens": ("최근", "변화", "바뀌", "이벤트", "변경"),
+        "support_keys": (),
+    },
+    {
+        "key": "comparison",
+        "label": "comparison",
+        "source_manager_id": "core_strategy",
+        "priority": 15,
+        "tokens": ("비교", "대비", "관계", "충돌"),
+        "support_keys": ("action", "cash"),
     },
     {
         "key": "real_estate",

@@ -20,17 +20,17 @@ export default function TopNav() {
           <p className="mt-2 text-sm text-slate-400">투자운영 중심 자산관리 시스템 · Home에서 상태를 보고 Manager에서 깊게 작업합니다.</p>
         </div>
 
-        <nav className="flex flex-wrap gap-2">
+        <nav className="flex flex-wrap gap-6 text-sm font-medium">
           {links.map((link) => (
             <NavLink
               key={link.to}
               to={link.to}
               end={link.end}
               className={({ isActive }) =>
-                `rounded-full border px-4 py-2 text-sm font-medium transition ${
+                `transition ${
                   isActive
-                    ? 'border-sky-300/35 bg-sky-400/12 text-sky-100'
-                    : 'border-white/10 bg-white/[0.04] text-slate-300 hover:bg-white/[0.08]'
+                    ? 'text-white border-b-2 border-sky-400 pb-1'
+                    : 'text-slate-400 hover:text-white'
                 }`
               }
             >

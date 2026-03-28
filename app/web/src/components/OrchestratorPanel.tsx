@@ -1,36 +1,18 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 
-import type { AppSnapshot } from '../types/appSnapshot'
-import {
-  appendHistoryEntry,
-  buildSessionInsights,
-  createHistoryEntry,
-  loadHistory,
-  ORCHESTRATOR_HISTORY_STORAGE_KEY,
-  saveHistory,
-  type OrchestratorHistoryEntry,
-} from '../lib/orchestratorSession.js'
-import { buildPreviewReply } from '../lib/orchestratorPreview.js'
+import type { AppSnapshot, OrchestratorPromptStarter } from '../types/appSnapshot'
+import { createHistoryEntry, loadHistory, ORCHESTRATOR_HISTORY_STORAGE_KEY, saveHistory, type OrchestratorHistoryEntry } from '../lib/orchestratorSession'
+import { buildPreviewReply } from '../lib/orchestratorPreview'
+import { normalizeOrchestratorReply, type StructuredOrchestratorReply } from '../lib/orchestratorReplyAdapter'
+import { resolveScreenRoute } from '../lib/navigation'
 
-type OrchestratorReply = {
-  answer: string
-  highlights: string[]
-  sourceManagers: string[]
-  primaryIntent: string
-  briefKeysUsed: string[]
-  metadata: {
-    mode: string
-    question_chars: number
-    source_manager_count: number
-    primary_intent: string
-  }
-}
-
-const FALLBACK_QUICK_PROMPTS = ['오늘 가장 중요한 액션은?', '지금 우선순위를 요약해줘', '현금 여력이 충분한가?', '지금 리스크 상태는 어때?']
+type HistoryEntryWithNormalized = OrchestratorHistoryEntry & { normalized?: StructuredOrchestratorReply }
 
 export default function OrchestratorPanel({ snapshot }: { snapshot?: AppSnapshot }) {
+  const navigate = useNavigate()
   const [question, setQuestion] = useState('')
-  const [reply, setReply] = useState<OrchestratorReply | null>(null)
+  const [isTyping, setIsTyping] = useState(false)
   const [history, setHistory] = useState<OrchestratorHistoryEntry[]>(() => {
     if (typeof window === 'undefined') return []
     try {
@@ -39,210 +21,206 @@ export default function OrchestratorPanel({ snapshot }: { snapshot?: AppSnapshot
       return []
     }
   })
-  const lastUpdated = useMemo(() => snapshot?.action_hero?.updated_at ?? snapshot?.wealth_home?.updated_at ?? 'N/A', [snapshot])
-  const quickPrompts = useMemo(() => snapshot?.orchestrator_policy?.quick_prompts ?? FALLBACK_QUICK_PROMPTS, [snapshot])
-  const sessionInsights = useMemo(() => buildSessionInsights(history), [history])
-  const auditInsights = snapshot?.orchestrator_insights
-  const promptButtons = useMemo(() => {
-    const prompts = [...(sessionInsights.recent_prompts ?? [])]
-    for (const item of quickPrompts) {
-      if (prompts.length >= 6) break
-      if (!prompts.includes(item)) prompts.push(item)
-    }
-    return prompts
-  }, [quickPrompts, sessionInsights.recent_prompts])
+  
+  const scrollRef = useRef<HTMLDivElement>(null)
+
+  const promptStarters: OrchestratorPromptStarter[] = useMemo(() => {
+    return snapshot?.orchestrator_prompt_starters ?? [
+      { id: '1', label: 'Compare AAPL with MSFT', prompt: 'Compare AAPL with MSFT', source_manager_ids: [], intent: 'research' },
+      { id: '2', label: "What's the macro outlook?", prompt: "What is the macro outlook today?", source_manager_ids: [], intent: 'macro' }
+    ]
+  }, [snapshot])
 
   useEffect(() => {
     if (typeof window === 'undefined') return
     saveHistory(history, window.localStorage, ORCHESTRATOR_HISTORY_STORAGE_KEY)
   }, [history])
 
+  // scroll to bottom on new message
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight
+    }
+  }, [history, isTyping])
+
   function submitQuestion(nextQuestion: string) {
     const prompt = nextQuestion.trim()
     if (!prompt) return
-    setQuestion(prompt)
-    const nextReply = buildPreviewReply(snapshot, prompt) as OrchestratorReply | null
-    setReply(nextReply)
-    if (nextReply) {
-      setHistory((current) => appendHistoryEntry(current, createHistoryEntry(prompt, nextReply, new Date().toISOString())))
+    setQuestion('')
+    
+    // Optimistically add user message
+    const tempEntry = createHistoryEntry(prompt, { answer: '...', sourceManagers: [], primaryIntent: '', briefKeysUsed: [], metadata: { mode: '', question_chars: 0, source_manager_count: 0, primary_intent: '' } }, new Date().toISOString())
+    if (tempEntry) {
+      setHistory((current) => [...current, tempEntry].slice(-5))
     }
+    setIsTyping(true)
+
+    // Simulate network delay for effect
+    setTimeout(() => {
+      const rawReply = buildPreviewReply(snapshot, prompt)
+      const nextReply = normalizeOrchestratorReply(rawReply)
+      
+      setHistory((current) => {
+        // Find and replace the optimistic entry
+        const idx = current.findIndex(e => e.question === prompt && e.answer === '...')
+        if (idx >= 0) {
+          const newHistory = [...current] as HistoryEntryWithNormalized[]
+          const replaced = createHistoryEntry(prompt, { answer: nextReply.answer || '', sourceManagers: nextReply.supporting_managers || [], primaryIntent: '', briefKeysUsed: [], metadata: { mode: '', question_chars: 0, source_manager_count: 0, primary_intent: '' } }, new Date().toISOString())
+          if (replaced) {
+            newHistory[idx] = { ...replaced, normalized: nextReply }
+          }
+          return newHistory
+        }
+        const finalEntry = createHistoryEntry(prompt, { answer: nextReply.answer || '', sourceManagers: nextReply.supporting_managers || [], primaryIntent: '', briefKeysUsed: [], metadata: { mode: '', question_chars: 0, source_manager_count: 0, primary_intent: '' } }, new Date().toISOString())
+        if (!finalEntry) return current
+        return [...current, { ...finalEntry, normalized: nextReply }].slice(-5)
+      })
+      setIsTyping(false)
+    }, 600)
   }
 
-  function clearHistory() {
-    setHistory([])
-    if (typeof window !== 'undefined') {
-      window.localStorage.removeItem(ORCHESTRATOR_HISTORY_STORAGE_KEY)
-    }
+  function renderBotReply(reply: HistoryEntryWithNormalized) {
+    const sr: StructuredOrchestratorReply = reply.normalized || normalizeOrchestratorReply(reply)
+    
+    return (
+      <div className="max-w-[95%]">
+        {/* Orchestrator Badge */}
+        <div className="flex items-center gap-2 mb-2">
+            <div className="w-6 h-6 rounded bg-brand-primary flex items-center justify-center">
+                <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+            </div>
+            <span className="text-xs font-semibold text-brand-accent uppercase">Analysis Completed</span>
+        </div>
+        
+        <div className="glass-panel rounded-xl overflow-hidden border border-brand-primary/20">
+            {/* Short Answer (요약) */}
+            {sr.short_answer && (
+              <div className="p-4 bg-brand-primary/5 border-b border-dark-700">
+                  <p className="text-sm font-semibold text-white">
+                      {sr.short_answer}
+                  </p>
+              </div>
+            )}
+            
+            {/* Details (근거) */}
+            {(sr.answer || sr.source_details) && (
+              <div className="p-4 text-sm text-gray-300">
+                  {sr.answer}
+              </div>
+            )}
+
+            {/* Source Details (투명성) */}
+            {(sr.source_details.length > 0 || sr.supporting_managers.length > 0) && (
+              <div className="px-4 py-3 bg-dark-800/80 border-t border-dark-700 flex items-center justify-between">
+                  <div className="flex items-center flex-wrap gap-2">
+                      <span className="text-xs text-gray-500 uppercase font-semibold">Sources:</span>
+                      {(sr.source_details.length > 0
+                        ? sr.source_details
+                        : sr.supporting_managers.map((manager_id) => ({ manager_id, stale: false }))).map(sm => (
+                        <span key={sm.manager_id} className="text-xs px-1.5 py-0.5 rounded bg-dark-700 text-gray-300 border border-dark-600">
+                          {sm.manager_id}{sm.stale ? ' (Stale)' : ''}
+                        </span>
+                      ))}
+                  </div>
+              </div>
+            )}
+
+            {/* Next Action (다음 행동) */}
+            {sr.next_action && (
+              <div className="p-4 border-t border-brand-primary/20 bg-dark-900 flex justify-between items-center">
+                  <div>
+                      <h5 className="text-xs font-semibold text-brand-accent uppercase mb-1">Recommended Action</h5>
+                      <p className="text-sm text-white font-medium">{sr.next_action}</p>
+                  </div>
+                  <button
+                    onClick={() => navigate(resolveScreenRoute(sr.go_to_screen))}
+                    className="px-3 py-1.5 bg-brand-primary hover:bg-brand-accent text-white rounded text-xs font-medium transition shadow-lg shadow-blue-500/10"
+                  >
+                      View
+                  </button>
+              </div>
+            )}
+        </div>
+      </div>
+    )
   }
 
   return (
-    <section className="rounded-[24px] border border-white/10 bg-white/[0.04] p-5 shadow-[0_12px_32px_rgba(15,23,42,0.18)]">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">Orchestrator AI</p>
-          <h3 className="mt-2 text-xl font-semibold tracking-[-0.03em] text-white">총괄 AI 대화</h3>
-        </div>
-        <span className="rounded-full border border-amber-300/20 bg-amber-500/10 px-2.5 py-1 text-[11px] uppercase tracking-[0.18em] text-amber-100">
-          Explicit only
-        </span>
-      </div>
-      <p className="mt-4 text-sm leading-6 text-slate-300">
-        페이지 로드시 자동 호출은 하지 않고, 현재 snapshot / manager summary cache 기준으로 질문을 보낼 때만 즉시 답변합니다.
-      </p>
-      <div className="mt-5 rounded-2xl border border-white/8 bg-slate-950/40 p-4 text-sm text-slate-400">
-        <p>기준 데이터: exported orchestrator briefs + cached manager summaries + wealth snapshot</p>
-        <p className="mt-2">마지막 업데이트: {lastUpdated}</p>
-      </div>
-
-      <div className="mt-4 flex flex-wrap gap-2">
-        {promptButtons.map((item) => (
-          <button
-            key={item}
-            type="button"
-            onClick={() => submitQuestion(item)}
-            className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs text-slate-200 transition hover:border-sky-300/30 hover:bg-sky-400/10"
-          >
-            {item}
-          </button>
-        ))}
-      </div>
-
-      <div className="mt-4 space-y-3">
-        <textarea
-          value={question}
-          onChange={(event) => setQuestion(event.target.value)}
-          rows={3}
-          placeholder="예: 지금 가장 중요한 액션과 현금 여력을 같이 알려줘"
-          className="w-full rounded-2xl border border-white/10 bg-slate-950/50 px-4 py-3 text-sm text-white outline-none ring-0 placeholder:text-slate-500"
-        />
-        <div className="flex items-center justify-between gap-3">
-          <p className="text-xs text-slate-500">Live AI 호출 없음 · explicit submit only · cache-first</p>
-          <button
-            type="button"
-            onClick={() => submitQuestion(question)}
-            disabled={!question.trim()}
-            className="rounded-full border border-sky-300/25 bg-sky-400/10 px-4 py-2 text-sm font-medium text-sky-100 transition enabled:hover:bg-sky-400/20 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            질문 실행
-          </button>
-        </div>
-      </div>
-
-      {reply ? (
-        <div className="mt-5 rounded-2xl border border-white/8 bg-slate-950/40 p-4">
-          <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Orchestrator reply</p>
-          <p className="mt-3 whitespace-pre-line text-sm leading-7 text-slate-200">{reply.answer}</p>
-          <div className="mt-4 flex flex-wrap gap-2">
-            {reply.highlights.map((item) => (
-              <span key={item} className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[11px] text-slate-300">
-                {item}
-              </span>
-            ))}
-          </div>
-          <p className="mt-3 text-xs text-slate-500">Sources: {reply.sourceManagers.join(', ') || 'core_strategy'}</p>
-          <p className="mt-1 text-xs text-slate-500">
-            Mode: {reply.metadata.mode} · intent: {reply.primaryIntent} · chars: {reply.metadata.question_chars} · source managers:{' '}
-            {reply.metadata.source_manager_count}
-          </p>
-        </div>
-      ) : null}
-
-      {history.length ? (
-        <>
-          <div className="mt-5 grid gap-3 sm:grid-cols-3">
-            <div className="rounded-2xl border border-white/8 bg-slate-950/40 px-4 py-3">
-              <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Session 질문 수</p>
-              <p className="mt-2 text-xl font-semibold text-white">{sessionInsights.total_questions}</p>
+    <aside className="h-full bg-dark-800 flex flex-col z-20">
+        <div className="p-4 border-b border-dark-700 flex justify-between items-center bg-dark-900/50">
+            <div className="flex items-center gap-2">
+                <span className="animate-pulse w-2 h-2 bg-brand-accent rounded-full"></span>
+                <h2 className="font-semibold text-white">Orchestrator</h2>
             </div>
-            <div className="rounded-2xl border border-white/8 bg-slate-950/40 px-4 py-3">
-              <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">주된 intent</p>
-              <p className="mt-2 text-sm font-medium text-white">{sessionInsights.top_intent ?? 'N/A'}</p>
-            </div>
-            <div className="rounded-2xl border border-white/8 bg-slate-950/40 px-4 py-3">
-              <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">누적 audit 질문 수</p>
-              <p className="mt-2 text-xl font-semibold text-white">{auditInsights?.total_questions ?? 0}</p>
-            </div>
-          </div>
-
-          <div className="mt-5 rounded-2xl border border-white/8 bg-slate-950/40 p-4">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Question history</p>
-                <p className="mt-1 text-sm text-slate-300">최근 질문을 다시 보거나 replay 할 수 있습니다.</p>
+            <button 
+              onClick={() => {
+                setHistory([])
+                if (typeof window !== 'undefined') window.localStorage.removeItem(ORCHESTRATOR_HISTORY_STORAGE_KEY)
+              }}
+              className="text-gray-400 hover:text-white" title="Clear History">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 8h16M4 16h16"></path></svg>
+            </button>
+        </div>
+        
+        <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-6 flex flex-col custom-scrollbar">
+            {history.length === 0 ? (
+              <div className="flex-1 flex items-center justify-center text-center px-4">
+                <p className="text-sm text-gray-500 leading-relaxed">
+                  How can I assist you with your portfolio today?<br/>Select a prompt below or type your question.
+                </p>
               </div>
-              <button
-                type="button"
-                onClick={clearHistory}
-                disabled={!history.length}
-                className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs text-slate-300 transition enabled:hover:border-rose-300/30 enabled:hover:bg-rose-400/10 disabled:opacity-40"
-              >
-                history clear
-              </button>
-            </div>
-
-            <div className="mt-4 space-y-3">
-              {history.slice(0, 4).map((item) => (
-                <div key={`${item.asked_at}:${item.question}`} className="rounded-2xl border border-white/8 bg-white/[0.03] px-4 py-3">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="text-sm font-medium text-white">{item.question}</p>
-                      <p className="mt-2 line-clamp-3 whitespace-pre-line text-sm leading-6 text-slate-300">{item.answer}</p>
-                      <p className="mt-2 text-xs text-slate-500">
-                        intent: {item.primary_intent} · sources: {item.source_managers.join(', ') || 'core_strategy'}
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => submitQuestion(item.question)}
-                      className="rounded-full border border-sky-300/20 bg-sky-400/10 px-3 py-1.5 text-[11px] text-sky-100 transition hover:bg-sky-400/20"
-                    >
-                      replay
-                    </button>
+            ) : (
+              history.map((entry, idx) => (
+                <div key={idx} className="flex flex-col space-y-4">
+                  {/* User Msg */}
+                  <div className="self-end max-w-[85%] bg-dark-700 rounded-2xl rounded-tr-sm px-4 py-3 text-sm text-white">
+                      {entry.question}
                   </div>
-                </div>
-              ))}
-            </div>
-          </div>
 
-          <div className="mt-5 rounded-2xl border border-white/8 bg-slate-950/40 p-4">
-            <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Operational insights</p>
-            <div className="mt-4 grid gap-3 md:grid-cols-2">
-              <div className="rounded-2xl border border-white/8 bg-white/[0.03] px-4 py-3">
-                <p className="text-xs uppercase tracking-[0.16em] text-slate-500">마지막 explicit 질문</p>
-                <p className="mt-2 text-sm font-medium text-white">{sessionInsights.last_interaction_at ?? 'N/A'}</p>
-              </div>
-              <div className="rounded-2xl border border-white/8 bg-white/[0.03] px-4 py-3">
-                <p className="text-xs uppercase tracking-[0.16em] text-slate-500">Session intent mix</p>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {sessionInsights.intent_mix.map((item) => (
-                    <span key={item.intent} className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[11px] text-slate-300">
-                      {item.intent} × {item.count}
-                    </span>
-                  ))}
+                  {/* Orchestrator AI Response Structured */}
+                  {entry.answer === '...' ? (
+                    <div className="text-sm text-gray-500 animate-pulse ml-2">Orchestrator is analyzing...</div>
+                  ) : renderBotReply(entry)}
                 </div>
-              </div>
-            </div>
-
-            <div className="mt-4 space-y-3">
-              {(auditInsights?.recent_questions ?? []).slice(0, 3).map((item) => (
-                <div key={`${item.timestamp}:${item.question}`} className="rounded-2xl border border-white/8 bg-white/[0.03] px-4 py-3">
-                  <p className="text-sm font-medium text-white">{item.question}</p>
-                  <p className="mt-2 text-xs text-slate-500">
-                    intent: {item.primary_intent} · sources: {(item.source_manager_ids ?? []).join(', ') || 'core_strategy'}
-                  </p>
-                </div>
-              ))}
-              {!auditInsights?.recent_questions?.length ? (
-                <p className="text-sm text-slate-500">아직 backend audit summary가 없습니다. 현재는 session history 기준으로 상담 UX를 제공합니다.</p>
-              ) : null}
-            </div>
-          </div>
-        </>
-      ) : (
-        <div className="mt-5 rounded-2xl border border-dashed border-white/10 bg-slate-950/30 px-4 py-4 text-sm text-slate-400">
-          아직 질문 기록이 없습니다. quick prompt나 직접 질문으로 첫 상담 기록을 만들어보세요.
+              ))
+            )}
         </div>
-      )}
-    </section>
+
+        {/* Input & Prompts */}
+        <div className="p-4 bg-dark-900 border-t border-dark-700">
+            {/* Prompt Starters */}
+            <div className="flex gap-2 mb-3 overflow-x-auto pb-1 custom-scrollbar">
+                {promptStarters.map(starter => (
+                  <button 
+                    key={starter.id}
+                    onClick={() => submitQuestion(starter.prompt)}
+                    className="flex-shrink-0 text-xs px-3 py-1.5 rounded-full bg-dark-700 border border-dark-600 text-gray-300 hover:text-white hover:border-gray-500 transition whitespace-nowrap"
+                  >
+                      {starter.label}
+                  </button>
+                ))}
+            </div>
+            {/* Input Box */}
+            <form 
+              onSubmit={(e) => { e.preventDefault(); submitQuestion(question); }}
+              className="relative flex items-center"
+            >
+                <input 
+                  type="text" 
+                  value={question}
+                  onChange={e => setQuestion(e.target.value)}
+                  placeholder="Ask Orchestrator for insights..." 
+                  className="w-full bg-dark-800 border border-dark-600 rounded-lg py-3 px-4 pr-12 text-sm text-white focus:outline-none focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition" 
+                />
+                <button 
+                  type="submit"
+                  disabled={!question.trim()}
+                  className="absolute right-2 p-1.5 bg-brand-primary rounded-md text-white hover:bg-brand-accent transition disabled:opacity-50 disabled:hover:bg-brand-primary"
+                >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                </button>
+            </form>
+        </div>
+    </aside>
   )
 }

@@ -1,0 +1,58 @@
+{
+  "status": "baseline_keep",
+  "reason": "no candidate satisfied strict MDD-first gate without harming CAGR",
+  "strict_pass_count": 0,
+  "near_miss": {
+    "params_json": "{\"dist200_enter\": 101.21, \"dist200_exit\": 99.81, \"overheat1_enter\": 139.0, \"overheat2_enter\": 146.0, \"overheat3_enter\": 149.0, \"overheat4_enter\": 151.0, \"slope_thr\": 0.11, \"tp10_cap\": 0.95, \"tp10_trigger\": 0.1, \"vol_threshold\": 0.061}",
+    "pretax_cagr": 0.4126572956989265,
+    "aftertax_cagr": 0.3830299454488541,
+    "pretax_mdd": -0.4044403560760539,
+    "mdd_pass": true,
+    "is_aftertax_cagr": 0.4239916376665849,
+    "oos_aftertax_cagr": 0.2991104400982034,
+    "oos_retention": 0.7054630646593447,
+    "oos_pass": true,
+    "total_tax_paid_krw": 4086558934.897788,
+    "rows": 3673,
+    "trial_id": "fine_0009",
+    "family": "phase2_core",
+    "candidate_id": "fine_0009",
+    "turnover": NaN,
+    "aftertax_mdd": NaN,
+    "baseline_aftertax_cagr": 0.3859792803756308,
+    "baseline_pretax_mdd": -0.40467363761426745,
+    "delta_cagr": -0.002949334926776681,
+    "delta_mdd": 0.0002332815382135589,
+    "strict_pass": false
+  },
+  "baseline": {
+    "family": "baseline",
+    "candidate_id": "baseline_s2",
+    "params_json": "{}",
+    "pretax_cagr": 0.4156743616862226,
+    "aftertax_cagr": 0.3859792803756308,
+    "pretax_mdd": -0.40467363761426745,
+    "aftertax_mdd": -0.5343459511576858,
+    "is_aftertax_cagr": 0.4308985010729598,
+    "oos_aftertax_cagr": 0.2936024227756351,
+    "oos_retention": 0.6813725785644408,
+    "oos_pass": false,
+    "total_tax_paid_krw": 4216176717.128256,
+    "rows": 3673,
+    "turnover": 102.35
+  },
+  "families": [
+    {
+      "family": "overheat_buffer",
+      "candidate_count": 12
+    },
+    {
+      "family": "phase2_core",
+      "candidate_count": 154
+    },
+    {
+      "family": "reentry_ramp",
+      "candidate_count": 18
+    }
+  ]
+}

@@ -717,3 +717,68 @@
   - `cd /home/juwon/tqqq/app/web && node --test src/lib/orchestratorPreview.test.js src/lib/orchestratorSession.test.js && npm run lint && npm run build` → preview/session tests, lint, build 성공
   - `cd /home/juwon/tqqq && UV_CACHE_DIR=/tmp/.uv-cache uv run --offline --with pytest pytest -q && PYTHONPATH=.:'src' python3 ops/scripts/run_manager_summaries.py && PYTHONPATH=.:'src' python3 ops/scripts/export_dashboard_snapshot.py` → `67 passed`, summary refresh / snapshot export 성공
   - Playwright smoke: Home 초기 로드 시 reply/history 미표시, quick prompt 클릭 후 reply + session history + insight cards 렌더 확인
+
+---
+
+# TODO - Stock Research Manager Task 2 (2026-03-19)
+
+- [x] Review Task 2 plan + existing frontend patterns
+- [x] Write failing `stockResearchWorkspace` node tests first
+- [x] Run `node --test` and confirm initial failure before implementation
+- [x] Implement frontend-only stock research types, fixture, and workspace adapter
+- [x] Re-run node tests to green and add any minimal refactor needed
+- [x] Run planned verification: `node --test`, `npm run lint`, `npm run build`
+- [x] Add review evidence to this section
+
+## Review
+
+- TDD red step: `cd app/web && node --test src/lib/stockResearchWorkspace.test.js` → failed with `ERR_MODULE_NOT_FOUND` for `src/lib/stockResearchWorkspace.js`.
+- Implemented frontend-only stock research types, symbol-keyed fixture data, and workspace adapter limited to the six owned files.
+- Added regression coverage for status normalization, score math, top candidate derivation, warning/summary lines, status counts, generated_at precedence, empty fallback, and re-derivation after status change.
+- Verification:
+  - `cd app/web && node --test src/lib/stockResearchWorkspace.test.js` → 8 tests passed.
+  - `cd app/web && npm run lint` → exit 0.
+  - `cd app/web && npm run build` → exit 0 (`vite v7.3.1`, 57 modules transformed, build completed).
+
+
+---
+
+# TODO - 2026-03-18 Stock Research Manager Tasks 3/4
+
+- [x] Add Task 3 acceptance checklist before coding
+- [x] Add/update workspace helper regression tests for local re-derive behavior
+- [x] Implement Task 3 UI assembly in owned stock research files only
+- [x] Run Task 3/4 verification (node test, lint, build, manual preview if possible)
+- [x] Update review evidence for Task 3/4 only
+
+## Task 3 Acceptance Checklist
+
+- [x] Async snapshot load after first render refreshes header seed data
+- [x] Default selected row opens the top-scored symbol
+- [x] Detail panel status action updates watchlist row + header counts
+- [x] Memo / next action edits stay local to the manager route
+
+## Review (Task 3/4)
+
+- Changed files:
+  - `app/web/src/components/stock-research/StockResearchHeader.tsx`
+  - `app/web/src/components/stock-research/StockResearchWatchlist.tsx`
+  - `app/web/src/components/stock-research/StockResearchMiniChart.tsx`
+  - `app/web/src/components/stock-research/StockResearchDetail.tsx`
+  - `app/web/src/pages/managers/StockResearchManager.tsx`
+  - `app/web/src/lib/stockResearchWorkspace.js`
+  - `app/web/src/lib/stockResearchWorkspace.d.ts`
+  - `app/web/src/lib/stockResearchWorkspace.test.js`
+- Simplifications made:
+  - kept `StockResearchManager.tsx` as a thin route-local draft wrapper over workspace helpers
+  - used dependency-free inline SVG for chart + markers instead of adding a chart library
+  - kept edits route-local only by avoiding snapshot mutation and backend writes
+- Verification:
+  - `cd app/web && node --test src/lib/stockResearchWorkspace.test.js` → PASS (`9 passed`)
+  - `cd app/web && npm run lint` → PASS
+  - `cd app/web && npm run build` → PASS
+  - Manual preview: `cd app/web && npm run preview -- --host 127.0.0.1 --port 4175` + browser check at `http://127.0.0.1:4175/#/managers/stocks`
+    - confirmed score-sorted watchlist render, header top-pick card, chart marker rendering, held badge, detail/watchlist status transitions, and header count/summary recompute after AMZN status change to 후보
+- Remaining risks:
+  - detail data remains fixture-backed; no persistent save/write-through exists yet
+  - route-local drafts reset on unmount/re-entry by design, but there is no dedicated React test harness for the manager page

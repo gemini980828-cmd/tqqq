@@ -28,3 +28,15 @@ def test_classify_question_maps_domain_specific_prompts_without_generic_fallback
 
     assert result["brief_keys"] == ["stock_research", "real_estate"]
     assert result["primary_intent"] == "stock_research"
+
+
+def test_classify_question_maps_recent_change_and_compare_prompts() -> None:
+    policy = export_orchestrator_policy()
+
+    changes = classify_question("최근 뭐가 바뀌었어?", policy=policy)
+    compare = classify_question("코어전략이랑 현금 상황을 비교해줘", policy=policy)
+
+    assert changes["primary_intent"] == "recent_changes"
+    assert changes["brief_keys"] == ["recent_changes"]
+    assert compare["primary_intent"] == "comparison"
+    assert compare["brief_keys"] == ["comparison", "action", "cash"]

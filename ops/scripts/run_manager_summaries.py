@@ -11,13 +11,14 @@ if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
 from tqqq_strategy.ai.manager_jobs import refresh_manager_summaries
+from tqqq_strategy.signal.final_engine import FINAL_RUNTIME_SIGNAL_PATH
 from tqqq_strategy.wealth.manual_inputs import DEFAULT_MANUAL_TRUTH_PATH
 from tqqq_strategy.wealth.summary_store import DEFAULT_SUMMARY_STORE_PATH
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Refresh deterministic manager summaries")
-    parser.add_argument("--signals", default="reports/signals_s1_s2_s3_user_original.csv")
+    parser.add_argument("--signals", default=str(FINAL_RUNTIME_SIGNAL_PATH))
     parser.add_argument("--data", default="data/user_input.csv")
     parser.add_argument("--metrics", default="reports/backtest_metrics_primary.csv")
     parser.add_argument("--state", default="reports/daily_telegram_alert_state.json")

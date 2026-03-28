@@ -1,0 +1,13 @@
+Metadata-Version: 2.4
+Name: tqqq-strategy
+Version: 0.1.0
+Requires-Python: >=3.12
+Requires-Dist: pandas
+Requires-Dist: numpy
+Requires-Dist: duckdb
+Requires-Dist: pyarrow
+Requires-Dist: yfinance
+Requires-Dist: pydantic
+Requires-Dist: fastapi
+Requires-Dist: uvicorn
+Requires-Dist: apscheduler
