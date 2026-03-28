@@ -11,13 +11,14 @@ import numpy as np
 import pandas as pd
 
 from tqqq_strategy.ops.idempotency import build_alert_key
-from tqqq_strategy.ops.telegram_alert import format_s2_change_message, send_telegram_message
+from tqqq_strategy.ops.telegram_alert import send_telegram_message
 from tqqq_strategy.signal.final_engine import FINAL_RUNTIME_SIGNAL_PATH
+from tqqq_strategy.wealth import DEFAULT_MANUAL_TRUTH_PATH, build_core_strategy_position, load_manual_truth
 
 SignalRow = dict[str, str]
 SenderFn = Callable[..., dict]
 REQUIRED_SIGNAL_COLUMNS = {"time", "S2_code", "S2_weight"}
-REQUIRED_DATA_COLUMNS = {"time", "QQQ종가", "TQQQ종가", "SPY종가"}
+REQUIRED_DATA_COLUMNS = {"time", "QQQ종가", "TQQQ종가", "SPY종가", "원달러환율"}
 
 
 def _read_last_two_rows(signal_csv_path: Path) -> tuple[SignalRow, SignalRow]:
@@ -111,6 +112,20 @@ def _emoji_from_sign(v: float) -> str:
     return "⚪"
 
 
+def _format_krw(value: float) -> str:
+    return f"{int(round(float(value))):,}원"
+
+
+def _format_usd(value: float) -> str:
+    return f"${float(value):,.2f}"
+
+
+def _is_truthy(value: object) -> bool:
+    if isinstance(value, bool):
+        return value
+    return str(value).strip().lower() in {"1", "true", "yes", "y", "on"}
+
+
 def _rsi_state(rsi: float) -> str:
     if np.isnan(rsi):
         return "N/A"
@@ -188,6 +203,7 @@ def run_daily_signal_alert(
     signal_csv_path: Path | str = FINAL_RUNTIME_SIGNAL_PATH,
     data_csv_path: Path | str = Path("data/user_input.csv"),
     state_path: Path | str = Path("reports/daily_telegram_alert_state.json"),
+    manual_truth_path: Path | str = DEFAULT_MANUAL_TRUTH_PATH,
     bot_token: str | None = None,
     chat_id: str | None = None,
     dry_run: bool = False,
@@ -196,9 +212,11 @@ def run_daily_signal_alert(
     signal_csv = Path(signal_csv_path)
     data_csv = Path(data_csv_path)
     state_file = Path(state_path)
+    manual_path = Path(manual_truth_path)
 
     prev_row, new_row = _read_last_two_rows(signal_csv)
     market_df = _read_market_data(data_csv)
+    manual_inputs = load_manual_truth(manual_path)
 
     date_str = new_row["time"]
     prev_code = str(prev_row["S2_code"])
@@ -240,6 +258,7 @@ def run_daily_signal_alert(
     tqqq_close = float(latest["TQQQ종가"])
     tqqq_prev = float(prev["TQQQ종가"])
     tqqq_day_pct = (tqqq_close / tqqq_prev - 1.0) * 100.0
+    fx_now = float(latest["원달러환율"]) if "원달러환율" in latest and pd.notna(latest["원달러환율"]) else float("nan")
 
     ma200 = hist["TQQQ종가"].rolling(200, min_periods=200).mean().iloc[-1]
     dist200 = (tqqq_close / ma200) * 100.0 if pd.notna(ma200) and ma200 != 0 else float("nan")
@@ -290,92 +309,94 @@ def run_daily_signal_alert(
     entry_pnl = ((tqqq_close / entry_price) - 1.0) * 100.0 if entry_price and entry_price > 0 else float("nan")
     stop_price = entry_price * 0.941 if entry_price is not None else float("nan")
     tp10_done = prev_weight >= 0.999 and abs(new_weight - 0.95) < 1e-9
+    positions = [row for row in manual_inputs.get("positions", []) if str(row.get("manager_id") or "") == "core_strategy"]
+    primary = positions[0] if positions else {}
+    inferred_fx = float(primary.get("market_price_krw") or 0.0) / tqqq_close if tqqq_close and float(primary.get("market_price_krw") or 0.0) > 0 else float("nan")
+    if np.isnan(fx_now) or fx_now <= 0:
+        fx_now = inferred_fx if pd.notna(inferred_fx) and inferred_fx > 0 else 1.0
+    close_krw = tqqq_close * fx_now
 
-    price_emoji = _emoji_from_sign(tqqq_day_pct)
-    pnl_emoji = _emoji_from_sign(tqqq_day_pct)
-    position_emoji = "🟢" if new_weight > 0 else "🔴"
-    entry_emoji = _emoji_from_sign(entry_pnl)
-    loss_cut_line = "해당 없음"
-    if new_weight >= 0.8 and entry_price is not None:
-        loss_cut_line = f"활성 (${stop_price:.2f} | 진입가×0.941)"
+    manual_inputs_live = dict(manual_inputs)
+    live_positions = []
+    for row in manual_inputs.get("positions", []):
+        if str(row.get("manager_id") or "") == "core_strategy":
+            updated = dict(row)
+            updated["market_price_krw"] = close_krw
+            updated["market_value_krw"] = float(row.get("quantity", 0.0)) * close_krw
+            live_positions.append(updated)
+        else:
+            live_positions.append(dict(row))
+    manual_inputs_live["positions"] = live_positions
 
-    action_line = _build_action_line(prev_weight=prev_weight, new_weight=new_weight)
-    signal_label = _signal_label(new_weight=new_weight, prev_weight=prev_weight, dist200=float(dist200 if pd.notna(dist200) else 0.0))
+    target_weight_pct = round(new_weight * 100.0, 2)
+    base_target_pct = round(float(new_row.get("base_weight") or new_weight) * 100.0, 2)
+    buffer_active = _is_truthy(new_row.get("buffer_active")) or base_target_pct > target_weight_pct + 1e-9
+    core_position = build_core_strategy_position(manual_inputs_live, target_weight_pct=target_weight_pct)
+    actual_weight_pct = float(core_position["actual_weight_pct"])
+    rebalance_gap_krw = float(core_position["rebalance_gap_krw"])
+    rebalance_action = str(core_position["rebalance_action"])
+    current_value_krw = float(core_position["market_value_krw"])
+    quantity = float(core_position["quantity"])
+    order_qty = int(round(abs(rebalance_gap_krw) / close_krw)) if close_krw > 0 else 0
+    order_value_krw = order_qty * close_krw
+    order_value_usd = order_qty * tqqq_close
+    asset_change_krw = quantity * (tqqq_close - tqqq_prev) * fx_now
 
-    action_needed = abs(delta) > 1e-9
-    action_line = _build_action_line(prev_weight=prev_weight, new_weight=new_weight)
+    if rebalance_action == "buy" and order_qty > 0:
+        judgment = "매수"
+        judgment_emoji = "🟢"
+    elif rebalance_action == "sell" and order_qty > 0:
+        judgment = "감량"
+        judgment_emoji = "🟠"
+    else:
+        judgment = "유지"
+        judgment_emoji = "🟢"
 
-    position_lines = []
-    if action_needed:
-        position_lines = [
-            f"신호: {signal_label}",
-            f"비중 변경: {prev_weight * 100:.2f}% → {new_weight * 100:.2f}% (보유대비 {holding_ratio})",
-            f"일간 수익: {pnl_emoji}{_format_pct(tqqq_day_pct)} (전일 종가 대비)",
-            (
-                f"진입가 대비: {entry_emoji}{_format_pct(entry_pnl)} (진입가 ${entry_price:.2f})"
-                if entry_price is not None
-                else "진입가 대비: N/A"
-            ),
-            f"로스컷: {loss_cut_line}",
-        ]
+    if buffer_active and target_weight_pct < base_target_pct:
+        summary = f"기본 엔진 목표 {base_target_pct:.0f}%보다 완충이 우선돼 최종 목표는 {target_weight_pct:.0f}%입니다."
+    else:
+        summary = f"기본 엔진 목표 {target_weight_pct:.0f}% 유지, 과열 완충은 비활성입니다."
 
-    reason_lines_all = _build_reason_lines(
-        vol20=float(vol20),
-        spy_dist200=float(spy_dist200),
-        dist200=float(dist200),
-        qqq3_vs161=float(qqq3_vs161),
-        prev_weight=float(prev_weight),
-        new_weight=float(new_weight),
-        entry_price=entry_price,
-    )
-
-    # 유지일은 짧게, 액션일은 풀 템플릿
-    summary_checks = [
-        ("⬜ Vol20: N/A (< 5.9%)" if np.isnan(vol20) else (f"✅ Vol20: {vol20:.2f}% (< 5.9%)" if vol20 < 5.9 else f"🚨 Vol20: {vol20:.2f}% (>= 5.9%)")),
-        ("⬜ SPY200: N/A (> 97.75)" if np.isnan(spy_dist200) else (f"✅ SPY200: {spy_dist200:.2f} (> 97.75)" if spy_dist200 > 97.75 else f"🚨 SPY200: {spy_dist200:.2f} (<= 97.75)")),
-        ("⬜ Dist200: N/A (>= 101)" if np.isnan(dist200) else (f"✅ Dist200: {dist200:.2f} (>= 101)" if dist200 >= 101.0 else f"⬜ Dist200: {dist200:.2f} (< 101)")),
+    lines = [
+        f"[ {date_str} ] 코어전략 운영브리프",
+        "",
+        f"{judgment_emoji} 오늘 판단: {judgment}",
+        f"목표 비중: {target_weight_pct:.0f}%",
     ]
 
-    reason_lines = reason_lines_all if action_needed else summary_checks
-    market_lines = []
-    if action_needed:
-        market_lines = [
-            f"TQQQ 종가: {price_emoji}{tqqq_close:.4f}({_format_pct(tqqq_day_pct)})",
-            f"TQQQ↔200일: {_format_pct(tqqq_vs200)}",
-            f"QQQ3↔161: {_format_pct(qqq3_vs161)}",
-            f"SPY200 이격도: {spy_dist200:.2f}",
-            f"20일 변동성: {vol20:.2f}%",
-            f"QQQ RSI(14): {rsi14:.2f} ({_rsi_state(rsi14)})" if pd.notna(rsi14) else "QQQ RSI(14): N/A",
-            f"QQQ 3음봉: {candle3}",
-            fx_line,
+    if order_qty > 0 and rebalance_action in {"buy", "sell"}:
+        verb = "매수" if rebalance_action == "buy" else "매도"
+        lines += [
+            "",
+            "🛒 실행 액션",
+            f"- TQQQ {order_qty}주 {verb}",
+            f"- 기준가: 오늘 종가 {_format_usd(tqqq_close)}",
+            f"- 예상 주문금액: {_format_usd(order_value_usd)} (약 {_format_krw(order_value_krw)})",
         ]
-
-    ops_lines = [f"run_id: daily-{date_str}", f"alert_key: {key}", f"dry_run: {dry_run}"]
-
-    if not action_needed:
-        compact_lines = [
-            f"[ {date_str} ] 일일현황보고",
-            f"{action_line} | ${tqqq_close:.2f} ({pnl_emoji}{_format_pct(tqqq_day_pct)})",
-        ]
-        if new_weight >= 0.8 and entry_price is not None:
-            compact_lines.append(f"⚠ 로스컷 ${stop_price:.2f} 감시중")
-        compact_lines += ["", *summary_checks, "", f"✅ 조건 {sum(1 for x in summary_checks if x.startswith('✅'))}/{len(summary_checks)} 충족 | 다음 점검 내일 장마감", "", *ops_lines]
-        message = "\n".join(compact_lines)
     else:
-        message = format_s2_change_message(
-            date_str=date_str,
-            prev_code=prev_code,
-            prev_weight=prev_weight,
-            new_code=new_code,
-            new_weight=new_weight,
-            title="일일현황보고",
-            alert_type="긴급 포지션 변경(리스크 관리) 알림",
-            action_line=action_line,
-            position_lines=position_lines,
-            reason_lines=reason_lines,
-            market_lines=market_lines,
-            ops_lines=ops_lines,
-        )
+        lines += ["", "🛒 실행 액션: 오늘은 주문 없음"]
+
+    lines += [
+        "",
+        "요약:",
+        summary,
+        "",
+        "📊 오늘 시장 / 내 자산",
+        f"- TQQQ 종가: {_format_usd(tqqq_close)} ({_emoji_from_sign(tqqq_day_pct)} {_format_pct(tqqq_day_pct)})",
+        f"- 내 TQQQ 자산 변화: {_emoji_from_sign(asset_change_krw)} {_format_krw(asset_change_krw)}",
+        f"- 현재 평가금액: {_format_krw(current_value_krw)}",
+        "",
+        "──────────",
+        "기술리포트",
+        f"- 기본/최종 목표: {base_target_pct:.0f}% / {target_weight_pct:.0f}%",
+        f"- 완충: {'ON' if buffer_active else 'OFF'} (129 / 123{' , cap 90%' if buffer_active else ''})",
+        f"- Dist200 / SPY200 / Vol20: {dist200:.2f} / {spy_dist200:.2f} / {vol20:.2f}%",
+        f"- signal code: {prev_code} → {new_code}",
+    ]
+    if new_weight >= 0.8 and entry_price is not None:
+        lines.append(f"- 로스컷 감시: {_format_usd(stop_price)}")
+
+    message = "\n".join(lines)
 
     send_result = sender(
         bot_token=bot_token,

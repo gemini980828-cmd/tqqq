@@ -1,23 +1,11 @@
 {
-  "positions": [
-    {
-      "account_id": "samsung-core",
-      "asset_id": "tqqq-core",
-      "manager_id": "core_strategy",
-      "symbol": "TQQQ",
-      "name": "ProShares UltraPro QQQ",
-      "quantity": 120,
-      "avg_cost_krw": 76000,
-      "market_price_krw": 81000,
-      "market_value_krw": 9720000
-    }
-  ],
+  "positions": [],
   "cash_debt": [
     {
       "entry_id": "cash-main",
       "kind": "cash",
       "label": "투자예수금",
-      "balance_krw": 1500000
+      "balance_krw": 11220000
     }
   ],
   "stock_watchlist": [
@@ -26,6 +14,86 @@
       "symbol": "NVDA",
       "status": "관찰",
       "memo": "AI 수혜 지속 모니터링"
+    },
+    {
+      "idea_id": "stock-2",
+      "symbol": "CRCL",
+      "status": "탐색",
+      "memo": "성장주 모멘텀/거래대금 추적",
+      "event_type": "earnings",
+      "event_date": "2026-03-10"
+    },
+    {
+      "idea_id": "stock-3",
+      "symbol": "CIEN",
+      "status": "탐색",
+      "memo": "광통신/네트워크 장비 업사이클 추적",
+      "event_type": "earnings",
+      "event_date": "2026-01-15"
+    },
+    {
+      "idea_id": "stock-4",
+      "symbol": "LITE",
+      "status": "탐색",
+      "memo": "광통신 모듈 수요 및 모멘텀 추적",
+      "event_type": "earnings",
+      "event_date": "2026-01-15"
+    },
+    {
+      "idea_id": "stock-5",
+      "symbol": "ANET",
+      "status": "탐색",
+      "memo": "AI 네트워크 인프라 모멘텀 추적",
+      "event_type": "earnings",
+      "event_date": "2026-02-18"
+    },
+    {
+      "idea_id": "stock-6",
+      "symbol": "APP",
+      "status": "탐색",
+      "memo": "광고/앱 플랫폼 성장 모멘텀 추적",
+      "event_type": "earnings",
+      "event_date": "2026-02-12"
+    },
+    {
+      "idea_id": "stock-7",
+      "symbol": "MSFT",
+      "status": "탐색",
+      "memo": "초대형 플랫폼/AI 소프트웨어 축 비교용 점검",
+      "event_type": "earnings",
+      "event_date": "2026-01-28"
+    },
+    {
+      "idea_id": "stock-8",
+      "symbol": "AMD",
+      "status": "탐색",
+      "memo": "NVDA 대비 반도체 2선 리더 강도 비교용 점검",
+      "event_type": "earnings",
+      "event_date": "2026-02-04"
+    },
+    {
+      "idea_id": "stock-9",
+      "symbol": "TTD",
+      "status": "탐색",
+      "memo": "APP 대비 광고 플랫폼 모멘텀 비교용 점검",
+      "event_type": "earnings",
+      "event_date": "2026-02-13"
+    },
+    {
+      "idea_id": "stock-10",
+      "symbol": "COIN",
+      "status": "탐색",
+      "memo": "CRCL 대비 크립토 거래 플랫폼 변동성/이벤트 반응 비교용 점검",
+      "event_type": "earnings",
+      "event_date": "2026-02-13"
+    },
+    {
+      "idea_id": "stock-11",
+      "symbol": "AVGO",
+      "status": "탐색",
+      "memo": "NVDA/AMD 대비 AI 반도체-인프라 수혜 확산 비교용 점검",
+      "event_type": "earnings",
+      "event_date": "2026-03-06"
     }
   ],
   "property_watchlist": [

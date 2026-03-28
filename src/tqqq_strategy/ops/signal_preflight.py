@@ -5,7 +5,7 @@ from pathlib import Path
 import pandas as pd
 
 REQUIRED_SIGNAL_COLUMNS = {"time", "S2_code", "S2_weight"}
-REQUIRED_MARKET_COLUMNS = {"time", "QQQ종가", "TQQQ종가", "SPY종가"}
+REQUIRED_MARKET_COLUMNS = {"time", "QQQ종가", "TQQQ종가", "SPY종가", "원달러환율"}
 
 
 def verify_signal_ready(
