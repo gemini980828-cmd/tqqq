@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   schedule:
     # US market close 이후 여유 시간(UTC) - DST/표준시 모두 커버
-    - cron: "30 22 * * 1-5"
+    - cron: "30 22 * * 1,2,3,4,5"
 
 concurrency:
   group: daily-telegram-alert
@@ -102,3 +102,19 @@ jobs:
             reports/wealth_manager_summaries.json
             app/web/public/dashboard_snapshot.json
           if-no-files-found: warn
+
+  keep-schedule-active:
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    steps:
+      - name: Renew scheduled workflow
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          curl --fail-with-body --silent --show-error \
+            -X PUT \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${GH_TOKEN}" \
+            "${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}/actions/workflows/daily-telegram.yml/enable"
