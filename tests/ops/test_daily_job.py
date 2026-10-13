@@ -53,10 +53,10 @@ MANUAL_HOLD_SAMPLE = """{
       "manager_id": "core_strategy",
       "symbol": "TQQQ",
       "name": "ProShares UltraPro QQQ",
-      "quantity": 95,
+      "quantity": 90,
       "avg_cost_krw": 76000,
       "market_price_krw": 75225,
-      "market_value_krw": 7146375
+      "market_value_krw": 6770250
     }
   ],
   "cash_debt": [
@@ -64,7 +64,7 @@ MANUAL_HOLD_SAMPLE = """{
       "entry_id": "cash-main",
       "kind": "cash",
       "label": "투자대기현금",
-      "balance_krw": 376125
+      "balance_krw": 1148171
     }
   ],
   "stock_watchlist": [],
@@ -156,13 +156,15 @@ def test_run_daily_signal_alert_skips_duplicate_on_second_run(tmp_path) -> None:
     assert "내 TQQQ 자산 변화:" in first["message"]
     assert "현재 평가금액:" in first["message"]
     assert "기술리포트" in first["message"]
-    assert "전략: B0_DZ + G1 (SGOV75/GLD25)" in first["message"]
-    # legacy CSV without sgov/gld columns: residual falls back to the 75/25 split
-    assert "목표 비중: TQQQ 25% / SGOV 56.25% / GLD 18.75%" in first["message"]
-    assert "- TQQQ: 100.00% → 25.00% (매도 75.00%p)" in first["message"]
-    assert "- SGOV: 0.00% → 56.25% (매수 56.25%p)" in first["message"]
-    assert "- GLD: 0.00% → 18.75% (매수 18.75%p)" in first["message"]
-    assert first["new_allocation"] == {"TQQQ": 0.25, "SGOV": 0.5625, "GLD": 0.1875}
+    assert "전략: B0_DZ 90% + GLD 10%" in first["message"]
+    # legacy CSV without allocation columns: falls back to 0.90*p / 0.90*(1-p) / 0.10
+    assert "목표 비중: TQQQ 22.50% / SGOV 67.50% / GLD 10.00%" in first["message"]
+    assert "- TQQQ: 90.00% → 22.50% (매도 67.50%p)" in first["message"]
+    assert "- SGOV: 0.00% → 67.50% (매수 67.50%p)" in first["message"]
+    assert "- GLD: 유지 (목표 10%)" in first["message"]
+    assert "금 10% 고정(연 1회 리밸런싱)" in first["message"]
+    assert "연 1회 금 리밸런싱일" not in first["message"]
+    assert first["new_allocation"] == {"TQQQ": 0.225, "SGOV": 0.675, "GLD": 0.1}
 
 
 def test_run_daily_signal_alert_dry_run_does_not_persist_state(tmp_path) -> None:
@@ -361,36 +363,82 @@ def test_run_daily_signal_alert_raises_on_invalid_weight_value(tmp_path) -> None
         assert "invalid S2_weight value" in str(exc)
 
 
-def test_run_daily_signal_alert_uses_sgov_gld_columns_and_lists_all_three_assets(tmp_path) -> None:
-    signal_csv = tmp_path / "signals_g1.csv"
+def _run_alloc_preview(tmp_path, signal_text, data_text=DATA_SAMPLE):
+    signal_csv = tmp_path / "signals_alloc.csv"
     data_csv = tmp_path / "data.csv"
-    state_file = tmp_path / "state.json"
     manual_file = tmp_path / "manual.json"
-    signal_csv.write_text(
-        "time,S2_code,S2_weight,sgov_weight,gld_weight\n"
-        "2026-03-05,2,1.0,0.0,0.0\n"
-        "2026-03-06,970,0.97,0.0225,0.0075\n",
-        encoding="utf-8",
-    )
-    _write_data_csv(data_csv)
+    signal_csv.write_text(signal_text, encoding="utf-8")
+    data_csv.write_text(data_text, encoding="utf-8")
     _write_manual(manual_file, MANUAL_ACTION_SAMPLE)
 
     def fake_sender(*, bot_token, chat_id, text, dry_run):
         return {"sent": True, "dry_run": dry_run}
 
-    result = run_daily_signal_alert(
+    return run_daily_signal_alert(
         signal_csv_path=signal_csv,
         data_csv_path=data_csv,
-        state_path=state_file,
+        state_path=tmp_path / "state.json",
         manual_truth_path=manual_file,
+        bot_token=None,
+        chat_id=None,
         dry_run=True,
         sender=fake_sender,
     )
 
+
+def test_run_daily_signal_alert_uses_allocation_columns_and_lists_all_three_assets(tmp_path) -> None:
+    result = _run_alloc_preview(
+        tmp_path,
+        "time,S2_code,S2_weight,tqqq_weight,sgov_weight,gld_weight\n"
+        "2026-03-05,2,1.0,0.9,0.0,0.1\n"
+        "2026-03-06,970,0.97,0.873,0.027,0.1\n",
+    )
+
     msg = result["message"]
-    assert "전략: B0_DZ + G1 (SGOV75/GLD25)" in msg
-    assert "목표 비중: TQQQ 97% / SGOV 2.25% / GLD 0.75%" in msg
-    assert "- TQQQ: 100.00% → 97.00% (매도 3.00%p)" in msg
-    assert "- SGOV: 0.00% → 2.25% (매수 2.25%p)" in msg
-    assert "- GLD: 0.00% → 0.75% (매수 0.75%p)" in msg
+    assert "전략: B0_DZ 90% + GLD 10%" in msg
+    assert "목표 비중: TQQQ 87.30% / SGOV 2.70% / GLD 10.00%" in msg
+    assert "- TQQQ: 90.00% → 87.30% (매도 2.70%p)" in msg
+    assert "- SGOV: 0.00% → 2.70% (매수 2.70%p)" in msg
+    assert "- GLD: 유지 (목표 10%)" in msg
+    assert "금 10% 고정(연 1회 리밸런싱)" in msg
+    assert "연 1회 금 리밸런싱일" not in msg
     assert "완충" not in msg
+    alloc = result["new_allocation"]
+    assert abs(sum(alloc.values()) - 1.0) < 1e-9
+
+
+def test_run_daily_signal_alert_order_quantity_uses_tqqq_target_not_raw_signal(tmp_path) -> None:
+    # investable total = 9,027,000 + 1,500,000; target TQQQ = 0.9 * p (p = 1.0 -> 90%)
+    result = _run_alloc_preview(
+        tmp_path,
+        "time,S2_code,S2_weight\n2026-03-05,2,1.0\n2026-03-06,2,1.0\n",
+    )
+    msg = result["message"]
+    close_krw = 51.0 * 1475.0
+    total = 9_027_000 + 1_500_000
+    # actual TQQQ value is revalued at today's close inside the job; quantity 120
+    gap = total * 0.90 - 120 * close_krw
+    expected_qty = int(round(abs(gap) / close_krw))
+    verb = "매수" if gap > 0 else "매도"
+    if expected_qty > 0:
+        assert f"- TQQQ {expected_qty}주 {verb}" in msg
+    else:
+        assert "오늘은 주문 없음" in msg
+
+
+def test_run_daily_signal_alert_first_session_of_year_adds_gold_rebalance_reminder(tmp_path) -> None:
+    result = _run_alloc_preview(
+        tmp_path,
+        "time,S2_code,S2_weight\n2025-12-31,2,1.0\n2026-01-02,2,1.0\n",
+        "time,QQQ종가,TQQQ종가,SPY종가,원달러환율\n2025-12-31,100.0,50.0,600.0,1470.0\n2026-01-02,102.0,51.0,605.0,1475.0\n",
+    )
+    assert "🔁 연 1회 금 리밸런싱일: GLD를 전체 자산의 10%로 맞추세요" in result["message"]
+
+
+def test_run_daily_signal_alert_mid_year_has_no_gold_rebalance_reminder(tmp_path) -> None:
+    result = _run_alloc_preview(
+        tmp_path,
+        "time,S2_code,S2_weight\n2026-03-05,2,1.0\n2026-03-06,2,1.0\n",
+    )
+    assert "연 1회 금 리밸런싱일" not in result["message"]
+    assert "- GLD: 유지 (목표 10%)" in result["message"] or "오늘은 주문 없음" in result["message"]

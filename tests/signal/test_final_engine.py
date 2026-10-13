@@ -12,7 +12,7 @@ from tqqq_strategy.signal.final_engine import (
     SoftOverheatOverlay,
     build_final_signal_frame,
     compute_final_signal_table,
-    split_residual,
+    split_allocation,
 )
 
 
@@ -43,25 +43,28 @@ def test_build_final_signal_frame_legacy_overlay_still_uses_129_enter_123_exit()
     assert frame["buffer_active"].tolist() == [False, True, True, False]
 
 
-def test_split_residual_is_sgov75_gld25_of_one_minus_tqqq() -> None:
-    sgov, gld = split_residual(pd.Series([1.0, 0.97, 0.10, 0.0]))
+def test_split_allocation_is_90pct_signal_driven_plus_fixed_10pct_gld() -> None:
+    tqqq, sgov, gld = split_allocation(pd.Series([1.0, 0.97, 0.10, 0.0]))
 
-    assert sgov.tolist() == [0.0, 0.0225, 0.675, 0.75]
-    assert gld.tolist() == [0.0, 0.0075, 0.225, 0.25]
+    assert tqqq.tolist() == [0.9, 0.873, 0.09, 0.0]
+    assert sgov.tolist() == [0.0, 0.027, 0.81, 0.9]
+    assert gld.tolist() == [0.1, 0.1, 0.1, 0.1]
 
 
-def test_build_final_signal_frame_adds_sgov_gld_columns_and_keeps_legacy_ones() -> None:
+def test_build_final_signal_frame_adds_allocation_columns_and_keeps_raw_signal() -> None:
     frame = build_final_signal_frame(
         time=pd.to_datetime(["2026-03-03", "2026-03-04"]),
         base_weight=pd.Series([0.0, 0.97]),
         dist200=pd.Series([95.0, 110.0]),
     )
 
-    for col in ("time", "S2_code", "S2_weight", "base_weight", "buffer_active", "dist200", "sgov_weight", "gld_weight"):
+    for col in ("time", "S2_code", "S2_weight", "base_weight", "buffer_active", "dist200", "tqqq_weight", "sgov_weight", "gld_weight"):
         assert col in frame.columns
-    assert frame["sgov_weight"].tolist() == [0.75, 0.0225]
-    assert frame["gld_weight"].tolist() == [0.25, 0.0075]
-    assert np.allclose(frame["S2_weight"] + frame["sgov_weight"] + frame["gld_weight"], 1.0)
+    assert frame["S2_weight"].tolist() == [0.0, 0.97]  # raw signal p
+    assert frame["tqqq_weight"].tolist() == [0.0, 0.873]
+    assert frame["sgov_weight"].tolist() == [0.9, 0.027]
+    assert frame["gld_weight"].tolist() == [0.1, 0.1]
+    assert np.allclose(frame["tqqq_weight"] + frame["sgov_weight"] + frame["gld_weight"], 1.0)
 
 
 def _synthetic_market(n: int = 420, seed: int = 7) -> pd.DataFrame:
@@ -90,8 +93,10 @@ def test_compute_final_signal_table_uses_b0_dz_params_without_overlay() -> None:
     assert table["overlay_json"].iloc[0] == "null"
     assert not table["buffer_active"].any()
     assert (table["S2_weight"] == table["base_weight"]).all()
-    assert table["strategy_name"].iloc[0] == STRATEGY_NAME == "B0_DZ + G1 (SGOV75/GLD25)"
-    assert np.allclose(table["S2_weight"] + table["sgov_weight"] + table["gld_weight"], 1.0)
+    assert table["strategy_name"].iloc[0] == STRATEGY_NAME == "B0_DZ 90% + GLD 10%"
+    assert np.allclose(table["tqqq_weight"] + table["sgov_weight"] + table["gld_weight"], 1.0)
+    assert np.allclose(table["gld_weight"], 0.10)
+    assert np.allclose(table["tqqq_weight"], 0.90 * table["S2_weight"])
 
 
 def test_final_runtime_signal_path_points_to_promoted_engine_report() -> None:

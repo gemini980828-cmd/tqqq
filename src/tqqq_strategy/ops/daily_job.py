@@ -14,8 +14,8 @@ from tqqq_strategy.ops.idempotency import build_alert_key
 from tqqq_strategy.ops.telegram_alert import send_telegram_message
 from tqqq_strategy.signal.final_engine import (
     FINAL_RUNTIME_SIGNAL_PATH,
-    GLD_RESIDUAL_SHARE,
-    SGOV_RESIDUAL_SHARE,
+    CORE_SHARE,
+    GLD_FIXED_WEIGHT,
     STRATEGY_NAME,
 )
 from tqqq_strategy.wealth import DEFAULT_MANUAL_TRUTH_PATH, build_core_strategy_position, load_manual_truth
@@ -172,26 +172,36 @@ def _signal_label(*, new_weight: float, prev_weight: float, dist200: float) -> s
 TP10_CAP_WEIGHT = 0.97
 
 
-def _row_weights(row: dict[str, str], tqqq_weight: float) -> tuple[float, float, float]:
-    """(TQQQ, SGOV, GLD) target weights; SGOV/GLD fall back to the G1 residual split for legacy CSVs."""
-    residual = max(0.0, 1.0 - tqqq_weight)
+def _row_weights(row: dict[str, str], signal_weight: float) -> tuple[float, float, float]:
+    """(TQQQ, SGOV, GLD) target weights from raw signal p; falls back to 0.90*p / 0.90*(1-p) / 0.10 for legacy CSVs."""
     try:
+        tqqq = float(row["tqqq_weight"])
         sgov = float(row["sgov_weight"])
         gld = float(row["gld_weight"])
     except (KeyError, TypeError, ValueError):
-        sgov = residual * SGOV_RESIDUAL_SHARE
-        gld = residual * GLD_RESIDUAL_SHARE
-    return tqqq_weight, sgov, gld
+        p = min(max(signal_weight, 0.0), 1.0)
+        tqqq = p * CORE_SHARE
+        sgov = (1.0 - p) * CORE_SHARE
+        gld = GLD_FIXED_WEIGHT
+    return tqqq, sgov, gld
 
 
 def _format_alloc(weights: tuple[float, float, float]) -> str:
     tqqq, sgov, gld = weights
-    return f"TQQQ {tqqq * 100:.0f}% / SGOV {sgov * 100:.2f}% / GLD {gld * 100:.2f}%"
+    return f"TQQQ {tqqq * 100:.2f}% / SGOV {sgov * 100:.2f}% / GLD {gld * 100:.2f}%"
+
+
+def _is_first_session_of_year(prev_date: str, new_date: str) -> bool:
+    return str(prev_date)[:4] != str(new_date)[:4]
 
 
 def _build_asset_action_lines(prev: tuple[float, float, float], new: tuple[float, float, float]) -> list[str]:
     lines: list[str] = []
     for symbol, p, n in zip(("TQQQ", "SGOV", "GLD"), prev, new):
+        if symbol == "GLD":
+            # fixed sleeve: no daily trading; only the yearly rebalance reminder acts on it
+            lines.append(f"- GLD: 유지 (목표 {n * 100:.0f}%)")
+            continue
         delta = n - p
         if abs(delta) < 1e-6:
             lines.append(f"- {symbol}: 변동 없음 (목표 {n * 100:.2f}%)")
@@ -367,9 +377,11 @@ def run_daily_signal_alert(
             live_positions.append(dict(row))
     manual_inputs_live["positions"] = live_positions
 
-    target_weight_pct = round(new_weight * 100.0, 2)
     prev_alloc = _row_weights(prev_row, prev_weight)
     new_alloc = _row_weights(new_row, new_weight)
+    # TQQQ order sizing uses the TQQQ target (0.90*p), not the raw signal p
+    target_weight_pct = round(new_alloc[0] * 100.0, 2)
+    first_session_of_year = _is_first_session_of_year(prev_row["time"], date_str)
     asset_changed = any(abs(n - p) >= 1e-6 for p, n in zip(prev_alloc, new_alloc))
     core_position = build_core_strategy_position(manual_inputs_live, target_weight_pct=target_weight_pct)
     actual_weight_pct = float(core_position["actual_weight_pct"])
@@ -392,13 +404,14 @@ def run_daily_signal_alert(
         judgment = "유지"
         judgment_emoji = "🟢"
 
-    residual_pct = (new_alloc[1] + new_alloc[2]) * 100.0
+    sgov_pct = new_alloc[1] * 100.0
     if asset_changed:
         summary = f"전략 목표가 {_format_alloc(prev_alloc)} → {_format_alloc(new_alloc)}로 바뀌었습니다."
-    elif residual_pct > 1e-9:
-        summary = f"전략 목표 {_format_alloc(new_alloc)} 유지, 잔여 {residual_pct:.1f}%는 SGOV/GLD로 배분합니다."
+    elif sgov_pct > 1e-9:
+        summary = f"전략 목표 {_format_alloc(new_alloc)} 유지, 신호 비중 외 {sgov_pct:.1f}%는 SGOV로 배분합니다."
     else:
         summary = f"전략 목표 {_format_alloc(new_alloc)} 유지."
+    summary += " 금 10% 고정(연 1회 리밸런싱)."
 
     lines = [
         f"[ {date_str} ] 코어전략 운영브리프",
@@ -424,6 +437,12 @@ def run_daily_signal_alert(
     else:
         lines += ["", "🛒 실행 액션: 오늘은 주문 없음"]
 
+    if first_session_of_year:
+        lines += [
+            "",
+            f"🔁 연 1회 금 리밸런싱일: GLD를 전체 자산의 {GLD_FIXED_WEIGHT * 100:.0f}%로 맞추세요 (연초 첫 거래일).",
+        ]
+
     lines += [
         "",
         "요약:",
@@ -436,7 +455,8 @@ def run_daily_signal_alert(
         "",
         "──────────",
         "기술리포트",
-        f"- 전략: {STRATEGY_NAME} (dist_cap 101.19, 오버레이 없음)",
+        f"- 전략: {STRATEGY_NAME} (B0_DZ dist_cap 101.19, 오버레이 없음, 금 10% 고정·연 1회 리밸런싱)",
+        f"- 신호 비중 p: {prev_weight * 100:.2f}% → {new_weight * 100:.2f}%",
         f"- 전일 목표: {_format_alloc(prev_alloc)}",
         f"- 오늘 목표: {_format_alloc(new_alloc)}",
         f"- Dist200 / SPY200 / Vol20: {dist200:.2f} / {spy_dist200:.2f} / {vol20:.2f}%",
@@ -495,6 +515,7 @@ def run_daily_signal_alert(
                 "last_sent_at": datetime.now(timezone.utc).isoformat(),
                 "date": date_str,
                 "position_weight": new_weight,
+                "tqqq_weight": new_alloc[0],
                 "sgov_weight": new_alloc[1],
                 "gld_weight": new_alloc[2],
                 "entry_price": entry_price,

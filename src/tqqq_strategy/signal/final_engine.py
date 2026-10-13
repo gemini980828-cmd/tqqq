@@ -14,14 +14,17 @@ PROJECT_ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_PHASE2_BEST_CONFIG_PATH = PROJECT_ROOT / "experiments/best_config.json"
 FINAL_RUNTIME_SIGNAL_PATH = Path("reports/signals_core_strategy_final.csv")
 
-# Recommended runtime config (research 2026-10-13): B0_DZ signal + G1 residual.
+# Recommended runtime config: B0_DZ signal drives 90% of the portfolio, GLD is a fixed 10% sleeve.
 # B0_DZ = Phase2 fine_0010 params with dist_cap raised to dist200_enter so the
 # slope-boost dead zone (dist_cap < dist200 < dist200_enter) is closed.
-STRATEGY_NAME = "B0_DZ + G1 (SGOV75/GLD25)"
-ENGINE_VERSION = "core-strategy/b0dz-g1-v1"
+# Allocation (p = raw B0_DZ signal weight): TQQQ = 0.90*p, SGOV = 0.90*(1-p), GLD = 0.10 always.
+# Gold is rebalanced to 10% once a year (first trading session of the year).
+# S2_weight stays the raw signal p (backward compatible); tqqq_weight is the actual TQQQ target 0.90*p.
+STRATEGY_NAME = "B0_DZ 90% + GLD 10%"
+ENGINE_VERSION = "core-strategy/b0dz-gld10-v1"
 DEFAULT_DIST_CAP = 101.19
-SGOV_RESIDUAL_SHARE = 0.75
-GLD_RESIDUAL_SHARE = 0.25
+CORE_SHARE = 0.90
+GLD_FIXED_WEIGHT = 0.10
 
 
 @dataclass(frozen=True)
@@ -79,12 +82,13 @@ LEGACY_FINAL_OVERLAY = SoftOverheatOverlay(
 )
 
 
-def split_residual(weight: pd.Series) -> tuple[pd.Series, pd.Series]:
-    """G1 residual: (1 - TQQQ weight) goes to SGOV 75% / GLD 25%."""
-    residual = (1.0 - weight.astype(float)).clip(lower=0.0, upper=1.0)
-    sgov = (residual * SGOV_RESIDUAL_SHARE).round(10)
-    gld = (residual * GLD_RESIDUAL_SHARE).round(10)
-    return sgov, gld
+def split_allocation(weight: pd.Series) -> tuple[pd.Series, pd.Series, pd.Series]:
+    """(TQQQ, SGOV, GLD) targets from raw signal p: 0.90*p / 0.90*(1-p) / 0.10 (always)."""
+    p = weight.astype(float).clip(lower=0.0, upper=1.0)
+    tqqq = (p * CORE_SHARE).round(10)
+    sgov = ((1.0 - p) * CORE_SHARE).round(10)
+    gld = pd.Series(GLD_FIXED_WEIGHT, index=p.index, dtype=float)
+    return tqqq, sgov, gld
 
 
 def _load_module(path: Path, name: str):
@@ -113,13 +117,14 @@ def build_final_signal_frame(
     reference_mod = _load_module(PROJECT_ROOT / "ops/scripts/user_original_reference.py", "user_original_reference_final_frame")
     codes = adjusted.map(reference_mod.weight_to_code).astype(int)
     buffer_active = (adjusted < base_weight).astype(bool)
-    sgov_weight, gld_weight = split_residual(adjusted)
+    tqqq_weight, sgov_weight, gld_weight = split_allocation(adjusted)
 
     return pd.DataFrame(
         {
             "time": pd.to_datetime(pd.Series(time)),
             "S2_code": codes,
             "S2_weight": adjusted.astype(float),
+            "tqqq_weight": tqqq_weight,
             "sgov_weight": sgov_weight,
             "gld_weight": gld_weight,
             "base_weight": base_weight.astype(float),
