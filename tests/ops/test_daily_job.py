@@ -156,7 +156,13 @@ def test_run_daily_signal_alert_skips_duplicate_on_second_run(tmp_path) -> None:
     assert "내 TQQQ 자산 변화:" in first["message"]
     assert "현재 평가금액:" in first["message"]
     assert "기술리포트" in first["message"]
-    assert "기본/최종 목표:" in first["message"]
+    assert "전략: B0_DZ + G1 (SGOV75/GLD25)" in first["message"]
+    # legacy CSV without sgov/gld columns: residual falls back to the 75/25 split
+    assert "목표 비중: TQQQ 25% / SGOV 56.25% / GLD 18.75%" in first["message"]
+    assert "- TQQQ: 100.00% → 25.00% (매도 75.00%p)" in first["message"]
+    assert "- SGOV: 0.00% → 56.25% (매수 56.25%p)" in first["message"]
+    assert "- GLD: 0.00% → 18.75% (매수 18.75%p)" in first["message"]
+    assert first["new_allocation"] == {"TQQQ": 0.25, "SGOV": 0.5625, "GLD": 0.1875}
 
 
 def test_run_daily_signal_alert_dry_run_does_not_persist_state(tmp_path) -> None:
@@ -353,3 +359,38 @@ def test_run_daily_signal_alert_raises_on_invalid_weight_value(tmp_path) -> None
         raise AssertionError("expected ValueError")
     except ValueError as exc:
         assert "invalid S2_weight value" in str(exc)
+
+
+def test_run_daily_signal_alert_uses_sgov_gld_columns_and_lists_all_three_assets(tmp_path) -> None:
+    signal_csv = tmp_path / "signals_g1.csv"
+    data_csv = tmp_path / "data.csv"
+    state_file = tmp_path / "state.json"
+    manual_file = tmp_path / "manual.json"
+    signal_csv.write_text(
+        "time,S2_code,S2_weight,sgov_weight,gld_weight\n"
+        "2026-03-05,2,1.0,0.0,0.0\n"
+        "2026-03-06,970,0.97,0.0225,0.0075\n",
+        encoding="utf-8",
+    )
+    _write_data_csv(data_csv)
+    _write_manual(manual_file, MANUAL_ACTION_SAMPLE)
+
+    def fake_sender(*, bot_token, chat_id, text, dry_run):
+        return {"sent": True, "dry_run": dry_run}
+
+    result = run_daily_signal_alert(
+        signal_csv_path=signal_csv,
+        data_csv_path=data_csv,
+        state_path=state_file,
+        manual_truth_path=manual_file,
+        dry_run=True,
+        sender=fake_sender,
+    )
+
+    msg = result["message"]
+    assert "전략: B0_DZ + G1 (SGOV75/GLD25)" in msg
+    assert "목표 비중: TQQQ 97% / SGOV 2.25% / GLD 0.75%" in msg
+    assert "- TQQQ: 100.00% → 97.00% (매도 3.00%p)" in msg
+    assert "- SGOV: 0.00% → 2.25% (매수 2.25%p)" in msg
+    assert "- GLD: 0.00% → 0.75% (매수 0.75%p)" in msg
+    assert "완충" not in msg

@@ -12,7 +12,12 @@ import pandas as pd
 
 from tqqq_strategy.ops.idempotency import build_alert_key
 from tqqq_strategy.ops.telegram_alert import send_telegram_message
-from tqqq_strategy.signal.final_engine import FINAL_RUNTIME_SIGNAL_PATH
+from tqqq_strategy.signal.final_engine import (
+    FINAL_RUNTIME_SIGNAL_PATH,
+    GLD_RESIDUAL_SHARE,
+    SGOV_RESIDUAL_SHARE,
+    STRATEGY_NAME,
+)
 from tqqq_strategy.wealth import DEFAULT_MANUAL_TRUTH_PATH, build_core_strategy_position, load_manual_truth
 
 SignalRow = dict[str, str]
@@ -120,12 +125,6 @@ def _format_usd(value: float) -> str:
     return f"${float(value):,.2f}"
 
 
-def _is_truthy(value: object) -> bool:
-    if isinstance(value, bool):
-        return value
-    return str(value).strip().lower() in {"1", "true", "yes", "y", "on"}
-
-
 def _distance_to_threshold(current: float, threshold: float) -> float | None:
     if np.isnan(current) or current <= 0:
         return None
@@ -153,8 +152,8 @@ def _position_label(weight: float) -> str:
 def _signal_label(*, new_weight: float, prev_weight: float, dist200: float) -> str:
     if new_weight <= 1e-9:
         return "강제 청산(0%)"
-    if abs(new_weight - 0.95) < 1e-9 and prev_weight >= 0.999:
-        return "익절 감량(95%)"
+    if abs(new_weight - TP10_CAP_WEIGHT) < 1e-9 and prev_weight >= 0.999:
+        return "익절 감량(97%)"
     if new_weight <= 0.101:
         return "부분 진입(10%)"
     if new_weight >= 0.999 and dist200 >= 101.0:
@@ -168,6 +167,38 @@ def _signal_label(*, new_weight: float, prev_weight: float, dist200: float) -> s
     if abs(new_weight - 0.05) < 1e-9:
         return "과열 감량(5%)"
     return f"비중 조정({new_weight * 100:.1f}%)"
+
+
+TP10_CAP_WEIGHT = 0.97
+
+
+def _row_weights(row: dict[str, str], tqqq_weight: float) -> tuple[float, float, float]:
+    """(TQQQ, SGOV, GLD) target weights; SGOV/GLD fall back to the G1 residual split for legacy CSVs."""
+    residual = max(0.0, 1.0 - tqqq_weight)
+    try:
+        sgov = float(row["sgov_weight"])
+        gld = float(row["gld_weight"])
+    except (KeyError, TypeError, ValueError):
+        sgov = residual * SGOV_RESIDUAL_SHARE
+        gld = residual * GLD_RESIDUAL_SHARE
+    return tqqq_weight, sgov, gld
+
+
+def _format_alloc(weights: tuple[float, float, float]) -> str:
+    tqqq, sgov, gld = weights
+    return f"TQQQ {tqqq * 100:.0f}% / SGOV {sgov * 100:.2f}% / GLD {gld * 100:.2f}%"
+
+
+def _build_asset_action_lines(prev: tuple[float, float, float], new: tuple[float, float, float]) -> list[str]:
+    lines: list[str] = []
+    for symbol, p, n in zip(("TQQQ", "SGOV", "GLD"), prev, new):
+        delta = n - p
+        if abs(delta) < 1e-6:
+            lines.append(f"- {symbol}: 변동 없음 (목표 {n * 100:.2f}%)")
+        else:
+            direction = "매수" if delta > 0 else "매도"
+            lines.append(f"- {symbol}: {p * 100:.2f}% → {n * 100:.2f}% ({direction} {abs(delta) * 100:.2f}%p)")
+    return lines
 
 
 def _build_action_line(*, prev_weight: float, new_weight: float) -> str:
@@ -196,7 +227,7 @@ def _build_reason_lines(
     lines.append(f"{spy_icon} SPY 200MA 필터(>97.75): {spy_dist200:.2f}")
     lines.append(f"{dist_icon} TQQQ 200일 이격도 ≥ 101%: {dist200:.2f}")
     lines.append(f"{'⬜' if dist200 < 139.0 else '✅'} 과열 감량 구간(≥139): {'미해당' if dist200 < 139.0 else f'{dist200:.2f}'}")
-    tp10_hit = prev_weight >= 0.999 and abs(new_weight - 0.95) < 1e-9
+    tp10_hit = prev_weight >= 0.999 and abs(new_weight - TP10_CAP_WEIGHT) < 1e-9
     lines.append(f"{'✅' if tp10_hit else '⬜'} TP10 조건(신규100% 진입 후 +10%): {'충족' if tp10_hit else '미해당'}")
     stop_active = new_weight >= 0.8 and entry_price is not None
     lines.append("")
@@ -316,7 +347,7 @@ def run_daily_signal_alert(
 
     entry_pnl = ((tqqq_close / entry_price) - 1.0) * 100.0 if entry_price and entry_price > 0 else float("nan")
     stop_price = entry_price * 0.941 if entry_price is not None else float("nan")
-    tp10_done = prev_weight >= 0.999 and abs(new_weight - 0.95) < 1e-9
+    tp10_done = prev_weight >= 0.999 and abs(new_weight - TP10_CAP_WEIGHT) < 1e-9
     positions = [row for row in manual_inputs.get("positions", []) if str(row.get("manager_id") or "") == "core_strategy"]
     primary = positions[0] if positions else {}
     inferred_fx = float(primary.get("market_price_krw") or 0.0) / tqqq_close if tqqq_close and float(primary.get("market_price_krw") or 0.0) > 0 else float("nan")
@@ -337,8 +368,9 @@ def run_daily_signal_alert(
     manual_inputs_live["positions"] = live_positions
 
     target_weight_pct = round(new_weight * 100.0, 2)
-    base_target_pct = round(float(new_row.get("base_weight") or new_weight) * 100.0, 2)
-    buffer_active = _is_truthy(new_row.get("buffer_active")) or base_target_pct > target_weight_pct + 1e-9
+    prev_alloc = _row_weights(prev_row, prev_weight)
+    new_alloc = _row_weights(new_row, new_weight)
+    asset_changed = any(abs(n - p) >= 1e-6 for p, n in zip(prev_alloc, new_alloc))
     core_position = build_core_strategy_position(manual_inputs_live, target_weight_pct=target_weight_pct)
     actual_weight_pct = float(core_position["actual_weight_pct"])
     rebalance_gap_krw = float(core_position["rebalance_gap_krw"])
@@ -360,16 +392,21 @@ def run_daily_signal_alert(
         judgment = "유지"
         judgment_emoji = "🟢"
 
-    if buffer_active and target_weight_pct < base_target_pct:
-        summary = f"기본 엔진 목표 {base_target_pct:.0f}%보다 완충이 우선돼 최종 목표는 {target_weight_pct:.0f}%입니다."
+    residual_pct = (new_alloc[1] + new_alloc[2]) * 100.0
+    if asset_changed:
+        summary = f"전략 목표가 {_format_alloc(prev_alloc)} → {_format_alloc(new_alloc)}로 바뀌었습니다."
+    elif residual_pct > 1e-9:
+        summary = f"전략 목표 {_format_alloc(new_alloc)} 유지, 잔여 {residual_pct:.1f}%는 SGOV/GLD로 배분합니다."
     else:
-        summary = f"기본 엔진 목표 {target_weight_pct:.0f}% 유지, 과열 완충은 비활성입니다."
+        summary = f"전략 목표 {_format_alloc(new_alloc)} 유지."
 
     lines = [
         f"[ {date_str} ] 코어전략 운영브리프",
         "",
+        f"전략: {STRATEGY_NAME}",
+        "",
         f"{judgment_emoji} 오늘 판단: {judgment}",
-        f"목표 비중: {target_weight_pct:.0f}%",
+        f"목표 비중: {_format_alloc(new_alloc)}",
     ]
 
     if order_qty > 0 and rebalance_action in {"buy", "sell"}:
@@ -381,6 +418,9 @@ def run_daily_signal_alert(
             f"- 기준가: 오늘 종가 {_format_usd(tqqq_close)}",
             f"- 예상 주문금액: {_format_usd(order_value_usd)} (약 {_format_krw(order_value_krw)})",
         ]
+        lines += _build_asset_action_lines(prev_alloc, new_alloc)
+    elif asset_changed:
+        lines += ["", "🛒 실행 액션", *_build_asset_action_lines(prev_alloc, new_alloc)]
     else:
         lines += ["", "🛒 실행 액션: 오늘은 주문 없음"]
 
@@ -396,8 +436,9 @@ def run_daily_signal_alert(
         "",
         "──────────",
         "기술리포트",
-        f"- 기본/최종 목표: {base_target_pct:.0f}% / {target_weight_pct:.0f}%",
-        f"- 완충: {'ON' if buffer_active else 'OFF'} (129 / 123{' , cap 90%' if buffer_active else ''})",
+        f"- 전략: {STRATEGY_NAME} (dist_cap 101.19, 오버레이 없음)",
+        f"- 전일 목표: {_format_alloc(prev_alloc)}",
+        f"- 오늘 목표: {_format_alloc(new_alloc)}",
         f"- Dist200 / SPY200 / Vol20: {dist200:.2f} / {spy_dist200:.2f} / {vol20:.2f}%",
         f"- signal code: {prev_code} → {new_code}",
     ]
@@ -454,6 +495,8 @@ def run_daily_signal_alert(
                 "last_sent_at": datetime.now(timezone.utc).isoformat(),
                 "date": date_str,
                 "position_weight": new_weight,
+                "sgov_weight": new_alloc[1],
+                "gld_weight": new_alloc[2],
                 "entry_price": entry_price,
                 "entry_date": entry_date,
                 "tp10_done": tp10_done,
@@ -469,6 +512,9 @@ def run_daily_signal_alert(
         "new_code": new_code,
         "prev_weight": prev_weight,
         "new_weight": new_weight,
+        "prev_allocation": {"TQQQ": prev_alloc[0], "SGOV": prev_alloc[1], "GLD": prev_alloc[2]},
+        "new_allocation": {"TQQQ": new_alloc[0], "SGOV": new_alloc[1], "GLD": new_alloc[2]},
+        "strategy": STRATEGY_NAME,
         "state_path": str(state_file),
         "dry_run": dry_run,
         "message": message,

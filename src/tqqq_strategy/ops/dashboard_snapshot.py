@@ -103,9 +103,9 @@ def _build_event_timeline(signals: pd.DataFrame, limit: int = 5) -> list[dict[st
         elif prev > 1e-9 and current <= 1e-9:
             event_type = "강제청산"
             detail = f"{prev * 100:.2f}% → 0.00% 전환"
-        elif abs(prev - 1.0) < 1e-9 and abs(current - 0.95) < 1e-9:
+        elif abs(prev - 1.0) < 1e-9 and abs(current - 0.97) < 1e-9:
             event_type = "TP10"
-            detail = "100% → 95% 감량"
+            detail = "100% → 97% 감량"
         else:
             event_type = "비중 변경"
             detail = f"{prev * 100:.2f}% → {current * 100:.2f}% 조정"
