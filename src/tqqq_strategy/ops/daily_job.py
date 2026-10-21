@@ -10,6 +10,7 @@ from typing import Callable
 import pandas as pd
 
 from tqqq_strategy.ops.alert_message import AlertContext, build_alert_message
+from tqqq_strategy.ops.alert_message_hybrid import build_hybrid_message
 from tqqq_strategy.ops.alert_triggers import TriggerReport, compute_triggers, skipped_report
 from tqqq_strategy.ops.idempotency import build_alert_key
 from tqqq_strategy.ops.order_plan import (
@@ -30,6 +31,11 @@ from tqqq_strategy.signal.final_engine import (
 
 SignalRow = dict[str, str]
 SenderFn = Callable[..., dict]
+ALERT_RENDERERS: dict[str, Callable[[AlertContext], str]] = {
+    "classic": build_alert_message,
+    "hybrid": build_hybrid_message,
+}
+DEFAULT_ALERT_STYLE = "classic"  # unknown styles also fall back to classic
 REQUIRED_SIGNAL_COLUMNS = {"time", "S2_code", "S2_weight"}
 REQUIRED_DATA_COLUMNS = {"time", "QQQ종가", "TQQQ종가", "SPY종가", "원달러환율"}
 
@@ -147,6 +153,7 @@ def run_daily_signal_alert(
     sender: SenderFn = send_telegram_message,
     contribution_krw: int | None = None,
     contribution_day: int | None = None,
+    style: str = DEFAULT_ALERT_STYLE,
 ) -> dict:
     signal_csv = Path(signal_csv_path)
     data_csv = Path(data_csv_path)
@@ -242,7 +249,8 @@ def run_daily_signal_alert(
         is_first_session_of_year=is_first_session_of_year(prev_row["time"], date_str),
     )
 
-    message = build_alert_message(
+    render = ALERT_RENDERERS.get(style, build_alert_message)
+    message = render(
         AlertContext(
             date_str=date_str,
             strategy_name=STRATEGY_NAME,

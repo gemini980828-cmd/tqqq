@@ -6,8 +6,8 @@ import os
 import sys
 from collections.abc import Mapping
 
-from tqqq_strategy.ops.signal_preflight import verify_signal_ready
 from tqqq_strategy.ops.daily_job import run_daily_signal_alert
+from tqqq_strategy.ops.signal_preflight import verify_signal_ready
 from tqqq_strategy.signal.final_engine import FINAL_RUNTIME_SIGNAL_PATH
 
 
@@ -17,7 +17,9 @@ def _parse_bool(value: str | None, default: bool) -> bool:
     return value.strip().lower() in {"1", "true", "yes", "y", "on"}
 
 
-def _parse_contribution_env(env: Mapping[str, str | None]) -> tuple[int | None, int | None]:
+def _parse_contribution_env(
+    env: Mapping[str, str | None],
+) -> tuple[int | None, int | None]:
     """(monthly KRW amount, day of month 1-31) from CORE_MONTHLY_CONTRIBUTION_KRW / CORE_CONTRIBUTION_DAY.
 
     Unset/empty/invalid values become None (invalid ones warn on stderr). Callers use the pair only when both are set.
@@ -25,14 +27,19 @@ def _parse_contribution_env(env: Mapping[str, str | None]) -> tuple[int | None, 
     amount: int | None = None
     day: int | None = None
 
-    raw_amount = (env.get("CORE_MONTHLY_CONTRIBUTION_KRW") or "").strip().replace(",", "")
+    raw_amount = (
+        (env.get("CORE_MONTHLY_CONTRIBUTION_KRW") or "").strip().replace(",", "")
+    )
     if raw_amount:
         try:
             amount = int(raw_amount)
             if amount <= 0:
                 raise ValueError("must be positive")
         except ValueError:
-            print("warning: invalid CORE_MONTHLY_CONTRIBUTION_KRW ignored", file=sys.stderr)
+            print(
+                "warning: invalid CORE_MONTHLY_CONTRIBUTION_KRW ignored",
+                file=sys.stderr,
+            )
             amount = None
 
     raw_day = (env.get("CORE_CONTRIBUTION_DAY") or "").strip()
@@ -46,6 +53,19 @@ def _parse_contribution_env(env: Mapping[str, str | None]) -> tuple[int | None, 
             day = None
 
     return amount, day
+
+
+def _parse_alert_style(env: Mapping[str, str | None]) -> str:
+    """ALERT_STYLE (classic|hybrid); unset/empty -> classic, invalid -> classic with a stderr warning."""
+    raw = (env.get("ALERT_STYLE") or "").strip().lower()
+    if not raw:
+        return "classic"
+    if raw in {"classic", "hybrid"}:
+        return raw
+    print(
+        f"warning: invalid ALERT_STYLE {raw!r} ignored (using classic)", file=sys.stderr
+    )
+    return "classic"
 
 
 def main() -> None:
@@ -78,9 +98,14 @@ def main() -> None:
         dry_run=dry_run,
         contribution_krw=contribution_krw,
         contribution_day=contribution_day,
+        style=_parse_alert_style(os.environ),
     )
     print(json.dumps(result, ensure_ascii=False, sort_keys=True))
-    if (not result.get("sent", False)) and (not result.get("skipped", False)) and (not dry_run):
+    if (
+        (not result.get("sent", False))
+        and (not result.get("skipped", False))
+        and (not dry_run)
+    ):
         sys.exit(1)
 
 

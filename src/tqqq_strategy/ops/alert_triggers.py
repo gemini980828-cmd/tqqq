@@ -45,6 +45,12 @@ class TriggerFacts:
     summary_clause: str | None = (
         None  # one sentence on the nearest trigger (sell if invested, re-entry if cash)
     )
+    gauge_pct: float | None = (
+        None  # signed % move to the nearest sell (invested) / price re-entry (cash) trigger
+    )
+    reentry_condition: str | None = (
+        None  # cash only: the leading blocker when it is not price-expressible (RSI / vol lock)
+    )
 
 
 @dataclass(frozen=True)
@@ -248,6 +254,7 @@ def _invested_report(
     sell_line: float | None = None
     sell_line_pct: float | None = None
     cross_pct_out: float | None = None
+    gauge_pct: float | None = None
 
     stop_price = float("nan")
     full_entry = float(state.get("fullEntryClose", float("nan")))
@@ -273,6 +280,7 @@ def _invested_report(
         headline = f"매도선까지 {fmt_signed_pct(nearest_pct)}"
         result = after if nearest == exit_price else "전량 매도"
         clause = f"TQQQ가 약 {abs(nearest_pct):.1f}% 더 내리면 {_sell_result(result)}"
+        gauge_pct = nearest_pct
         sell_line, sell_line_pct = float(params.dist200_exit), exit_pct
     else:
         # partial (10%) position held on the QQQ short-term trend only
@@ -288,6 +296,7 @@ def _invested_report(
         sell_line = float(params.dist200_enter)  # here: the 100% entry line
         sell_line_pct = _pct_to(enter_price, t_now)
         cross_pct_out = cross_pct
+        gauge_pct = cross_pct
 
     if stop_active:
         lines.append(
@@ -321,6 +330,7 @@ def _invested_report(
         stop_pct=_pct_to(stop_price, t_now) if stop_active else None,
         qqq_cross_pct=cross_pct_out,
         summary_clause=clause,
+        gauge_pct=gauge_pct,
         **overheat,
     )
     return TriggerReport(headline=headline, detail_lines=tuple(lines), facts=facts)
@@ -328,9 +338,9 @@ def _invested_report(
 
 def _overheat_and_tp10_lines(
     state: dict[str, Any], *, params: Any, t: np.ndarray, t_now: float
-) -> tuple[list[str], dict[str, float]]:
+) -> tuple[list[str], dict[str, Any]]:
     lines: list[str] = []
-    facts: dict[str, float] = {}
+    facts: dict[str, Any] = {}
     stage = int(state["overheatStage"])
     enters = [
         params.overheat1_enter,
@@ -398,6 +408,8 @@ def _cash_report(
     lines: list[str] = []
     blockers: list[str] = []
     clauses: list[str] = []  # same order as blockers: one summary sentence each
+    # same order again: (price move %, None) for price-expressible blockers, (None, condition text) otherwise
+    gauges: list[tuple[float | None, str | None]] = []
     rsi_thr = float(params.rsi_reentry_thr)
 
     rsi_blocked = bool(state["reentryLock"]) and not (
@@ -413,6 +425,7 @@ def _cash_report(
         clauses.append(
             f"재진입 조건: QQQ RSI {fmt_num(rsi_thr)} 이상 (현재 {q_rsi:.1f})."
         )
+        gauges.append((None, f"QQQ RSI {fmt_num(rsi_thr)} 이상 (현재 {q_rsi:.1f})"))
 
     vol_blocked = bool(state["locked"])
     lines.append(
@@ -425,6 +438,9 @@ def _cash_report(
         clauses.append(
             f"재진입 조건: 20일 변동성 {fmt_num(vol_thr_pct, 1)}% 미만 (현재 {v20_pct:.1f}%)."
         )
+        gauges.append(
+            (None, f"20일 변동성 {fmt_num(vol_thr_pct, 1)}% 미만 (현재 {v20_pct:.1f}%)")
+        )
 
     spy_blocked = not state["spyBull"]
     spy_pct = _pct_to(spy_enter_price, spy_now)
@@ -435,6 +451,7 @@ def _cash_report(
     if spy_blocked:
         blockers.append(f"재진입까지 SPY {fmt_signed_pct(spy_pct)}")
         clauses.append(_reentry_clause("SPY", spy_pct))
+        gauges.append((spy_pct, None))
 
     stage = int(state["overheatStage"])
     if stage == 4:
@@ -446,6 +463,7 @@ def _cash_report(
         )
         blockers.append(f"재진입까지 TQQQ {fmt_signed_pct(rel_pct)} (과열 해제)")
         clauses.append(_reentry_clause("TQQQ", rel_pct, suffix=" (과열 해제)"))
+        gauges.append((rel_pct, None))
 
     trend_ok = bool(state["above200Hyst"]) or qqq_trend_up
     enter_pct = _pct_to(enter_price, t_now)
@@ -464,9 +482,11 @@ def _cash_report(
         if abs(cross_pct) < abs(enter_pct):
             blockers.append(f"재진입까지 QQQ {fmt_signed_pct(cross_pct)}")
             clauses.append(_reentry_clause("QQQ", cross_pct))
+            gauges.append((cross_pct, None))
         else:
             blockers.append(f"재진입까지 TQQQ {fmt_signed_pct(enter_pct)}")
             clauses.append(_reentry_clause("TQQQ", enter_pct))
+            gauges.append((enter_pct, None))
 
     headline = blockers[0] if blockers else None
     facts = TriggerFacts(
@@ -475,5 +495,7 @@ def _cash_report(
         v20_pct=v20_pct,
         vol_limit_pct=vol_thr_pct,
         summary_clause=clauses[0] if clauses else None,
+        gauge_pct=gauges[0][0] if gauges else None,
+        reentry_condition=gauges[0][1] if gauges else None,
     )
     return TriggerReport(headline=headline, detail_lines=tuple(lines), facts=facts)
