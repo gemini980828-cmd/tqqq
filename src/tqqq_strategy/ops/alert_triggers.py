@@ -366,12 +366,15 @@ def _cash_report(
     trend_ok = bool(state["above200Hyst"]) or qqq_trend_up
     enter_pct = _pct_to(enter_price, t_now)
     cross_pct = _pct_to(qqq_cross, q_now)
+    # distances only for unmet conditions; a met condition's "distance" would point the wrong way
+    enter_gap = "" if state["above200Hyst"] else f", TQQQ {fmt_signed_pct(enter_pct)}"
+    cross_gap = "" if qqq_trend_up else f", QQQ {fmt_signed_pct(cross_pct)}"
     lines.append(
         f"{'✓' if state['above200Hyst'] else '✗'} TQQQ/200일선 {dist200:.1f}% "
-        f"({fmt_num(params.dist200_enter)}% 이상 → 100% 진입, TQQQ {fmt_signed_pct(enter_pct)})"
+        f"({fmt_num(params.dist200_enter)}% 이상 → 100% 진입{enter_gap})"
     )
     lines.append(
-        f"{'✓' if qqq_trend_up else '✗'} QQQ 3일선 > 161일선 (→ 10% 진입, QQQ {fmt_signed_pct(cross_pct)})"
+        f"{'✓' if qqq_trend_up else '✗'} QQQ 3일선 > 161일선 (→ 10% 진입{cross_gap})"
     )
     if not trend_ok:
         if abs(cross_pct) < abs(enter_pct):
