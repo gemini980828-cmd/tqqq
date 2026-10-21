@@ -185,7 +185,10 @@ def _invested_tech_lines(ctx: AlertContext) -> list[str]:
 
 
 def _cash_tech_lines(ctx: AlertContext) -> list[str]:
-    detail = [f"- {line}" for line in ctx.triggers.detail_lines]
+    # ✓/✗ condition lines already carry a marker; a "- " bullet in front would double it
+    detail = [
+        line if line[:1] in "✓✗" else f"- {line}" for line in ctx.triggers.detail_lines
+    ]
     if ctx.triggers.facts is None or not detail:
         return detail
     return ["매수까지 남은 조건", *detail]

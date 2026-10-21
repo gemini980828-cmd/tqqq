@@ -87,9 +87,8 @@ def test_render_bar_uses_eighth_blocks() -> None:
 
 
 def test_marker_index_is_proportional_and_clamped() -> None:
-    assert (
-        marker_index(-50.0, 100.0) == 10
-    )  # price space: 1/3 of the way from 0.5 to 2.0
+    # price space: 1/3 of the way from 0.5 to 2.0
+    assert marker_index(-50.0, 100.0) == round((GAUGE_CELLS - 1) / 3)
     assert marker_index(-7.8, 28.7) == round(7.8 / 36.5 * (GAUGE_CELLS - 1))
     # already past either trigger -> pinned to the ends
     assert marker_index(5.0, 20.0) == 0
@@ -101,17 +100,18 @@ def test_hold_message_layout() -> None:
     message = build_hybrid_message(_ctx())
     lines = message.split("\n")
 
-    assert lines[0] == "⚪ 보유 유지 · 10/20(화)"
+    assert lines[0] == "<b>⚪ 보유 유지 · 10/20(화)</b>"
     assert lines[1] == "오늘 할 일 없음"
-    assert lines[3].startswith("<pre>매도선") and lines[3].endswith("과열 감량")
-    assert lines[4].startswith("├") and lines[4].endswith("┤") and "●" in lines[4]
-    assert lines[5].startswith("−7.8%") and lines[5].endswith("+28.7%")
+    assert lines[2] == ""
+    assert lines[3] == "매도선까지 −7.8% · 과열 감량까지 +28.7%"
+    assert lines[4].startswith("<pre>매도 ├") and lines[4].endswith("┤ 과열")
+    assert "●" in lines[4]
     assert "TQQQ ████████▋   87%" in lines
     assert "SGOV ▎            3%" in lines
     assert "GLD  █           10%</pre>" in lines
-    assert "📊 TQQQ $70.41 (🔴 −0.33%) · 원/달러 1,330.00 (−0.26%)" in lines
-    assert "7/30 진입 후 +11.2%" in lines
-    assert "기술리포트" in lines
+    assert "📊 TQQQ $70.41 (🔴 −0.33%)" in lines
+    assert "7/30 진입 후 +11.2% · 💱 1,330원 (−0.3%)" in lines
+    assert "<b>기술리포트</b>" in lines
     assert "- 200일선 이격도: 108.33 (매도선 99.79, −7.8%)" in lines
 
 
@@ -149,7 +149,12 @@ def test_checklists_per_action() -> None:
 
 
 def test_headers_per_action() -> None:
-    first = lambda **kw: build_hybrid_message(_ctx(**kw)).split("\n", 1)[0]
+    first = lambda **kw: (
+        build_hybrid_message(_ctx(**kw))
+        .split("\n", 1)[0]
+        .removeprefix("<b>")
+        .removesuffix("</b>")
+    )
     assert first(p=1.0, prev_p=0.0) == "🟢 매수일 — 오늘 밤 미국장 시가 · 10/20(화)"
     assert (
         first(p=0.97, prev_p=1.0) == "🟠 일부 감량일 — 오늘 밤 미국장 시가 · 10/20(화)"
@@ -163,11 +168,13 @@ def test_headers_per_action() -> None:
 
 def test_cash_price_gauge_and_non_price_condition() -> None:
     up = TriggerReport(
-        "x", ("✗ 조건",), TriggerFacts(gauge_pct=5.2, summary_clause="s")
+        "재진입까지 TQQQ +5.2%",
+        ("✗ 조건",),
+        TriggerFacts(gauge_pct=5.2, summary_clause="s"),
     )
     message = build_hybrid_message(_ctx(p=0.0, prev_p=0.0, triggers=up))
-    assert "현재" in message and "재진입" in message and "+5.2%" in message
-    assert "●" in message and "┤" in message
+    assert "재진입까지 TQQQ +5.2%\n<pre>현재 ●" in message
+    assert "┤ 재진입" in message
     assert "SGOV █████████   90%" in message
     assert "TQQQ" not in message.split("<pre>")[1].split("</pre>")[0]
 
@@ -201,7 +208,9 @@ def test_length_cap_and_escaping() -> None:
     message = build_hybrid_message(_ctx(p=0.0, prev_p=0.0, triggers=nasty))
     assert "재진입 조건: a&lt;b&amp;c" in message
     assert "- 값 &lt;5 &amp; &gt;3" in message
-    stripped = message.replace("<pre>", "").replace("</pre>", "").replace("&lt;", "")
+    stripped = message
+    for tag in ("<pre>", "</pre>", "<b>", "</b>", "&lt;"):
+        stripped = stripped.replace(tag, "")
     assert "<" not in stripped.replace("&gt;", "").replace("&amp;", "")
 
 

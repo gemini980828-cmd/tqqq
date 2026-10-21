@@ -123,7 +123,7 @@ def test_cash_wait_message_lists_conditions() -> None:
     tech = message.split("기술리포트\n", 1)[1].split("\n")
     assert tech[0] == "- 신호 비중 p: 0.00% → 0.00%"
     assert tech[1] == "매수까지 남은 조건"
-    assert tech[2] == "- ✗ 손절 후 재진입 잠금: QQQ RSI 39.3 (43 이상 필요)"
+    assert tech[2] == "✗ 손절 후 재진입 잠금: QQQ RSI 39.3 (43 이상 필요)"
 
 
 def test_trade_message_has_action_section_and_contribution() -> None:

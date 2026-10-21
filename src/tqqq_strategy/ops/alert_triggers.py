@@ -418,7 +418,7 @@ def _cash_report(
     if state["reentryLock"]:
         mark = "✗" if rsi_blocked else "✓"
         lines.append(
-            f"{mark} 손절 후 재진입 잠금: QQQ RSI {q_rsi:.1f} ({fmt_num(rsi_thr)} 이상 필요)"
+            f"{mark} 손절 후 재진입 잠금: RSI {q_rsi:.1f} (≥{fmt_num(rsi_thr)})"
         )
     if rsi_blocked:
         blockers.append(f"재진입: QQQ RSI {fmt_num(rsi_thr)} 이상 (현재 {q_rsi:.1f})")
@@ -429,7 +429,7 @@ def _cash_report(
 
     vol_blocked = bool(state["locked"])
     lines.append(
-        f"{'✗' if vol_blocked else '✓'} 20일 변동성 {v20_pct:.1f}% ({fmt_num(vol_thr_pct, 1)}% 미만 필요)"
+        f"{'✗' if vol_blocked else '✓'} 20일 변동성 {v20_pct:.1f}% (<{fmt_num(vol_thr_pct, 1)}%)"
     )
     if vol_blocked:
         blockers.append(
@@ -446,7 +446,7 @@ def _cash_report(
     spy_pct = _pct_to(spy_enter_price, spy_now)
     spy_suffix = f", SPY {fmt_signed_pct(spy_pct)}" if spy_blocked else ""
     lines.append(
-        f"{'✗' if spy_blocked else '✓'} SPY/200일선 {spy_dist:.1f}% ({fmt_num(params.spy_enter)}% 이상 필요{spy_suffix})"
+        f"{'✗' if spy_blocked else '✓'} SPY/200일선 {spy_dist:.1f}% (≥{fmt_num(params.spy_enter)}%{spy_suffix})"
     )
     if spy_blocked:
         blockers.append(f"재진입까지 SPY {fmt_signed_pct(spy_pct)}")
@@ -473,10 +473,10 @@ def _cash_report(
     cross_gap = "" if qqq_trend_up else f", QQQ {fmt_signed_pct(cross_pct)}"
     lines.append(
         f"{'✓' if state['above200Hyst'] else '✗'} TQQQ/200일선 {dist200:.1f}% "
-        f"({fmt_num(params.dist200_enter)}% 이상 → 100% 진입{enter_gap})"
+        f"(≥{fmt_num(params.dist200_enter)}% → 100%{enter_gap})"
     )
     lines.append(
-        f"{'✓' if qqq_trend_up else '✗'} QQQ 3일선 > 161일선 (→ 10% 진입{cross_gap})"
+        f"{'✓' if qqq_trend_up else '✗'} QQQ 3일선 > 161일선 (→ 10%{cross_gap})"
     )
     if not trend_ok:
         if abs(cross_pct) < abs(enter_pct):

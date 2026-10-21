@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import unicodedata
 from datetime import date
 
 from tqqq_strategy.ops.alert_message import (
@@ -25,7 +24,7 @@ from tqqq_strategy.ops.order_plan import (
 )
 
 WEEKDAYS = ("월", "화", "수", "목", "금", "토", "일")
-GAUGE_CELLS = 30
+GAUGE_CELLS = 22
 BAR_CELLS = 10
 PARTIAL_BLOCKS = "▏▎▍▌▋▊▉"
 MARKER = "●"
@@ -34,12 +33,6 @@ MARKER = "●"
 def _weekday_md(date_str: str) -> str:
     d = date.fromisoformat(date_str[:10])
     return f"{d.month}/{d.day}({WEEKDAYS[d.weekday()]})"
-
-
-def _width(text: str) -> int:
-    return sum(
-        2 if unicodedata.east_asian_width(ch) in ("W", "F") else 1 for ch in text
-    )
 
 
 def marker_index(left_pct: float, right_pct: float, cells: int = GAUGE_CELLS) -> int:
@@ -72,28 +65,16 @@ def _bar_lines(alloc: Alloc) -> list[str]:
     return lines
 
 
-def _place(width: int, items: list[tuple[int, str]]) -> str:
-    """Put each text at its display column (left to right, assumed not overlapping)."""
-    out = ""
-    for col, text in sorted(items):
-        out += " " * max(col - _width(out), 0) + text
-    return out.ljust(width)
+def _gauge(ctx: AlertContext) -> tuple[str, str] | None:
+    """(caption, gauge line) or None when there is nothing to draw (triggers unavailable).
 
-
-def _pct_line(width: int, left: str, right: str) -> str:
-    gap = max(width - _width(left) - _width(right), 1)
-    return left + " " * gap + right
-
-
-def _gauge_lines(ctx: AlertContext) -> list[str]:
-    """Gauge block lines, or [] when there is nothing to draw (triggers unavailable)."""
+    Hangul inside <pre> does not occupy a predictable number of monospace cells on phones, so the
+    gauge is a single line with Korean words only at its two ends and the numbers go in the caption.
+    """
     facts = ctx.triggers.facts
-    if facts is None:
-        return []
-    width = GAUGE_CELLS + 2
+    if facts is None or facts.gauge_pct is None:
+        return None
     if _invested(ctx):
-        if facts.gauge_pct is None:
-            return []
         left_pct = facts.gauge_pct
         if facts.overheat_pct is not None:
             right_pct, right_label = facts.overheat_pct, "과열 감량"
@@ -101,42 +82,23 @@ def _gauge_lines(ctx: AlertContext) -> list[str]:
             right_pct, right_label = facts.tp_pct, "익절 감량"
         else:
             right_pct, right_label = abs(left_pct), ""
-        idx = marker_index(left_pct, right_pct)
         cells = ["─"] * GAUGE_CELLS
-        cells[idx] = MARKER
-        bar = "├" + "".join(cells) + "┤"
-        left_label, now = "매도선", "현재"
-        label_items = [(0, left_label)]
-        if right_label:
-            label_items.append((width - _width(right_label), right_label))
-        # "현재" sits over the marker, shifted sideways just enough to keep a gap to both end labels
-        lowest = _width(left_label) + 1
-        highest = (width - _width(right_label) - 1 if right_label else width) - _width(
-            now
+        cells[marker_index(left_pct, right_pct)] = MARKER
+        line = (
+            "매도 ├"
+            + "".join(cells)
+            + "┤"
+            + (f" {right_label[:2]}" if right_label else "")
         )
-        now_col = min(max(idx, lowest), highest)
-        if lowest <= highest:
-            label_items.append((now_col, now))
-        return [
-            _place(width, label_items).rstrip(),
-            bar,
-            _pct_line(width, fmt_signed_pct(left_pct), fmt_signed_pct(right_pct)),
-        ]
-    if facts.gauge_pct is not None:
-        pct = facts.gauge_pct
-        track = "─" * GAUGE_CELLS
-        if pct >= 0:
-            return [
-                _pct_line(width, "현재", "재진입"),
-                f"{MARKER}{track}┤",
-                _pct_line(width, "", fmt_signed_pct(pct)),
-            ]
-        return [
-            _pct_line(width, "재진입", "현재"),
-            f"├{track}{MARKER}",
-            _pct_line(width, fmt_signed_pct(pct), ""),
-        ]
-    return []
+        caption = f"매도선까지 {fmt_signed_pct(left_pct)}"
+        if right_label:
+            caption += f" · {right_label}까지 {fmt_signed_pct(right_pct)}"
+        return caption, line
+    track = "─" * GAUGE_CELLS
+    caption = ctx.triggers.headline or f"재진입까지 {fmt_signed_pct(facts.gauge_pct)}"
+    if facts.gauge_pct >= 0:
+        return caption, f"현재 {MARKER}{track}┤ 재진입"
+    return caption, f"재진입 ├{track}{MARKER} 현재"
 
 
 def _header(ctx: AlertContext) -> str:
@@ -192,39 +154,60 @@ def checklist_lines(ctx: AlertContext) -> list[str]:
 
 
 def _status_lines(ctx: AlertContext) -> list[str]:
-    market = f"📊 TQQQ {_usd(ctx.tqqq_close)} ({_emoji_from_sign(ctx.tqqq_day_pct)} {fmt_signed_pct(ctx.tqqq_day_pct, 2)})"
-    if ctx.fx_now is not None:
-        market += f" · 원/달러 {ctx.fx_now:,.2f}"
-        if ctx.fx_pct is not None:
-            market += f" ({fmt_signed_pct(ctx.fx_pct, 2)})"
-    lines = [market]
+    # two short lines: one long line wraps on a phone-width bubble
+    lines = [
+        f"📊 TQQQ {_usd(ctx.tqqq_close)} ({_emoji_from_sign(ctx.tqqq_day_pct)} {fmt_signed_pct(ctx.tqqq_day_pct, 2)})"
+    ]
+    second = ""
     if _invested(ctx):
         if ctx.entry_date and ctx.entry_close:
-            pnl = (ctx.tqqq_close / ctx.entry_close - 1.0) * 100.0
-            lines.append(f"{_md(ctx.entry_date)} 진입 후 {fmt_signed_pct(pnl)}")
+            if ctx.entry_date[:10] == ctx.date_str[:10]:
+                second = "오늘 진입"
+            else:
+                pnl = (ctx.tqqq_close / ctx.entry_close - 1.0) * 100.0
+                second = f"{_md(ctx.entry_date)} 진입 후 {fmt_signed_pct(pnl)}"
     elif ctx.cash_since:
-        lines.append(f"{_md(ctx.cash_since)} 매도 후 SGOV 대기 중")
+        second = f"{_md(ctx.cash_since)} 매도 후 SGOV 대기"
+    if ctx.fx_now is not None:
+        fx = f"💱 {ctx.fx_now:,.0f}원"
+        if ctx.fx_pct is not None:
+            fx += f" ({fmt_signed_pct(ctx.fx_pct, 1)})"
+        second = f"{second} · {fx}" if second else fx
+    if second:
+        lines.append(second)
     return lines
 
 
 def build_hybrid_message(ctx: AlertContext) -> str:
     items = checklist_lines(ctx)
-    head = [esc(_header(ctx)), *(esc(line) for line in items or ["오늘 할 일 없음"])]
+    head = [
+        f"<b>{esc(_header(ctx))}</b>",
+        *(esc(line) for line in items or ["오늘 할 일 없음"]),
+        "",
+    ]
 
     facts = ctx.triggers.facts
-    gauge = _gauge_lines(ctx)
+    gauge = _gauge(ctx)
     block: list[str] = []
-    if gauge:
-        block += [*gauge, ""]
+    if gauge is not None:
+        caption, line = gauge
+        head.append(esc(caption))
+        block += [line, ""]
     elif facts is not None and not _invested(ctx) and facts.reentry_condition:
-        block_text = f"재진입 조건: {facts.reentry_condition}"
-        head.append(esc(block_text))
+        head.append(esc(f"재진입 조건: {facts.reentry_condition}"))
     block += _bar_lines(ctx.new_alloc)
     pre = "<pre>" + esc("\n".join(block)) + "</pre>"
 
-    body = [*head, "", pre, "", *(esc(line) for line in _status_lines(ctx))]
-    tech = ["", TECH_SEPARATOR, *_tech_lines(ctx)]
-    full = "\n".join([*body, *(esc(line) for line in tech)])
+    # <pre> renders as its own block, so no blank lines around it
+    body = [*head, pre, *(esc(line) for line in _status_lines(ctx))]
+    tech = _tech_lines(ctx)
+    tech_html = [
+        "",
+        esc(TECH_SEPARATOR),
+        f"<b>{esc(tech[0])}</b>",
+        *(esc(line) for line in tech[1:]),
+    ]
+    full = "\n".join([*body, *tech_html])
     if len(full) > MAX_MESSAGE_CHARS:
         full = "\n".join(
             body
