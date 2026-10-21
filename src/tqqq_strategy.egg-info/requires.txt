@@ -1,0 +1,9 @@
+pandas
+numpy
+duckdb
+pyarrow
+yfinance
+pydantic
+fastapi
+uvicorn
+apscheduler

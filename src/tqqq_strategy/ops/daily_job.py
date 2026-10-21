@@ -257,6 +257,9 @@ def run_daily_signal_alert(
             cash_since=cash_since,
             fx_now=fx_now,
             fx_pct=fx_pct,
+            prev_p=prev_weight,
+            prev_code=prev_code,
+            new_code=new_code,
         )
     )
 

@@ -22,9 +22,7 @@ from tqqq_strategy.signal.final_engine import CORE_SHARE, GLD_FIXED_WEIGHT
 Alloc = tuple[float, float, float]  # (TQQQ, SGOV, GLD) portfolio weights
 ASSETS = ("TQQQ", "SGOV", "GLD")
 FULL_FRACTION = 0.9995  # sell_fraction at/above this is shown as "전량"
-EXEC_WHEN = (
-    "오늘 밤 시가"  # alert arrives after the US close; orders go in at the next US open
-)
+EXEC_WHEN = "오늘 밤 미국장 시가"  # alert arrives after the US close; orders go in at the next US open
 MANWON = 10_000
 
 
@@ -171,60 +169,44 @@ def format_fraction(fraction: float) -> str:
     return text.removesuffix(".0")
 
 
-def _source_amount(trade: Trade) -> str:
-    return "전량" if trade.full else f"{format_fraction(trade.sell_fraction)}%"
+def render_trade_lines(trade: Trade) -> list[str]:
+    """Per-asset order bullets, sells first."""
+    sold = (
+        "전량 매도"
+        if trade.full
+        else f"보유수량의 {format_fraction(trade.sell_fraction)}% 매도"
+    )
+    bought = f"{trade.sell_asset} 매도대금 전액으로 매수"
+    return [
+        f"- {trade.sell_asset}: {sold}",
+        f"- {trade.proceeds_to}: {bought}",
+        "- GLD: 유지",
+    ]
 
 
-def render_trade_header(trade: Trade) -> str:
-    if trade.kind == "buy":
-        return f"🟢 TQQQ 매수 · {EXEC_WHEN}"
-    if trade.kind == "exit":
-        return f"🔴 TQQQ 전량 매도 · {EXEC_WHEN}"
-    return f"🟠 TQQQ {format_fraction(trade.sell_fraction)}% 매도 · {EXEC_WHEN}"
-
-
-def render_trade_line(trade: Trade) -> str:
-    return f"{trade.sell_asset} {_source_amount(trade)} → {trade.proceeds_to}"
-
-
-def _legs_text(contribution: ContributionPlan) -> str:
-    return " · ".join(f"{asset} {amount}" for asset, amount in contribution.legs)
-
-
-def render_contribution_header(contribution: ContributionPlan) -> str:
-    return f"💵 적립 {contribution.total_manwon}만원 · {EXEC_WHEN}"
-
-
-def render_contribution_legs_line(contribution: ContributionPlan) -> str:
-    return f"{_legs_text(contribution)} (만원)"
-
-
-def render_contribution_with_trade_line(contribution: ContributionPlan) -> str:
-    return f"적립 {contribution.total_manwon}만원: {_legs_text(contribution)}"
+def render_contribution_lines(contribution: ContributionPlan) -> list[str]:
+    legs = " / ".join(f"{asset} {amount}만원" for asset, amount in contribution.legs)
+    return [
+        f"💵 이번 달 적립 ({contribution.total_manwon}만원, {EXEC_WHEN})",
+        f"- {legs}",
+    ]
 
 
 def render_gold_line(gold: GoldRebalance) -> str:
-    return f"🔁 GLD {format_fraction(gold.target)}%로 리밸런싱"
+    return f"🔁 연 1회 금 리밸런싱일: GLD를 전체 자산의 {format_fraction(gold.target)}%로 맞추세요 (연초 첫 거래일)."
 
 
-def render_gold_header(gold: GoldRebalance) -> str:
-    return f"{render_gold_line(gold)} · {EXEC_WHEN}"
-
-
-def render_action(plan: OrderPlan) -> tuple[str, list[str]] | None:
-    """(bold header text, body lines) for an action day, or None when there is nothing to do."""
+def render_action(plan: OrderPlan) -> list[str] | None:
+    """Lines of the action sections (blank lines between sections), or None when there is nothing to do."""
+    if not plan.has_action:
+        return None
+    lines: list[str] = []
     if plan.trade is not None:
-        lines = [render_trade_line(plan.trade)]
-        if plan.contribution is not None:
-            lines.append(render_contribution_with_trade_line(plan.contribution))
-        if plan.gold_rebalance is not None:
-            lines.append(render_gold_line(plan.gold_rebalance))
-        return render_trade_header(plan.trade), lines
+        lines += [f"🛒 실행 액션 ({EXEC_WHEN})", *render_trade_lines(plan.trade)]
+    else:
+        lines.append("🛒 실행 액션: 기존 보유분 매매 없음")
     if plan.contribution is not None:
-        lines = [render_contribution_legs_line(plan.contribution)]
-        if plan.gold_rebalance is not None:
-            lines.append(render_gold_line(plan.gold_rebalance))
-        return render_contribution_header(plan.contribution), lines
+        lines += ["", *render_contribution_lines(plan.contribution)]
     if plan.gold_rebalance is not None:
-        return render_gold_header(plan.gold_rebalance), []
-    return None
+        lines += ["", render_gold_line(plan.gold_rebalance)]
+    return lines

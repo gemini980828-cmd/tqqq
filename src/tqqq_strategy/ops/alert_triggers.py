@@ -20,9 +20,38 @@ _CODE_WEIGHTS = {0: 0.0, 1: 0.10, 2: 1.00, 3: 0.90, 4: 0.80, 5: 0.05}
 
 
 @dataclass(frozen=True)
+class TriggerFacts:
+    """Numbers behind the report, for the technical-report block (all optional; None = not applicable)."""
+
+    dist200: float | None = None
+    sell_line: float | None = None  # 200-day gap threshold that triggers the next sell
+    sell_line_pct: float | None = None  # TQQQ move needed to reach it
+    spy_dist: float | None = None
+    spy_sell_line: float | None = (
+        None  # None when SPY is not part of the sell conditions
+    )
+    spy_sell_pct: float | None = None
+    v20_pct: float | None = None
+    vol_limit_pct: float | None = None
+    stop_price: float | None = None
+    stop_pct: float | None = None
+    overheat_enter: float | None = None
+    overheat_pct: float | None = None
+    tp_price: float | None = None
+    tp_pct: float | None = None
+    qqq_cross_pct: float | None = (
+        None  # partial position: QQQ move to the 3/161-day cross
+    )
+    summary_clause: str | None = (
+        None  # one sentence on the nearest trigger (sell if invested, re-entry if cash)
+    )
+
+
+@dataclass(frozen=True)
 class TriggerReport:
     headline: str | None
     detail_lines: tuple[str, ...]
+    facts: TriggerFacts | None = None
 
 
 def code_to_weight(code: int) -> float:
@@ -77,6 +106,15 @@ def next_qqq_close_for_trend_cross(
     s_long = float(arr[-(long - 1) :].sum())
     s_short = float(arr[-(short - 1) :].sum())
     return (short * s_long - long * s_short) / (long - short)
+
+
+def _sell_result(result: str) -> str:
+    return "10%로 축소됩니다." if result == "10%로 축소" else "전량 매도됩니다."
+
+
+def _reentry_clause(asset: str, pct: float, *, suffix: str = "") -> str:
+    direction = "오르면" if pct > 0 else "내리면"
+    return f"{asset}가 약 {abs(pct):.1f}% {direction} 재진입합니다{suffix}."
 
 
 def _pct_to(price: float, current: float) -> float:
@@ -161,6 +199,7 @@ def _compute_triggers(
             v20_pct=v20_pct,
             vol_thr_pct=vol_thr_pct,
             exit_price=exit_price,
+            enter_price=enter_price,
             qqq_cross=qqq_cross,
             qqq_trend_up=qqq_trend_up,
             spy_exit_price=spy_exit_price,
@@ -198,12 +237,17 @@ def _invested_report(
     v20_pct: float,
     vol_thr_pct: float,
     exit_price: float,
+    enter_price: float,
     qqq_cross: float,
     qqq_trend_up: bool,
     spy_exit_price: float,
 ) -> TriggerReport:
     lines: list[str] = []
     headline: str | None = None
+    clause: str | None = None
+    sell_line: float | None = None
+    sell_line_pct: float | None = None
+    cross_pct_out: float | None = None
 
     stop_price = float("nan")
     full_entry = float(state.get("fullEntryClose", float("nan")))
@@ -225,7 +269,11 @@ def _invested_report(
         if stop_active:
             candidates.append(stop_price)
         nearest = max(candidates)
-        headline = f"매도선까지 {fmt_signed_pct(_pct_to(nearest, t_now))}"
+        nearest_pct = _pct_to(nearest, t_now)
+        headline = f"매도선까지 {fmt_signed_pct(nearest_pct)}"
+        result = after if nearest == exit_price else "전량 매도"
+        clause = f"TQQQ가 약 {abs(nearest_pct):.1f}% 더 내리면 {_sell_result(result)}"
+        sell_line, sell_line_pct = float(params.dist200_exit), exit_pct
     else:
         # partial (10%) position held on the QQQ short-term trend only
         cross_pct = _pct_to(qqq_cross, q_now)
@@ -236,6 +284,10 @@ def _invested_report(
             f"TQQQ/200일선 {dist200:.1f}% ({fmt_num(params.dist200_enter)}% 이상 → 100% 진입)"
         )
         headline = f"매도선까지 QQQ {fmt_signed_pct(cross_pct)}"
+        clause = f"QQQ가 약 {abs(cross_pct):.1f}% 더 내리면 전량 매도됩니다."
+        sell_line = float(params.dist200_enter)  # here: the 100% entry line
+        sell_line_pct = _pct_to(enter_price, t_now)
+        cross_pct_out = cross_pct
 
     if stop_active:
         lines.append(
@@ -252,14 +304,33 @@ def _invested_report(
         f"20일 변동성 {v20_pct:.1f}% ({fmt_num(vol_thr_pct, 1)}% 이상 → 전량 매도)"
     )
 
-    lines.extend(_overheat_and_tp10_lines(state, params=params, t=t, t_now=t_now))
-    return TriggerReport(headline=headline, detail_lines=tuple(lines))
+    overheat_lines, overheat = _overheat_and_tp10_lines(
+        state, params=params, t=t, t_now=t_now
+    )
+    lines.extend(overheat_lines)
+    facts = TriggerFacts(
+        dist200=dist200,
+        sell_line=sell_line,
+        sell_line_pct=sell_line_pct,
+        spy_dist=spy_dist,
+        spy_sell_line=float(params.spy_exit) if state["spyBull"] else None,
+        spy_sell_pct=_pct_to(spy_exit_price, spy_now) if state["spyBull"] else None,
+        v20_pct=v20_pct,
+        vol_limit_pct=vol_thr_pct,
+        stop_price=stop_price if stop_active else None,
+        stop_pct=_pct_to(stop_price, t_now) if stop_active else None,
+        qqq_cross_pct=cross_pct_out,
+        summary_clause=clause,
+        **overheat,
+    )
+    return TriggerReport(headline=headline, detail_lines=tuple(lines), facts=facts)
 
 
 def _overheat_and_tp10_lines(
     state: dict[str, Any], *, params: Any, t: np.ndarray, t_now: float
-) -> list[str]:
+) -> tuple[list[str], dict[str, float]]:
     lines: list[str] = []
+    facts: dict[str, float] = {}
     stage = int(state["overheatStage"])
     enters = [
         params.overheat1_enter,
@@ -273,6 +344,8 @@ def _overheat_and_tp10_lines(
         action = (
             "전량 매도" if stage == 3 else ("추가 매도" if stage > 0 else "일부 매도")
         )
+        facts["overheat_enter"] = enter
+        facts["overheat_pct"] = _pct_to(price, t_now)
         lines.append(
             f"과열 감량 {fmt_num(enter)}% ({fmt_signed_pct(_pct_to(price, t_now))} 상승 시 {action})"
         )
@@ -294,11 +367,13 @@ def _overheat_and_tp10_lines(
         and not math.isnan(tp_entry)
     ):
         tp_price = tp_entry * (1.0 + float(params.tp10_trigger))
+        facts["tp_price"] = tp_price
+        facts["tp_pct"] = _pct_to(tp_price, t_now)
         lines.append(
             f"익절 감량 {_fmt_usd(tp_price)} (진입 종가 대비 {fmt_signed_pct(params.tp10_trigger * 100, 0)}, "
             f"{fmt_signed_pct(_pct_to(tp_price, t_now))} → {fmt_num(params.tp10_cap * 100, 0)}%로 감량)"
         )
-    return lines
+    return lines, facts
 
 
 def _cash_report(
@@ -322,6 +397,7 @@ def _cash_report(
     """Cash: list every blocking condition, headline is the first blocker in priority order."""
     lines: list[str] = []
     blockers: list[str] = []
+    clauses: list[str] = []  # same order as blockers: one summary sentence each
     rsi_thr = float(params.rsi_reentry_thr)
 
     rsi_blocked = bool(state["reentryLock"]) and not (
@@ -334,6 +410,9 @@ def _cash_report(
         )
     if rsi_blocked:
         blockers.append(f"재진입: QQQ RSI {fmt_num(rsi_thr)} 이상 (현재 {q_rsi:.1f})")
+        clauses.append(
+            f"재진입 조건: QQQ RSI {fmt_num(rsi_thr)} 이상 (현재 {q_rsi:.1f})."
+        )
 
     vol_blocked = bool(state["locked"])
     lines.append(
@@ -342,6 +421,9 @@ def _cash_report(
     if vol_blocked:
         blockers.append(
             f"재진입: 20일 변동성 {fmt_num(vol_thr_pct, 1)}% 미만 (현재 {v20_pct:.1f}%)"
+        )
+        clauses.append(
+            f"재진입 조건: 20일 변동성 {fmt_num(vol_thr_pct, 1)}% 미만 (현재 {v20_pct:.1f}%)."
         )
 
     spy_blocked = not state["spyBull"]
@@ -352,6 +434,7 @@ def _cash_report(
     )
     if spy_blocked:
         blockers.append(f"재진입까지 SPY {fmt_signed_pct(spy_pct)}")
+        clauses.append(_reentry_clause("SPY", spy_pct))
 
     stage = int(state["overheatStage"])
     if stage == 4:
@@ -362,6 +445,7 @@ def _cash_report(
             f"{fmt_signed_pct(rel_pct)})"
         )
         blockers.append(f"재진입까지 TQQQ {fmt_signed_pct(rel_pct)} (과열 해제)")
+        clauses.append(_reentry_clause("TQQQ", rel_pct, suffix=" (과열 해제)"))
 
     trend_ok = bool(state["above200Hyst"]) or qqq_trend_up
     enter_pct = _pct_to(enter_price, t_now)
@@ -379,8 +463,17 @@ def _cash_report(
     if not trend_ok:
         if abs(cross_pct) < abs(enter_pct):
             blockers.append(f"재진입까지 QQQ {fmt_signed_pct(cross_pct)}")
+            clauses.append(_reentry_clause("QQQ", cross_pct))
         else:
             blockers.append(f"재진입까지 TQQQ {fmt_signed_pct(enter_pct)}")
+            clauses.append(_reentry_clause("TQQQ", enter_pct))
 
     headline = blockers[0] if blockers else None
-    return TriggerReport(headline=headline, detail_lines=tuple(lines))
+    facts = TriggerFacts(
+        dist200=dist200,
+        spy_dist=spy_dist,
+        v20_pct=v20_pct,
+        vol_limit_pct=vol_thr_pct,
+        summary_clause=clauses[0] if clauses else None,
+    )
+    return TriggerReport(headline=headline, detail_lines=tuple(lines), facts=facts)

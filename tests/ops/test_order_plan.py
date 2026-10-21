@@ -17,83 +17,76 @@ def alloc(p: float) -> tuple[float, float, float]:
     return round(0.9 * p, 10), round(0.9 * (1.0 - p), 10), 0.1
 
 
-# (id, prev p, new p, header w/o contribution, trade line, contribution legs at the new target)
+EXEC = "오늘 밤 미국장 시가"
+# (id, prev p, new p, trade lines w/o contribution, contribution legs at the new target)
 CASES = [
-    ("hold", 0.97, 0.97, None, None, "TQQQ 146 · SGOV 4 · GLD 17"),
-    ("cash", 0.0, 0.0, None, None, "SGOV 150 · GLD 17"),
+    ("hold", 0.97, 0.97, None, "TQQQ 146만원 / SGOV 4만원 / GLD 17만원"),
+    ("cash", 0.0, 0.0, None, "SGOV 150만원 / GLD 17만원"),
     (
         "buy_full",
         0.0,
         1.0,
-        "🟢 TQQQ 매수 · 오늘 밤 시가",
-        "SGOV 전량 → TQQQ",
-        "TQQQ 150 · GLD 17",
+        ["- SGOV: 전량 매도", "- TQQQ: SGOV 매도대금 전액으로 매수"],
+        "TQQQ 150만원 / GLD 17만원",
     ),
     (
         "buy_tenth",
         0.0,
         0.1,
-        "🟢 TQQQ 매수 · 오늘 밤 시가",
-        "SGOV 10% → TQQQ",
-        "TQQQ 15 · SGOV 135 · GLD 17",
+        ["- SGOV: 보유수량의 10% 매도", "- TQQQ: SGOV 매도대금 전액으로 매수"],
+        "TQQQ 15만원 / SGOV 135만원 / GLD 17만원",
     ),
     (
         "buy_partial",
         0.05,
         0.9,
-        "🟢 TQQQ 매수 · 오늘 밤 시가",
-        "SGOV 89.5% → TQQQ",
-        "TQQQ 135 · SGOV 15 · GLD 17",
+        ["- SGOV: 보유수량의 89.5% 매도", "- TQQQ: SGOV 매도대금 전액으로 매수"],
+        "TQQQ 135만원 / SGOV 15만원 / GLD 17만원",
     ),
     (
         "trim",
         1.0,
         0.97,
-        "🟠 TQQQ 3% 매도 · 오늘 밤 시가",
-        "TQQQ 3% → SGOV",
-        "TQQQ 146 · SGOV 4 · GLD 17",
+        ["- TQQQ: 보유수량의 3% 매도", "- SGOV: TQQQ 매도대금 전액으로 매수"],
+        "TQQQ 146만원 / SGOV 4만원 / GLD 17만원",
     ),
     (
         "exit",
         0.97,
         0.0,
-        "🔴 TQQQ 전량 매도 · 오늘 밤 시가",
-        "TQQQ 전량 → SGOV",
-        "SGOV 150 · GLD 17",
+        ["- TQQQ: 전량 매도", "- SGOV: TQQQ 매도대금 전액으로 매수"],
+        "SGOV 150만원 / GLD 17만원",
     ),
 ]
-GOLD_LINE = "🔁 GLD 10%로 리밸런싱"
+GOLD_LINE = (
+    "🔁 연 1회 금 리밸런싱일: GLD를 전체 자산의 10%로 맞추세요 (연초 첫 거래일)."
+)
 
 
-def _expected(header, trade_line, legs, *, contribution: bool, gold: bool):
-    """Full (header, body lines) per the message spec, or None when nothing is to be done."""
-    amount_header = "💵 적립 167만원 · 오늘 밤 시가"
-    if header is not None:
-        body = [trade_line]
-        if contribution:
-            body.append(f"적립 167만원: {legs}")
-        if gold:
-            body.append(GOLD_LINE)
-        return header, body
+def _expected(trade_lines, legs, *, contribution: bool, gold: bool):
+    """Full action lines per the message spec, or None when nothing is to be done."""
+    if trade_lines is not None:
+        lines = [f"🛒 실행 액션 ({EXEC})", *trade_lines, "- GLD: 유지"]
+    elif contribution or gold:
+        lines = ["🛒 실행 액션: 기존 보유분 매매 없음"]
+    else:
+        return None
     if contribution:
-        body = [f"{legs} (만원)"]
-        if gold:
-            body.append(GOLD_LINE)
-        return amount_header, body
+        lines += ["", f"💵 이번 달 적립 (167만원, {EXEC})", f"- {legs}"]
     if gold:
-        return f"{GOLD_LINE} · 오늘 밤 시가", []
-    return None
+        lines += ["", GOLD_LINE]
+    return lines
 
 
 @pytest.mark.parametrize("gold", [False, True], ids=["nogold", "gold"])
 @pytest.mark.parametrize("contribution", [False, True], ids=["nocontrib", "contrib"])
 @pytest.mark.parametrize(
-    ("case_id", "prev_p", "new_p", "header", "trade_line", "legs"),
+    ("case_id", "prev_p", "new_p", "trade_lines", "legs"),
     CASES,
     ids=[c[0] for c in CASES],
 )
 def test_plan_orders_renders_expected_lines(
-    case_id, prev_p, new_p, header, trade_line, legs, contribution, gold
+    case_id, prev_p, new_p, trade_lines, legs, contribution, gold
 ) -> None:
     plan = plan_orders(
         alloc(prev_p),
@@ -104,7 +97,7 @@ def test_plan_orders_renders_expected_lines(
     )
 
     assert render_action(plan) == _expected(
-        header, trade_line, legs, contribution=contribution, gold=gold
+        trade_lines, legs, contribution=contribution, gold=gold
     )
 
 
@@ -159,14 +152,18 @@ def test_sell_fraction_full_boundary_at_0_9995() -> None:
         and not trim_plan.trade.full
         and trim_plan.trade.kind == "trim"
     )
-    assert render_action(exit_plan) == (
-        "🔴 TQQQ 전량 매도 · 오늘 밤 시가",
-        ["TQQQ 전량 → SGOV"],
-    )
-    assert render_action(trim_plan) == (
-        "🟠 TQQQ 99.9% 매도 · 오늘 밤 시가",
-        ["TQQQ 99.9% → SGOV"],
-    )
+    assert render_action(exit_plan) == [
+        f"🛒 실행 액션 ({EXEC})",
+        "- TQQQ: 전량 매도",
+        "- SGOV: TQQQ 매도대금 전액으로 매수",
+        "- GLD: 유지",
+    ]
+    assert render_action(trim_plan) == [
+        f"🛒 실행 액션 ({EXEC})",
+        "- TQQQ: 보유수량의 99.9% 매도",
+        "- SGOV: TQQQ 매도대금 전액으로 매수",
+        "- GLD: 유지",
+    ]
 
 
 def test_trade_keeps_sell_fraction_and_proceeds_source() -> None:

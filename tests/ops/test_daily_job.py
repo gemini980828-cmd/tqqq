@@ -105,12 +105,12 @@ def test_run_daily_signal_alert_skips_duplicate_on_second_run(tmp_path) -> None:
     ):
         assert key in saved
     msg = first["message"]
-    assert msg.startswith(
-        "<b>🟠 TQQQ 75% 매도 · 오늘 밤 시가</b>\nTQQQ 75% → SGOV\n3/6(금) 미국장 마감 기준\n"
-    )
-    assert "오늘 판단" not in msg and "실행 액션" not in msg
+    assert msg.startswith("[ 2026-03-06 ] 코어전략 운영브리프\n")
+    assert "🟠 오늘 판단: 일부 감량" in msg
+    assert "- TQQQ: 보유수량의 75% 매도\n- SGOV: TQQQ 매도대금 전액으로 매수" in msg
     # legacy CSV without allocation columns: falls back to 0.90*p / 0.90*(1-p) / 0.10
-    assert "목표  TQQQ 22.5% · SGOV 67.5% · GLD 10%" in msg
+    assert "목표 비중: TQQQ 22.50% / SGOV 67.50% / GLD 10.00%" in msg
+    assert "- signal code: 1 → 3" in msg
     assert SKIPPED in msg  # two rows of market data cannot feed the engine
     assert first["new_allocation"] == {"TQQQ": 0.225, "SGOV": 0.675, "GLD": 0.1}
 
@@ -141,8 +141,10 @@ def test_run_daily_signal_alert_derives_entry_from_csv_and_ignores_state(
     result = _run(tmp_path, CSV_SAME_WEIGHT_SAMPLE, dry_run=False)
 
     msg = result["message"]
-    assert msg.startswith("<b>⚪ 보유 유지</b>\nTQQQ $51.00 (+2.0%)\n")
-    assert "진입  3/5 · $50.00 · 평가손익 +2.0%" in msg
+    assert "⚪ 오늘 판단: 유지" in msg
+    assert "- TQQQ 종가: $51.00 (🟢 +2.00%)" in msg
+    assert "3/5 진입 후 보유 중 (평가손익 +2.0%)." in msg
+    assert "- 진입: 3/5 · $50.00" in msg
     assert "$49.2" not in msg
     saved = json.loads((tmp_path / "state.json").read_text(encoding="utf-8"))
     assert saved["entry_price"] == 50.0
@@ -163,7 +165,7 @@ def test_run_daily_signal_alert_entry_is_start_of_current_invested_run(
         "2026-03-06,102.0,51.0,605.0,1475.0\n",
     )
 
-    assert "진입  3/4 · $50.00 · 평가손익 +2.0%" in result["message"]
+    assert "3/4 진입 후 보유 중 (평가손익 +2.0%)." in result["message"]
 
 
 def test_run_daily_signal_alert_too_short_data_skips_distances_without_failing(
@@ -182,9 +184,10 @@ def test_run_daily_signal_alert_too_short_data_skips_distances_without_failing(
     msg = result["message"]
     assert result["sent"] is True
     assert result["action"] == "wait"
-    assert msg.startswith("<b>⚪ 현금 대기 (SGOV)</b>\nTQQQ $38.78 (−5.9%)\n")
-    assert SKIPPED in msg
-    assert "현금  3/26부터" in msg
+    assert "⚪ 오늘 판단: 현금 대기" in msg
+    assert "- TQQQ 종가: $38.78 (🔴 −5.94%)" in msg
+    assert "3/26 매도 후 SGOV 대기 중.\n" in msg
+    assert f"- {SKIPPED}" in msg
 
 
 def test_run_daily_signal_alert_raises_on_missing_required_columns(tmp_path) -> None:
@@ -236,9 +239,10 @@ def test_run_daily_signal_alert_uses_allocation_columns(tmp_path) -> None:
     )
 
     msg = result["message"]
-    assert msg.startswith("<b>🟠 TQQQ 3% 매도 · 오늘 밤 시가</b>\nTQQQ 3% → SGOV\n")
-    assert "목표  TQQQ 87.3% · SGOV 2.7% · GLD 10%" in msg
-    assert "B0_DZ 90% + GLD 10%" in msg
+    assert "🟠 오늘 판단: 일부 감량" in msg
+    assert "- TQQQ: 보유수량의 3% 매도\n- SGOV: TQQQ 매도대금 전액으로 매수" in msg
+    assert "목표 비중: TQQQ 87.30% / SGOV 2.70% / GLD 10.00%" in msg
+    assert "전략: B0_DZ 90% + GLD 10%" in msg
     alloc = result["new_allocation"]
     assert abs(sum(alloc.values()) - 1.0) < 1e-9
 
@@ -253,8 +257,10 @@ def test_run_daily_signal_alert_first_session_of_year_adds_gold_rebalance(
     )
 
     assert result["action"] == "gold_rebalance"
-    assert result["message"].startswith(
-        "<b>🔁 GLD 10%로 리밸런싱 · 오늘 밤 시가</b>\n1/2(금) 미국장 마감 기준\n"
+    assert "🔁 오늘 판단: 금 리밸런싱" in result["message"]
+    assert (
+        "🔁 연 1회 금 리밸런싱일: GLD를 전체 자산의 10%로 맞추세요 (연초 첫 거래일)."
+        in result["message"]
     )
 
 
@@ -279,8 +285,10 @@ def test_run_daily_signal_alert_contribution_session_adds_contribution_lines(
 
     assert result["contribution_session"] is True
     assert result["action"] == "contribution"
-    assert result["message"].startswith(
-        "<b>💵 적립 167만원 · 오늘 밤 시가</b>\nTQQQ 150 · GLD 17 (만원)\n"
+    assert "💵 오늘 판단: 적립 집행" in result["message"]
+    assert (
+        "💵 이번 달 적립 (167만원, 오늘 밤 미국장 시가)\n- TQQQ 150만원 / GLD 17만원"
+        in result["message"]
     )
 
 
@@ -299,7 +307,7 @@ def test_run_daily_signal_alert_contribution_needs_both_amount_and_day(
     for result in (amount_only, day_only, off_day):
         assert result["contribution_session"] is False
         assert "적립" not in result["message"]
-        assert result["message"].startswith("<b>⚪ 보유 유지</b>")
+        assert "⚪ 오늘 판단: 유지" in result["message"]
 
 
 def test_run_daily_signal_alert_with_real_engine_computes_trigger_distances(
