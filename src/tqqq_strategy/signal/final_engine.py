@@ -134,16 +134,9 @@ def build_final_signal_frame(
     )
 
 
-def compute_final_signal_table(
-    data: pd.DataFrame,
-    *,
-    best_config_path: Path | str = DEFAULT_PHASE2_BEST_CONFIG_PATH,
-    overlay: SoftOverheatOverlay | None = None,
-    dist_cap: float = DEFAULT_DIST_CAP,
-) -> pd.DataFrame:
-    reference_mod = _load_module(PROJECT_ROOT / "ops/scripts/user_original_reference.py", "user_original_reference_final_signal")
-    params = load_phase2_best_params(best_config_path)
-    basic_params = reference_mod.BasicParams(
+def _build_basic_params(reference_mod, params: Phase2Params, dist_cap: float):
+    """B0_DZ BasicParams: Phase2 params + dist_cap, SPY bear forces cash (spy_bear_cap=0)."""
+    return reference_mod.BasicParams(
         vol_threshold=params.vol_threshold,
         dist200_enter=params.dist200_enter,
         dist200_exit=params.dist200_exit,
@@ -158,6 +151,8 @@ def compute_final_signal_table(
         dist_cap=dist_cap,
     )
 
+
+def _run_basic_strategy(reference_mod, data: pd.DataFrame, basic_params, state_out: dict | None = None):
     working = data.copy()
     reference_mod.ensure_sma(working, "QQQ종가", 3, "QQQ3일선")
     reference_mod.ensure_sma(working, "QQQ종가", 161, "QQQ161일선")
@@ -174,7 +169,7 @@ def compute_final_signal_table(
     spy_close = working["SPY종가"].to_numpy()
     spy_ma200 = working["SPY200일선"].to_numpy()
 
-    _codes, weights = reference_mod.compute_basic_strategy(
+    codes, weights = reference_mod.compute_basic_strategy(
         time,
         q_close,
         q_ma3,
@@ -184,7 +179,41 @@ def compute_final_signal_table(
         spy_close,
         spy_ma200,
         basic_params,
+        state_out=state_out,
     )
+    return working, t_close, t_ma200, codes, weights
+
+
+def compute_engine_snapshot(
+    data: pd.DataFrame,
+    *,
+    best_config_path: Path | str = DEFAULT_PHASE2_BEST_CONFIG_PATH,
+    dist_cap: float = DEFAULT_DIST_CAP,
+) -> dict:
+    """Run B0_DZ on `data` and return the last-bar engine state: {"state", "params", "weight"}.
+
+    "state" is the dict filled by compute_basic_strategy(state_out=...), "params" the BasicParams used,
+    "weight" the last raw signal p.
+    """
+    reference_mod = _load_module(PROJECT_ROOT / "ops/scripts/user_original_reference.py", "user_original_reference_final_snapshot")
+    params = load_phase2_best_params(best_config_path)
+    basic_params = _build_basic_params(reference_mod, params, dist_cap)
+    state: dict = {}
+    _working, _t_close, _t_ma200, _codes, weights = _run_basic_strategy(reference_mod, data, basic_params, state_out=state)
+    return {"state": state, "params": basic_params, "weight": float(weights[-1])}
+
+
+def compute_final_signal_table(
+    data: pd.DataFrame,
+    *,
+    best_config_path: Path | str = DEFAULT_PHASE2_BEST_CONFIG_PATH,
+    overlay: SoftOverheatOverlay | None = None,
+    dist_cap: float = DEFAULT_DIST_CAP,
+) -> pd.DataFrame:
+    reference_mod = _load_module(PROJECT_ROOT / "ops/scripts/user_original_reference.py", "user_original_reference_final_signal")
+    params = load_phase2_best_params(best_config_path)
+    basic_params = _build_basic_params(reference_mod, params, dist_cap)
+    working, t_close, t_ma200, _codes, weights = _run_basic_strategy(reference_mod, data, basic_params)
 
     base_weight = pd.Series(weights, index=working.index, dtype=float)
     dist200 = (pd.Series(t_close, index=working.index, dtype=float) / pd.Series(t_ma200, index=working.index, dtype=float)) * 100.0

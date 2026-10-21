@@ -208,6 +208,7 @@ def compute_basic_strategy(
     spy_close: np.ndarray,
     spy_ma200: np.ndarray,
     params: BasicParams,
+    state_out: dict | None = None,
 ) -> Tuple[np.ndarray, np.ndarray]:
     n = len(t_close)
     codes = np.zeros(n, dtype=int)
@@ -238,6 +239,7 @@ def compute_basic_strategy(
     tp10CycleActive = False
     tp10Reduced = False
     tp10EntryClose = math.nan
+    baseCode = 0
 
     for i in range(n):
         prevAsset = assetCode
@@ -412,6 +414,31 @@ def compute_basic_strategy(
 
         codes[i] = assetCode
         weights[i] = code_weight(assetCode)
+
+    if state_out is not None:
+        # last-bar engine state (read-only snapshot for alert triggers; does not affect codes/weights)
+        last = n - 1
+        state_out.update(
+            {
+                "ready": bool(ready[last]) if n else False,
+                "locked": bool(locked),
+                "spyBull": bool(spyBull),
+                "above200Hyst": bool(above200Hyst),
+                "overheatStage": int(overheatStage),
+                "fullEntryClose": float(fullEntryClose),
+                "reentryLock": bool(reentryLock),
+                "tp10CycleActive": bool(tp10CycleActive),
+                "tp10Reduced": bool(tp10Reduced),
+                "tp10EntryClose": float(tp10EntryClose),
+                "assetCode": int(assetCode),
+                "baseCode": int(baseCode),
+                "v20": float(t_v20[last]) if n else math.nan,
+                "dist200": float(dist200[last]) if n else math.nan,
+                "spyDist200": float(spyDist200[last]) if n else math.nan,
+                "q_rsi": float(q_rsi[last]) if n else math.nan,
+                "dist_slope": float(dist_slope[last]) if n else math.nan,
+            }
+        )
 
     return codes, weights
 

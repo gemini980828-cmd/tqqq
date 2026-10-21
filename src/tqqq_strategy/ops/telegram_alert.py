@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import html
 import json
+import re
 import urllib.error
 import urllib.request
 from typing import Iterable
@@ -59,6 +61,50 @@ def format_s2_change_message(
     return "\n".join(lines)
 
 
+_TAG_RE = re.compile(r"<[^>]+>")
+
+
+def _strip_html(text: str) -> str:
+    """Plain-text fallback for an HTML-mode message: drop tags, unescape entities."""
+    return html.unescape(_TAG_RE.sub("", text))
+
+
+def _post_message(url: str, payload: dict, timeout: float) -> dict:
+    body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+    req = urllib.request.Request(
+        url=url,
+        data=body,
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            raw = resp.read().decode("utf-8")
+            parsed = json.loads(raw) if raw else {}
+            return {
+                "sent": bool(parsed.get("ok")),
+                "dry_run": False,
+                "status_code": getattr(resp, "status", None),
+                "response": parsed,
+            }
+    except urllib.error.HTTPError as exc:
+        raw = exc.read().decode("utf-8", errors="replace")
+        return {
+            "sent": False,
+            "dry_run": False,
+            "status_code": exc.code,
+            "error": raw or str(exc),
+        }
+    except urllib.error.URLError as exc:
+        return {
+            "sent": False,
+            "dry_run": False,
+            "status_code": None,
+            "error": str(exc),
+        }
+
+
 def send_telegram_message(
     *,
     bot_token: str | None,
@@ -66,6 +112,7 @@ def send_telegram_message(
     text: str,
     dry_run: bool = False,
     timeout: float = 10.0,
+    parse_mode: str | None = None,
 ) -> dict:
     if dry_run:
         return {
@@ -84,36 +131,13 @@ def send_telegram_message(
         }
 
     url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
-    body = json.dumps({"chat_id": chat_id, "text": text}, ensure_ascii=False).encode("utf-8")
-    req = urllib.request.Request(
-        url=url,
-        data=body,
-        headers={"Content-Type": "application/json"},
-        method="POST",
-    )
+    payload: dict = {"chat_id": chat_id, "text": text}
+    if parse_mode:
+        payload["parse_mode"] = parse_mode
 
-    try:
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
-            raw = resp.read().decode("utf-8")
-            payload = json.loads(raw) if raw else {}
-            return {
-                "sent": bool(payload.get("ok")),
-                "dry_run": False,
-                "status_code": getattr(resp, "status", None),
-                "response": payload,
-            }
-    except urllib.error.HTTPError as exc:
-        raw = exc.read().decode("utf-8", errors="replace")
-        return {
-            "sent": False,
-            "dry_run": False,
-            "status_code": exc.code,
-            "error": raw or str(exc),
-        }
-    except urllib.error.URLError as exc:
-        return {
-            "sent": False,
-            "dry_run": False,
-            "status_code": None,
-            "error": str(exc),
-        }
+    result = _post_message(url, payload, timeout)
+    if parse_mode and result.get("status_code") == 400 and "can't parse entities" in str(result.get("error", "")):
+        # malformed markup must never cost the alert: resend once as plain text
+        result = _post_message(url, {"chat_id": chat_id, "text": _strip_html(text)}, timeout)
+        result["parse_mode_fallback"] = True
+    return result

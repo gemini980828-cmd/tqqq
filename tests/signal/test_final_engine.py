@@ -101,3 +101,62 @@ def test_compute_final_signal_table_uses_b0_dz_params_without_overlay() -> None:
 
 def test_final_runtime_signal_path_points_to_promoted_engine_report() -> None:
     assert str(FINAL_RUNTIME_SIGNAL_PATH) == "reports/signals_core_strategy_final.csv"
+
+
+def test_compute_basic_strategy_state_out_does_not_change_output() -> None:
+    from tqqq_strategy.signal.final_engine import (
+        DEFAULT_PHASE2_BEST_CONFIG_PATH,
+        PROJECT_ROOT,
+        _build_basic_params,
+        _load_module,
+        load_phase2_best_params,
+    )
+
+    ref = _load_module(PROJECT_ROOT / "ops/scripts/user_original_reference.py", "user_original_reference_state_out_test")
+    data = _synthetic_market()
+    ref.ensure_sma(data, "QQQ종가", 3, "QQQ3일선")
+    ref.ensure_sma(data, "QQQ종가", 161, "QQQ161일선")
+    ref.ensure_sma(data, "TQQQ종가", 200, "TQQQ200일선")
+    ref.ensure_sma(data, "SPY종가", 200, "SPY200일선")
+    params = _build_basic_params(ref, load_phase2_best_params(DEFAULT_PHASE2_BEST_CONFIG_PATH), DEFAULT_DIST_CAP)
+    cols = ("time", "QQQ종가", "QQQ3일선", "QQQ161일선", "TQQQ종가", "TQQQ200일선", "SPY종가", "SPY200일선")
+    args = [data[c].to_numpy() for c in cols]
+
+    codes_a, weights_a = ref.compute_basic_strategy(*args, params)
+    state: dict = {}
+    codes_b, weights_b = ref.compute_basic_strategy(*args, params, state_out=state)
+
+    assert codes_a.tolist() == codes_b.tolist()
+    assert weights_a.tolist() == weights_b.tolist()
+    assert state["assetCode"] == int(codes_b[-1])
+    for key in (
+        "locked",
+        "spyBull",
+        "above200Hyst",
+        "overheatStage",
+        "fullEntryClose",
+        "reentryLock",
+        "tp10CycleActive",
+        "tp10Reduced",
+        "tp10EntryClose",
+        "baseCode",
+        "v20",
+        "dist200",
+        "q_rsi",
+        "dist_slope",
+    ):
+        assert key in state
+
+
+def test_compute_engine_snapshot_weight_matches_last_signal_row() -> None:
+    from tqqq_strategy.signal.final_engine import compute_engine_snapshot
+
+    market = _synthetic_market()
+    table = compute_final_signal_table(market)
+
+    snapshot = compute_engine_snapshot(market)
+
+    assert snapshot["weight"] == float(table["S2_weight"].iloc[-1])
+    assert snapshot["params"].dist200_enter == 101.19
+    assert snapshot["params"].spy_bear_cap == 0.0
+    assert set(snapshot) == {"state", "params", "weight"}
